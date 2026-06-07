@@ -1,0 +1,59 @@
+﻿[ Add ]
+{ Tag }
+Expression / calculation tags
+- Expr
+- Calc
+- ExprText
+- IfExpr
+- IfText
+- Coalesce
+
+{ Player / judgment tags }
+- Existing judgment tags now support an optional player number, for example {OVE:2}
+- PlayerHit
+- PlayerTotalHits
+- PlayerAccuracy
+- PlayerXAccuracy
+- PlayerAbsXAccuracy
+
+{ XPerfect tags }
+- XPerfectAvailable
+- XPerfectCount
+- XPlusPerfectCount
+- XMinusPerfectCount
+- XDetailedPerfectCount
+- XPerfectDetail
+- XPerfectLastJudge
+- XPerfectLastJudgeConsumedByMeter
+- XPerfectPureRun
+- XPerfectShare
+- XPerfectPercent
+- XPerfectRate
+
+[ Change ]
+AutoUpdater is disabled in this Overlayer XDBuilding build to prevent the official updater from overwriting the custom build.
+AutoUpdate and AutoUpdateBeta settings are forced off.
+Version is updated from 3.49.0 to 3.49.2.
+GitHub and Wiki buttons now point to the Overlayer-Lagacy repository.
+Project references now use configurable GameDir / ADOFAI_GAME_DIR paths instead of one fixed Steam path.
+Build output now copies Overlayer.dll, language files, info.json, update.txt, logo, and dependency DLLs into Mods/Overlayer.
+Bootstrapper dependency loading now uses a fixed load order for required libraries.
+Text tag parsing was rewritten to better support escaped braces, nested tags, nested arguments, and expression-style arguments.
+Profile loading now supports newer profile JSON, legacy object-list JSON, and single-object JSON imports.
+Migrated legacy profiles are backed up as .legacy.bak before being rewritten.
+File selection now uses an internal Windows PowerShell / Windows Forms shim.
+Unity image loading and PNG encoding now use a compatibility shim for newer Unity assemblies.
+Inactive profiles now suspend tag references instead of keeping their objects active in patch logic.
+
+[ Fix ]
+Removed stale project references to missing IMColorPicker test files so the source package can build cleanly.
+Improved compatibility with newer ADOFAI builds that moved player, planet, floor, mistake, and hit-text data.
+Fixed several direct field reads by routing them through version-safe accessors.
+Fixed judgment, combo, fail, checkpoint, BPM, progress, tile, and status tags for newer game field names.
+Fixed hit text script APIs for newer cached hit text layouts.
+Fixed profile and object cleanup when deleting, refreshing, importing, or disabling profiles.
+Fixed deep-copy behavior for text and image expression values.
+Fixed safer parsing for invalid color hex strings.
+Fixed safer delete popup behavior when an object or profile is already missing.
+Fixed safer expression parsing so unresolved inline tags do not crash expression evaluation.
+Fixed dependency packaging path handling for local builds.

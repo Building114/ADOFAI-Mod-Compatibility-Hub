@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <!-- Change this to your actual ADOFAI install folder if the auto-detect paths miss it. -->
+    <GameDir>E:\SteamLibrary\steamapps\common\A Dance of Fire and Ice</GameDir>
+  </PropertyGroup>
+</Project>

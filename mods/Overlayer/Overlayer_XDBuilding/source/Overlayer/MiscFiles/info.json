@@ -1,0 +1,8 @@
+{
+  "Id": "Overlayer",
+  "DisplayName": "Overlayer XDBuilding",
+  "Author": "modlist.org; XDBuilding patch maintainer",
+  "Version": "3.49.2",
+  "AssemblyName": "Overlayer.Bootstrapper.dll",
+  "EntryMethod": "Overlayer.Bootstrapper.Main.Load"
+}

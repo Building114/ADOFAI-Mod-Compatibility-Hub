@@ -1,0 +1,753 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="15.0">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <Import Project="Local.Build.props" Condition="Exists('Local.Build.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A10DA92A-C5BB-4708-B1B4-9A112A644D8C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Overlayer</RootNamespace>
+    <AssemblyName>Overlayer</AssemblyName>
+    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <LangVersion>13.0</LangVersion>
+    <TargetFrameworkProfile />
+    <GameDir Condition="'$(GameDir)' == '' And '$(ADOFAI_GAME_DIR)' != ''">$(ADOFAI_GAME_DIR)</GameDir>
+    <DeployToGame Condition="'$(DeployToGame)' == ''">false</DeployToGame>
+    <ManagedDir>$(GameDir)\A Dance of Fire and Ice_Data\Managed</ManagedDir>
+    <ModDir>$(GameDir)\Mods\Overlayer</ModDir>
+</PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>$(ManagedDir)\UnityModManager\0Harmony.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(ManagedDir)\Assembly-CSharp-firstpass.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="DemiLib">
+      <HintPath>$(ManagedDir)\DemiLib.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="DOTween">
+      <HintPath>$(ManagedDir)\DOTween.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="DOTweenPro">
+      <HintPath>$(ManagedDir)\DOTweenPro.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ManagedDir)\Newtonsoft.Json.dll</HintPath>
+    <Private>False</Private></Reference>
+    <Reference Include="RDTools">
+      <HintPath>$(ManagedDir)\RDTools.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Drawing.Design" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Unity.Addressables">
+      <HintPath>$(ManagedDir)\Unity.Addressables.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.AI.Navigation">
+      <HintPath>$(ManagedDir)\Unity.AI.Navigation.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.MemoryProfiler">
+      <HintPath>$(ManagedDir)\Unity.MemoryProfiler.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.ResourceManager">
+      <HintPath>$(ManagedDir)\Unity.ResourceManager.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.ScriptableBuildPipeline">
+      <HintPath>$(ManagedDir)\Unity.ScriptableBuildPipeline.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Analytics">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Analytics.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Configuration">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Configuration.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Device">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Device.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Environments">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Environments.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Environments.Internal">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Environments.Internal.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Internal">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Internal.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Networking">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Networking.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Registration">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Registration.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Scheduler">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Scheduler.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Telemetry">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Telemetry.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Services.Core.Threading">
+      <HintPath>$(ManagedDir)\Unity.Services.Core.Threading.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(ManagedDir)\Unity.TextMeshPro.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="Unity.Timeline">
+      <HintPath>$(ManagedDir)\Unity.Timeline.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.AccessibilityModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AccessibilityModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.AIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AIModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.AndroidJNIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AndroidJNIModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AnimationModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.ARModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ARModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AssetBundleModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AudioModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.ClothModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ClothModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.ClusterInputModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ClusterInputModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.ClusterRendererModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ClusterRendererModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.ContentLoadModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ContentLoadModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.CrashReportingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.CrashReportingModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.DirectorModule">
+      <HintPath>$(ManagedDir)\UnityEngine.DirectorModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.DSPGraphModule">
+      <HintPath>$(ManagedDir)\UnityEngine.DSPGraphModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.GameCenterModule">
+      <HintPath>$(ManagedDir)\UnityEngine.GameCenterModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.GIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.GIModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.GridModule">
+      <HintPath>$(ManagedDir)\UnityEngine.GridModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.HotReloadModule">
+      <HintPath>$(ManagedDir)\UnityEngine.HotReloadModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.IMGUIModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(ManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.InputModule">
+      <HintPath>$(ManagedDir)\UnityEngine.InputModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.JSONSerializeModule">
+      <HintPath>$(ManagedDir)\UnityEngine.JSONSerializeModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.LocalizationModule">
+      <HintPath>$(ManagedDir)\UnityEngine.LocalizationModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.NVIDIAModule">
+      <HintPath>$(ManagedDir)\UnityEngine.NVIDIAModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ParticleSystemModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.PerformanceReportingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.PerformanceReportingModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Physics2DModule">
+      <HintPath>$(ManagedDir)\UnityEngine.Physics2DModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.PhysicsModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.ProfilerModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ProfilerModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.PropertiesModule">
+      <HintPath>$(ManagedDir)\UnityEngine.PropertiesModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Purchasing">
+      <HintPath>$(ManagedDir)\UnityEngine.Purchasing.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Purchasing.AppleCore">
+      <HintPath>$(ManagedDir)\UnityEngine.Purchasing.AppleCore.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Purchasing.AppleMacosStub">
+      <HintPath>$(ManagedDir)\UnityEngine.Purchasing.AppleMacosStub.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Purchasing.AppleStub">
+      <HintPath>$(ManagedDir)\UnityEngine.Purchasing.AppleStub.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Purchasing.Codeless">
+      <HintPath>$(ManagedDir)\UnityEngine.Purchasing.Codeless.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Purchasing.SecurityCore">
+      <HintPath>$(ManagedDir)\UnityEngine.Purchasing.SecurityCore.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Purchasing.SecurityStub">
+      <HintPath>$(ManagedDir)\UnityEngine.Purchasing.SecurityStub.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Purchasing.Stores">
+      <HintPath>$(ManagedDir)\UnityEngine.Purchasing.Stores.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Purchasing.WinRTCore">
+      <HintPath>$(ManagedDir)\UnityEngine.Purchasing.WinRTCore.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.Purchasing.WinRTStub">
+      <HintPath>$(ManagedDir)\UnityEngine.Purchasing.WinRTStub.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule">
+      <HintPath>$(ManagedDir)\UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.ScreenCaptureModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ScreenCaptureModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.SharedInternalsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.SharedInternalsModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.SpriteMaskModule">
+      <HintPath>$(ManagedDir)\UnityEngine.SpriteMaskModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.SpriteShapeModule">
+      <HintPath>$(ManagedDir)\UnityEngine.SpriteShapeModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.StreamingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.StreamingModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.SubstanceModule">
+      <HintPath>$(ManagedDir)\UnityEngine.SubstanceModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.SubsystemsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.SubsystemsModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.TerrainModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TerrainModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.TerrainPhysicsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TerrainPhysicsModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.TextCoreFontEngineModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.TextCoreTextEngineModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TextRenderingModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.TilemapModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TilemapModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.TLSModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TLSModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(ManagedDir)\UnityEngine.UI.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UIElementsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UIElementsModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UIModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UmbraModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UmbraModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UnityAnalyticsCommonModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityAnalyticsCommonModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UnityAnalyticsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityAnalyticsModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UnityConnectModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityConnectModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UnityCurlModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityCurlModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UnityTestProtocolModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityTestProtocolModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAssetBundleModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestTextureModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestWWWModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.VehiclesModule">
+      <HintPath>$(ManagedDir)\UnityEngine.VehiclesModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.VFXModule">
+      <HintPath>$(ManagedDir)\UnityEngine.VFXModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.VideoModule">
+      <HintPath>$(ManagedDir)\UnityEngine.VideoModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.VirtualTexturingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.VirtualTexturingModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.VRModule">
+      <HintPath>$(ManagedDir)\UnityEngine.VRModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.WindModule">
+      <HintPath>$(ManagedDir)\UnityEngine.WindModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityEngine.XRModule">
+      <HintPath>$(ManagedDir)\UnityEngine.XRModule.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+    <Reference Include="UnityModManager">
+      <HintPath>$(ManagedDir)\UnityModManager\UnityModManager.dll</HintPath>
+    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CodeEditor\CodeEditor.cs" />
+    <Compile Include="CodeEditor\CodeTheme.cs" />
+    <Compile Include="Controllers\GUIController.cs" />
+    <Compile Include="Compatibility\Unity\ImageConversionCompat.cs" />
+    <Compile Include="Core\Drawer.cs" />
+    <Compile Include="Core\EventEase.cs" />
+    <Compile Include="Core\FastDateTime.cs" />
+    <Compile Include="Core\FontManager.cs" />
+    <Compile Include="Core\ImageConfigImporter.cs" />
+    <Compile Include="Core\ImageManager.cs" />
+    <Compile Include="Core\Patches\SafeConditionalPatch.cs" />
+    <Compile Include="Core\Patches\SafePatchController.cs" />
+    <Compile Include="Core\Patches\SafePatch.cs" />
+    <Compile Include="Core\Patches\SafePatchAttribute.cs" />
+    <Compile Include="Core\Patches\SafePatchManager.cs" />
+    <Compile Include="Core\Reference.cs" />
+    <Compile Include="Core\ResourceManager.cs" />
+    <Compile Include="Core\Interfaces\ICopyable.cs" />
+    <Compile Include="Core\Interfaces\IDrawable.cs" />
+    <Compile Include="Core\Interfaces\IModel.cs" />
+    <Compile Include="Core\MethodDrawable.cs" />
+    <Compile Include="Core\ModelDrawable.cs" />
+    <Compile Include="Core\NeoDrawer.cs" />
+    <Compile Include="Core\ProfileReferences.cs" />
+    <Compile Include="Core\ProfileManager.cs" />
+    <Compile Include="Core\Scripting\JSNet\API\Api.cs" />
+    <Compile Include="Core\Scripting\JSNet\API\ApiAttribute.cs" />
+    <Compile Include="Core\Scripting\JSNet\API\ConstructorAttribute.cs" />
+    <Compile Include="Core\Scripting\JSNet\API\ExcludeAttribute.cs" />
+    <Compile Include="Core\Scripting\JSNet\API\IncludeAttribute.cs" />
+    <Compile Include="Core\Scripting\JSNet\API\JintInteropAttributesCompat.cs" />
+    <Compile Include="Core\Scripting\JSNet\API\NotVisibleAttribute.cs" />
+    <Compile Include="Core\Scripting\JSNet\API\StringUtils.cs" />
+    <Compile Include="Core\Scripting\JSNet\API\TypeWrapper.cs" />
+    <Compile Include="Core\Scripting\JSNet\EnumParser.cs" />
+    <Compile Include="Core\Scripting\JSNet\StringHelper.cs" />
+    <Compile Include="Core\Scripting\JSNet\Utils\Attribute.cs" />
+    <Compile Include="Core\Scripting\JSNet\Utils\CustomParameter.cs" />
+    <Compile Include="Core\Scripting\JSNet\Utils\EmitUtils.cs" />
+    <Compile Include="Core\Scripting\JSNet\Utils\FIWrapper.cs" />
+    <Compile Include="Core\Scripting\JSNet\Utils\JSUtils.cs" />
+    <Compile Include="Core\Scripting\JSNet\Utils\Type.cs" />
+    <Compile Include="Core\Scripting\Scripting.cs" />
+    <Compile Include="Core\TagDesc.cs" />
+    <Compile Include="Core\TextReplacing\Parsing\ParsedFormatTag.cs" />
+    <Compile Include="Models\TileAttempt.cs" />
+    <Compile Include="Models\FileAttempt.cs" />
+    <Compile Include="Models\ExprValue.cs" />
+    <Compile Include="Models\ImageConfig.cs" />
+    <Compile Include="Models\ObjectConfig.cs" />
+    <Compile Include="Models\ProfileConfig.cs" />
+    <Compile Include="Olly\OllyDialogue.cs" />
+    <Compile Include="Olly\OllyDialogueLines.cs" />
+    <Compile Include="Olly\OllyRender.cs" />
+    <Compile Include="Olly\OllyResources.cs" />
+    <Compile Include="Olly\OllyState.cs" />
+    <Compile Include="Olly\OllyUtils.cs" />
+    <Compile Include="Patches\HideTitle.cs" />
+    <Compile Include="Patches\FileAttemptPatch.cs" />
+    <Compile Include="Patches\HitFixPatch.cs" />
+    <Compile Include="Core\Patches\LazyPatch.cs" />
+    <Compile Include="Core\Patches\LazyPatchAttribute.cs" />
+    <Compile Include="Core\Patches\LazyPatchManager.cs" />
+    <Compile Include="Core\TextConfigImporter.cs" />
+    <Compile Include="Core\ObjectManager.cs" />
+    <Compile Include="Core\TextReplacing\Parsing\IParsed.cs" />
+    <Compile Include="Core\TextReplacing\Parsing\ParsedString.cs" />
+    <Compile Include="Core\TextReplacing\Parsing\ParsedTag.cs" />
+    <Compile Include="Core\TextReplacing\Parsing\Parser.cs" />
+    <Compile Include="Core\TextReplacing\ReplaceableText.cs" />
+    <Compile Include="Core\TextReplacing\Replacer.cs" />
+    <Compile Include="Core\TextReplacing\Tag.cs" />
+    <Compile Include="Core\Translation\Translator.cs" />
+    <Compile Include="Core\UndoRedoManager.cs" />
+    <Compile Include="Main.cs" />
+    <Compile Include="Models\FontMeta.cs" />
+    <Compile Include="Models\GColor.cs" />
+    <Compile Include="Models\TextConfig.cs" />
+    <Compile Include="Patches\BlockUMMClosing.cs" />
+    <Compile Include="Patches\FontPatch.cs" />
+    <Compile Include="Patches\TagResetter.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RapidGUI\Component\FastScrollView.cs" />
+    <Compile Include="RapidGUI\Component\Fold.cs" />
+    <Compile Include="RapidGUI\Component\Folds.cs" />
+    <Compile Include="RapidGUI\Component\IDoGUI.cs" />
+    <Compile Include="RapidGUI\Component\IMColorPicker\Scripts\Editor\IMColorPickerEditor.cs" />
+    <Compile Include="RapidGUI\Component\IMColorPicker\Scripts\IMColorPicker.cs" />
+    <Compile Include="RapidGUI\Component\IMColorPicker\Scripts\IMColorPreset.cs" />
+    <Compile Include="RapidGUI\Component\MinMax.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\Cursor\Cursor.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\Cursor\CursorData.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\FocusChecker.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\IDoGUIWindow.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\LazyFindObject.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\RapidGUIBehaviour.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\Recursive.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\RGUILayoutUtility.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\RGUIStyle.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\RGUIUtility.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\TitleContent.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\TitleContents.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\TypeUtility.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\TypeUtilityMemberInfo.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\UnparsedStr.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\WarningLabel.cs" />
+    <Compile Include="RapidGUI\Component\Utilities\WindowInvoker.cs" />
+    <Compile Include="RapidGUI\Component\WindowLauncher.cs" />
+    <Compile Include="RapidGUI\Component\WindowLaunchers.cs" />
+    <Compile Include="RapidGUI\RGUI\CustomGUI\CustomGUI.cs" />
+    <Compile Include="RapidGUI\RGUI\Field.cs" />
+    <Compile Include="RapidGUI\RGUI\Field\BoolField.cs" />
+    <Compile Include="RapidGUI\RGUI\Field\ColorField.cs" />
+    <Compile Include="RapidGUI\RGUI\Field\EnumField.cs" />
+    <Compile Include="RapidGUI\RGUI\Field\ListField.cs" />
+    <Compile Include="RapidGUI\RGUI\Field\RecursiveField.cs" />
+    <Compile Include="RapidGUI\RGUI\Field\StandardField.cs" />
+    <Compile Include="RapidGUI\RGUI\MinMaxSlider.cs" />
+    <Compile Include="RapidGUI\RGUI\MinMaxSlider\MinMaxSliderCore.cs" />
+    <Compile Include="RapidGUI\RGUI\MinMaxSlider\RecursiveMinMaxSlider.cs" />
+    <Compile Include="RapidGUI\RGUI\Popup.cs" />
+    <Compile Include="RapidGUI\RGUI\PrefixLabel.cs" />
+    <Compile Include="RapidGUI\RGUI\ResizableWindow.cs" />
+    <Compile Include="RapidGUI\RGUI\Scope\BackgroundColorScope.cs" />
+    <Compile Include="RapidGUI\RGUI\Scope\ColorScope.cs" />
+    <Compile Include="RapidGUI\RGUI\Scope\CustomLabelScope.cs" />
+    <Compile Include="RapidGUI\RGUI\Scope\EnabledScope.cs" />
+    <Compile Include="RapidGUI\RGUI\Scope\IgnoreFieldScope.cs" />
+    <Compile Include="RapidGUI\RGUI\Scope\IndentScope.cs" />
+    <Compile Include="RapidGUI\RGUI\Scope\PrefixLabelIndentScope.cs" />
+    <Compile Include="RapidGUI\RGUI\Slider.cs" />
+    <Compile Include="RapidGUI\RGUI\Slider\RecursiveSlider.cs" />
+    <Compile Include="Core\Scripting\AudioPlayer.cs" />
+    <Compile Include="Core\Scripting\Impl.cs" />
+    <Compile Include="Core\Scripting\ScriptTag.cs" />
+    <Compile Include="Core\Scripting\Sound.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="Tags\AccuracyStats.cs" />
+    <Compile Include="Tags\ADOFAI.cs" />
+    <Compile Include="Tags\Attributes\IgnoreCaseAttribute.cs" />
+    <Compile Include="Tags\Attributes\ValueProcessing.cs" />
+    <Compile Include="Tags\Attributes\JSImplementedByAttribute.cs" />
+    <Compile Include="Tags\Attributes\TagAttribute.cs" />
+    <Compile Include="Tags\Bpm.cs" />
+    <Compile Include="Tags\CheckPointStats.cs" />
+    <Compile Include="Tags\ComboStats.cs" />
+    <Compile Include="Tags\Developers.cs" />
+    <Compile Include="Tags\Effect.cs" />
+    <Compile Include="Tags\Expression.cs" />
+    <Compile Include="Tags\FailStats.cs" />
+    <Compile Include="Tags\FrameRate.cs" />
+    <Compile Include="Tags\Hex.cs" />
+    <Compile Include="Tags\Hit.cs" />
+    <Compile Include="Tags\Level.cs" />
+    <Compile Include="Core\OverlayerTag.cs" />
+    <Compile Include="Tags\Mod.cs" />
+    <Compile Include="Tags\Patches\M_MonsterLove.cs" />
+    <Compile Include="Tags\Patches\PatchBase.cs" />
+    <Compile Include="Tags\Patches\P_ffxSetDefaultText.cs" />
+    <Compile Include="Tags\Patches\P_Persistence.cs" />
+    <Compile Include="Tags\Patches\P_scnEditor.cs" />
+    <Compile Include="Tags\Patches\P_scnGame.cs" />
+    <Compile Include="Tags\Patches\P_scrCamera.cs" />
+    <Compile Include="Tags\Patches\P_scrConductor.cs" />
+    <Compile Include="Tags\Patches\P_scrController.cs" />
+    <Compile Include="Tags\Patches\P_scrMisc.cs" />
+    <Compile Include="Tags\Patches\P_scrPlanet.cs" />
+    <Compile Include="Tags\Patches\P_scrPressToStart.cs" />
+    <Compile Include="Tags\Patches\P_scrUIController.cs" />
+    <Compile Include="Tags\Patches\P_scrMistakeManager.cs" />
+    <Compile Include="Tags\ProgressStats.cs" />
+    <Compile Include="Tags\Scores.cs" />
+    <Compile Include="Tags\Song.cs" />
+    <Compile Include="Tags\Status.cs" />
+    <Compile Include="Tags\System.cs" />
+    <Compile Include="Core\TagManager.cs" />
+    <Compile Include="Tags\Tile.cs" />
+    <Compile Include="Tags\Time.cs" />
+    <Compile Include="Tags\HitTiming.cs" />
+    <Compile Include="Unity\OverlayerImage.cs" />
+    <Compile Include="Unity\OverlayerObject.cs" />
+    <Compile Include="Unity\OverlayerProfile.cs" />
+    <Compile Include="Unity\StaticCoroutine.cs" />
+    <Compile Include="Unity\OverlayerText.cs" />
+    <Compile Include="Utils\ADOUtils.cs" />
+    <Compile Include="Utils\AutoUpdater.cs" />
+    <Compile Include="CodeEditor\ColorRangeEditor.cs" />
+    <Compile Include="Utils\DeletePopup.cs" />
+    <Compile Include="CodeEditor\EasedValueEditor.cs" />
+    <Compile Include="Utils\EnumHelper.cs" />
+    <Compile Include="Utils\Extensions.cs" />
+    <Compile Include="Utils\MiscUtils.cs" />
+    <Compile Include="Models\ModelUtils.cs" />
+    <Compile Include="CodeEditor\MovingManEditor.cs" />
+    <Compile Include="Utils\UpdatePopup.cs" />
+    <Compile Include="Utils\StringConverter.cs" />
+    <Compile Include="Utils\StringUtils.cs" />
+    <Compile Include="Olly\Olly.cs" />
+    <Compile Include="Views\ImageConfigDrawer.cs" />
+    <Compile Include="Views\ProfileDrawer.cs" />
+    <Compile Include="Views\SettingsDrawer.cs" />
+    <Compile Include="Views\TextConfigDrawer.cs" />
+    <Compile Include="Core\DllImporter.cs" />
+    <Compile Include="Unity\StandaloneFileBrowserShim.cs" />
+    <Compile Include="Utils\VersionSafe.cs" />
+    <Compile Include="Tags\PlayerHitStats.cs" />
+    <Compile Include="Tags\XPerfectTags.cs" />
+    <Compile Include="Tags\ExpressionTags.cs" />
+    <Compile Include="Tags\TUF.cs" />
+    <Compile Include="Core\TextReplacing\Lexing\LexConfig.cs" />
+    <Compile Include="Core\TextReplacing\Lexing\Lexer.cs" />
+    <Compile Include="Core\TextReplacing\Lexing\Token.cs" />
+    <Compile Include="Core\TextReplacing\Lexing\TokenType.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="MiscFiles\info.json" />
+    <None Include="MiscFiles\lang\zh-CN.json" />
+    <None Include="MiscFiles\lang\en-US.json" />
+    <None Include="MiscFiles\lang\fr-CA.json" />
+    <None Include="MiscFiles\lang\ko-KR.json" />
+    <None Include="MiscFiles\lang\ru-RU.json" />
+    <None Include="MiscFiles\lang\vi-VN.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MiscFiles\res\images\active.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinback.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinbounce.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeincirc.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeincubic.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinelastic.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinexpo.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinoutback.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinoutbounce.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinoutcirc.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinoutcubic.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinoutelastic.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinoutexpo.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinoutquad.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinoutquart.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinoutquint.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinoutsine.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinquad.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinquart.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinquint.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeinsine.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easelinear.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeoutback.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeoutbounce.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeoutcirc.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeoutcubic.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeoutelastic.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeoutexpo.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeoutquad.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeoutquart.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeoutquint.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\easeoutsine.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\inactive.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\power.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\alibaseline.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\alibottom.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\alicapline.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\alicenter.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\aliflush.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\aligeometrycenter.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\alijustified.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\alileft.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\alimiddle.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\alimidline.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\aliright.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\alitop.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\aliunknown.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\color.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\copy.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\discord.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\drag.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\font.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\fontalternate.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\fontsize.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\github.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\gradation.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\linespacing.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\openfolder.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\outline.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\outlinewidth.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\parse.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\pause.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\pencil.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\play.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\shadow.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\shadowdilate.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\shadowsoftness.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\updown.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\x.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\xrotate.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\zrotate.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\RGUIoutline.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\plus.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\up.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\opacity.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\image.png" />
+    <EmbeddedResource Include="MiscFiles\res\images\wiki.png" />
+    <Content Include="MiscFiles\ov3_logo.png" />
+    <Content Include="MiscFiles\update.txt" />
+    <Content Include="RapidGUI\Component\IMColorPicker\Resources\imBorder.png" />
+    <Content Include="RapidGUI\Component\IMColorPicker\Resources\imBorderHighlighted.png" />
+    <Content Include="RapidGUI\Component\IMColorPicker\Resources\imCircle.png" />
+    <Content Include="RapidGUI\Component\IMColorPicker\Resources\imLeft.png" />
+    <Content Include="RapidGUI\Component\IMColorPicker\Resources\imPreset.asset" />
+    <Content Include="RapidGUI\Component\IMColorPicker\Resources\imRight.png" />
+    <Content Include="RapidGUI\Component\IMColorPicker\Scripts\Editor\RapidGUI.IMColorPicier.Editor.asmdef" />
+    <Content Include="RapidGUI\Component\Utilities\Cursor\Resources\cursorData.asset" />
+    <Content Include="RapidGUI\Component\Utilities\Cursor\Resources\cursor_ew.png" />
+    <Content Include="RapidGUI\Component\Utilities\Cursor\Resources\cursor_ns.png" />
+    <Content Include="RapidGUI\Component\Utilities\Cursor\Resources\cursor_nwse.png" />
+    <Content Include="RapidGUI\RGUI\MinMaxSlider\Resources\minmax slider thumb act.png" />
+    <Content Include="RapidGUI\RGUI\MinMaxSlider\Resources\minmax slider thumb.png" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <PackageReference Include="Acornima" Version="1.3.2" />
+    <PackageReference Include="BlackSharp.Core" Version="1.0.7" />
+    <PackageReference Include="DiskInfoToolkit" Version="1.1.2" />
+    <PackageReference Include="Esprima" Version="3.0.5" />
+    <PackageReference Include="HidSharp" Version="2.6.4" />
+    <PackageReference Include="Jint" Version="4.7.1" />
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+    <PackageReference Include="ncalc" Version="1.3.8" />
+    <PackageReference Include="RAMSPDToolkit-NDD" Version="1.4.2" />
+    <PackageReference Include="System.Buffers" Version="4.6.1" />
+    <PackageReference Include="System.CodeDom" Version="10.0.2" />
+    <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />
+    <PackageReference Include="System.Management" Version="10.0.2" />
+    <PackageReference Include="System.Memory" Version="4.6.3" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
+    <PackageReference Include="System.Security.AccessControl" Version="6.0.0" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
+    <PackageReference Include="System.Threading.AccessControl" Version="10.0.3" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
+    <PackageReference Include="Vostok.Sys.Metrics.PerfCounters" Version="0.0.8" />
+  </ItemGroup>
+  <Target Name="ValidateGameDirForOverlayerXDBuilding" BeforeTargets="ResolveReferences" Condition="'$(GameDir)' == ''">
+    <Error Text="GameDir is not set. Set ADOFAI_GAME_DIR, pass /p:GameDir=..., or create Local.Build.props from Local.Build.props.example." />
+  </Target>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if /I "$(DeployToGame)"=="true" (
+if not exist "$(ModDir)" mkdir "$(ModDir)"
+if not exist "$(ModDir)\lang" mkdir "$(ModDir)\lang"
+if not exist "$(ModDir)\lib" mkdir "$(ModDir)\lib"
+
+copy /Y "$(TargetPath)" "$(ModDir)\Overlayer.dll"
+xcopy /Y /I /S /E "$(ProjectDir)MiscFiles\lang\*" "$(ModDir)\lang\"
+xcopy /Y /I "$(ProjectDir)MiscFiles\info.json" "$(ModDir)\"
+xcopy /Y /I "$(ProjectDir)MiscFiles\update.txt" "$(ModDir)\"
+xcopy /Y /I "$(ProjectDir)MiscFiles\ov3_logo.png" "$(ModDir)\"
+
+rem Keep lib deterministic. Do not leave old Unity/game DLLs here.
+del /Q "$(ModDir)\lib\*.dll" 2&gt;nul
+
+rem Copy NuGet/runtime dependencies from the build output.
+rem Game and Unity references have Private=False, so they should not appear here.
+for %%F in ("$(TargetDir)*.dll") do (
+  if /I not "%%~nxF"=="Overlayer.dll" copy /Y "%%~fF" "$(ModDir)\lib\"
+)
+
+rem LibreHardwareMonitorLib uses runtime-specific assets and may not be copied to TargetDir by classic net481 builds.
+set "LHM=%USERPROFILE%\.nuget\packages\librehardwaremonitorlib\0.9.6\runtimes\win-x64\lib\net472\LibreHardwareMonitorLib.dll"
+if not exist "$(TargetDir)LibreHardwareMonitorLib.dll" if exist "%LHM%" copy /Y "%LHM%" "$(TargetDir)LibreHardwareMonitorLib.dll"
+if exist "$(TargetDir)LibreHardwareMonitorLib.dll" copy /Y "$(TargetDir)LibreHardwareMonitorLib.dll" "$(ModDir)\lib\LibreHardwareMonitorLib.dll"
+) else (
+  echo DeployToGame is false; skipping copy to local ADOFAI Mods folder.
+)</PostBuildEvent>
+  </PropertyGroup>
+</Project>
