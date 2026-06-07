@@ -35,11 +35,12 @@ Original status: **Archived / read-only since 2026-06-06**
 
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
+| Overlayer XDBuilding (legacy external link) | [Open](https://github.com/Building114/Overlayer-XDBuilding) | Earlier external link entry for the 3.42.0-based temporary compatibility patch maintained by Building114. | 3.42.0 | 3.42.2 | Available / temporary patch | Link only |
 | Overlayer XDBuilding | [Open](mods/Overlayer/Overlayer_XDBuilding/release/Overlayer-XDBuilding-v3.49.2.zip) | Unofficial temporary compatibility patch for ADOFAI 3.1.1. Adds practical fields and improves parsing logic. | 3.49.0 | 3.49.2 | Available / temporary patch | Yes |
 
 ## Included Here
 
-- **Included**: this repository contains Building114's patch source and release package for this entry, under `mods/<original mod>/<patch name>/`.
+- **Included**: this repository contains Building114's patch source and release package for this entry, under `mods/{original mod}/{patch name}/`.
 - **Link only**: this repository only links to another repository or release. The linked project keeps its own source code, license, and rules.
 
 ## External Community Patch Links
