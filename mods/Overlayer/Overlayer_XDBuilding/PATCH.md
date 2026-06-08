@@ -1,4 +1,4 @@
-# Overlayer XDBuilding
+﻿# Overlayer XDBuilding
 
 This is an unofficial temporary compatibility patch for Overlayer.
 
@@ -13,7 +13,7 @@ This is an unofficial temporary compatibility patch for Overlayer.
 | Base version | `3.49.0` |
 | Patch version | `3.49.3` |
 | Target ADOFAI version | `3.1.1` |
-| Status | Available |
+| Status | Testing / editor save issue under investigation |
 | Included here | Yes |
 
 ## Files
@@ -45,4 +45,5 @@ Main changes:
 The original project is licensed under GPL-3.0.
 
 This repository includes the patched source for this entry so users can inspect the corresponding source for the included release package.
+
 
