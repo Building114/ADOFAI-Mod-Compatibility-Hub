@@ -27,7 +27,3 @@ Repository note:
 Third-party dependency note:
 - Jint is referenced through NuGet as Jint 4.7.1.
 - This source package does not claim to bundle a modified `modlist-org/jint` DLL.
-## Known Issue
-
-A public report says Overlayer v3.49 may stop the ADOFAI level editor from saving levels.
-Treat this package as Testing until the editor-save problem is reproduced and fixed.
