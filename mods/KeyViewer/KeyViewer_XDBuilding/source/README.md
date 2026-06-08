@@ -25,20 +25,25 @@ Patch hub: https://github.com/Building114/ADOFAI-Mod-Compatibility-Hub
 
 ## Building
 
-1. Install or locate the game.
-2. Set the `ADOFAI_GAME_DIR` environment variable to the game folder, or pass `GameDir` when building.
-3. Restore the NuGet package listed in `packages.config`.
+1. Install or locate A Dance of Fire and Ice.
+2. Set `ADOFAI_GAME_DIR`, or pass `GameDir` when building.
+3. Make sure `NCalc.dll` exists at:
+
+   `packages/ncalc.1.3.8/lib/NCalc.dll`
+
+   The current `packages.config` does not declare this package, so `nuget restore KeyViewer.sln` may not be enough on a clean checkout.
 4. Build `KeyViewer.sln`.
-5. Use a Release build for a player-facing package.
 
 Example:
 
 ```bat
-nuget restore KeyViewer.sln
 msbuild KeyViewer.sln /p:Configuration=Release /p:GameDir="D:\Games\A Dance of Fire and Ice"
 ```
 
-The project copies the built mod files into the game's `Mods/KeyViewer` folder after a successful build.
+After a successful build, the project copies the built mod files into:
+
+`<GameDir>/Mods/KeyViewer/`
+
 
 ## Included and Excluded Content
 
