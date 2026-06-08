@@ -2,6 +2,6 @@
 <Project>
   <PropertyGroup>
     <!-- Change this to your actual ADOFAI install folder if the auto-detect paths miss it. -->
-    <GameDir>E:\SteamLibrary\steamapps\common\A Dance of Fire and Ice</GameDir>
+    <GameDir>C:\Path\To\A Dance of Fire and Ice</GameDir>
   </PropertyGroup>
 </Project>

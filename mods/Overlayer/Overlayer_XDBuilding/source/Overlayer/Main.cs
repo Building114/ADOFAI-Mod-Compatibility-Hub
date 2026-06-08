@@ -80,7 +80,7 @@ public static class Main {
         Ass = Assembly.GetExecutingAssembly();
 
         // XDB merge: do not apply pending official updater payloads to an unofficial patch build.
-        UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.2.";
+        UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.3.";
 
         GUI = new GUIController();
         Lang = new Translator();
@@ -141,7 +141,7 @@ public static class Main {
 
             if(updateOnce) {
                 updateOnce = false;
-                UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.2.";
+                UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.3.";
             }
         } else {
             if(EgEnabled) {

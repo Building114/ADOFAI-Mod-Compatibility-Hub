@@ -1,4 +1,4 @@
-# ADOFAI Mod Compatibility Hub
+﻿# ADOFAI Mod Compatibility Hub
 
 ![Status](https://img.shields.io/badge/status-unofficial%20patch%20hub-orange)
 ![Official](https://img.shields.io/badge/official-no-red)
@@ -36,7 +36,13 @@ Original status: **Archived / read-only since 2026-06-06**
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
 | Overlayer XDBuilding (legacy external link) | [Open](https://github.com/Building114/Overlayer-XDBuilding) | Earlier external link entry for the 3.42.0-based temporary compatibility patch maintained by Building114. | 3.42.0 | 3.42.2 | Available / temporary patch | Link only |
-| Overlayer XDBuilding | [Open](mods/Overlayer/Overlayer_XDBuilding/release/Overlayer-XDBuilding-v3.49.2.zip) | Unofficial temporary compatibility patch for ADOFAI 3.1.1. Adds practical fields and improves parsing logic. | 3.49.0 | 3.49.2 | Available / temporary patch | Yes |
+| Overlayer XDBuilding | [Open](mods/Overlayer/Overlayer_XDBuilding/release/Overlayer-XDBuilding-v3.49.3.zip) | Unofficial temporary compatibility patch for ADOFAI 3.1.1. Adds practical fields and improves parsing logic. | 3.49.0 | 3.49.3 | Available | Yes |
+
+## Known Issue
+
+GitHub issue #2 reports that installing Overlayer v3.49 can make the ADOFAI level editor unable to save levels.
+This entry is therefore marked as Testing until the issue is reproduced and fixed.
+
 
 ## Included Here
 
@@ -58,3 +64,4 @@ This hub itself is only an index and notice repository unless a patch folder cle
 Each linked or included patched project keeps its own license.
 
 External community patches follow their own repositories' licenses and rules.
+

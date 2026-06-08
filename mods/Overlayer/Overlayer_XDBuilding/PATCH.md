@@ -1,4 +1,4 @@
-# Overlayer XDBuilding
+﻿# Overlayer XDBuilding
 
 This is an unofficial temporary compatibility patch for Overlayer.
 
@@ -11,9 +11,9 @@ This is an unofficial temporary compatibility patch for Overlayer.
 | Original status | Archived / read-only since 2026-06-06 |
 | Patch name | Overlayer XDBuilding |
 | Base version | `3.49.0` |
-| Patch version | `3.49.2` |
+| Patch version | `3.49.3` |
 | Target ADOFAI version | `3.1.1` |
-| Status | Available / temporary patch |
+| Status | Available |
 | Included here | Yes |
 
 ## Files
@@ -21,7 +21,7 @@ This is an unofficial temporary compatibility patch for Overlayer.
 | Type | Path |
 |---|---|
 | Source | `source/` |
-| Player release package | `release/Overlayer-XDBuilding-v3.49.2.zip` |
+| Player release package | `release/Overlayer-XDBuilding-v3.49.3.zip` |
 
 ## Notice
 
@@ -46,6 +46,16 @@ The original project is licensed under GPL-3.0.
 
 This repository includes the patched source for this entry so users can inspect the corresponding source for the included release package.
 
+## Known Issue
+
+GitHub issue #2 reports that installing Overlayer v3.49 can make the ADOFAI level editor unable to save levels.
+Do not mark this build as fully available until that editor-save problem is reproduced, fixed, and tested.
+
+Temporary user advice: if saving fails, remove this mod first, retry saving the level, and attach the UnityModManager/MelonLoader log to the issue.
+
+
 ## Testing
 
-This patch has been tested by the maintainer for the intended ADOFAI 3.1.1 compatibility use case.
+This build still needs a focused editor-save test before it should be treated as stable.
+Minimum test: open a custom level, make a small edit, save it, close the editor, reopen the level, and confirm the edit remains.
+

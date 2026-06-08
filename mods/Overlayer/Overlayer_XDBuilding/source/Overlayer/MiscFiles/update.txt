@@ -1,4 +1,4 @@
-﻿[ Add ]
+[ Add ]
 { Tag }
 Expression / calculation tags
 - Expr
@@ -33,7 +33,7 @@ Expression / calculation tags
 [ Change ]
 AutoUpdater is disabled in this Overlayer XDBuilding build to prevent the official updater from overwriting the custom build.
 AutoUpdate and AutoUpdateBeta settings are forced off.
-Version is updated from 3.49.0 to 3.49.2.
+Version is updated from 3.49.0 to 3.49.3.
 GitHub and Wiki buttons now point to the Overlayer-Lagacy repository.
 Project references now use configurable GameDir / ADOFAI_GAME_DIR paths instead of one fixed Steam path.
 Build output now copies Overlayer.dll, language files, info.json, update.txt, logo, and dependency DLLs into Mods/Overlayer.
@@ -57,3 +57,8 @@ Fixed safer parsing for invalid color hex strings.
 Fixed safer delete popup behavior when an object or profile is already missing.
 Fixed safer expression parsing so unresolved inline tags do not crash expression evaluation.
 Fixed dependency packaging path handling for local builds.
+Fixed update popup layout so the window is measured during OnGUI and drawn only once per frame.
+
+[ Known Issue ]
+A public report says Overlayer v3.49 may stop the ADOFAI level editor from saving levels.
+This build is marked as Testing until the editor-save problem is reproduced and fixed.

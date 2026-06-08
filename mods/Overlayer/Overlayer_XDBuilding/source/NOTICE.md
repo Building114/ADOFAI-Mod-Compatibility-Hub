@@ -10,9 +10,9 @@ Original project:
 
 Patch:
 - Name: Overlayer XDBuilding
-- Patch version: 3.49.2
+- Patch version: 3.49.3
 - Target ADOFAI version: 3.1.1
-- Patch maintainer: XDBuilding patch maintainer
+- Patch maintainer: Building114
 - Included source status: included here as a temporary compatibility patch
 
 This project is not an official release from modlist.org, c3nb, or the original Overlayer maintainers.
@@ -27,3 +27,7 @@ Repository note:
 Third-party dependency note:
 - Jint is referenced through NuGet as Jint 4.7.1.
 - This source package does not claim to bundle a modified `modlist-org/jint` DLL.
+## Known Issue
+
+A public report says Overlayer v3.49 may stop the ADOFAI level editor from saving levels.
+Treat this package as Testing until the editor-save problem is reproduced and fixed.

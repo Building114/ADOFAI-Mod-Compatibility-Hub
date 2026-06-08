@@ -5,3 +5,15 @@ Thumbs.db
 # Local temporary files
 *.bak
 *.tmp
+
+# Visual Studio / local build files
+.vs/
+bin/
+obj/
+packages/
+*.user
+*.suo
+*.vsidx
+*.pdb
+Local.Build.props
+_adofai_fix_backups/

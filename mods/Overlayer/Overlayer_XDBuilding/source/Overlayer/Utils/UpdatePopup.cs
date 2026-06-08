@@ -1,57 +1,157 @@
-﻿using DG.Tweening;
+using DG.Tweening;
 using Overlayer.Core;
 using RapidGUI;
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
 namespace Overlayer.Utils;
 
 internal class UpdatePopup : MonoBehaviour {
+    private const int MaxUpdateLines = 400;
+    private const int MaxUpdateCharacters = 32000;
+    private const int MaxSingleLineCharacters = 1200;
+    private const int MaxDisplayLineCharacters = 160;
+    private const float MinWindowWidth = 420f;
+    private const float MinWindowHeight = 260f;
+    private const float MaxWindowWidthRatio = 0.82f;
+    private const float MaxWindowHeightRatio = 0.82f;
+    private const float ContentPadding = 40f;
+    private const float ButtonAreaHeight = 70f;
+    private const float ApproxLineHeight = 20f;
+
     private Rect windowRect;
+    private Vector2 scrollPosition;
     private string version = "";
     private string[] contentLines;
-    private bool isInitaialize = false;
+    private bool isInitialized = false;
     private bool isAnimating = false;
-    private bool isSpawn = false;
+    private bool hasCalculatedWindowRect = false;
 
     public void Initialize() {
         version = Main.Mod.Version.ToString();
 
         string filePath = Path.Combine(Main.Mod.Path, "update.txt");
-        if(File.Exists(filePath)) {
-            contentLines = File.ReadAllLines(filePath);
-            File.Delete(filePath);
-        } else {
+        if(!File.Exists(filePath)) {
             Destroy(gameObject);
             return;
         }
 
-        var maxWidth = 0f;
+        try {
+            contentLines = ReadUpdateLines(filePath);
+        } catch(Exception ex) {
+            contentLines = new[] {
+                "Failed to read update.txt.",
+                ex.Message
+            };
+        }
 
-        foreach(var line in contentLines) {
-            float lineWidth = GUI.skin.label.CalcSize(new GUIContent(line)).x;
-            if(lineWidth > maxWidth) {
-                maxWidth = lineWidth;
+        try {
+            File.Delete(filePath);
+        } catch(Exception ex) {
+            Main.Logger?.Log("Failed to delete update.txt: " + ex.Message);
+        }
+
+        if(contentLines == null || contentLines.Length == 0) {
+            Destroy(gameObject);
+            return;
+        }
+
+        // GUI.skin is safest to read during OnGUI, so calculate the first layout there.
+        isInitialized = true;
+    }
+
+    private static string[] ReadUpdateLines(string filePath) {
+        var lines = new List<string>();
+        var readCharacters = 0;
+        var truncated = false;
+
+        using(var reader = new StreamReader(filePath, true)) {
+            string line;
+            while((line = reader.ReadLine()) != null) {
+                readCharacters += line.Length + 1;
+
+                if(line.Length > MaxSingleLineCharacters) {
+                    line = line.Substring(0, MaxSingleLineCharacters) + " ...";
+                    truncated = true;
+                }
+
+                AddDisplayLine(lines, line);
+
+                if(lines.Count > MaxUpdateLines) {
+                    lines.RemoveRange(MaxUpdateLines, lines.Count - MaxUpdateLines);
+                    truncated = true;
+                    break;
+                }
+
+                if(lines.Count >= MaxUpdateLines || readCharacters >= MaxUpdateCharacters) {
+                    truncated = truncated || !reader.EndOfStream;
+                    break;
+                }
             }
         }
-        float width = maxWidth + 40;
-        float height = (contentLines.Length * 20) + 40;
-        windowRect = new Rect((Screen.width - width) / 2f, (Screen.height - height) / 2f, width, height);
 
-        isInitaialize = true;
+        if(truncated) {
+            var shownLines = lines.Count;
+            lines.Add("");
+            lines.Add($"... update.txt is too long, so only the first {shownLines} lines / {MaxUpdateCharacters} characters are shown.");
+        }
+
+        return lines.ToArray();
+    }
+
+    private static void AddDisplayLine(List<string> lines, string line) {
+        if(string.IsNullOrEmpty(line)) {
+            lines.Add("");
+            return;
+        }
+
+        for(var index = 0; index < line.Length; index += MaxDisplayLineCharacters) {
+            var length = Math.Min(MaxDisplayLineCharacters, line.Length - index);
+            lines.Add(line.Substring(index, length));
+        }
+    }
+
+    private void CalculateWindowRect() {
+        var maxAllowedWidth = Mathf.Max(240f, Screen.width * MaxWindowWidthRatio);
+        var maxAllowedHeight = Mathf.Max(180f, Screen.height * MaxWindowHeightRatio);
+        var minAllowedWidth = Mathf.Min(MinWindowWidth, maxAllowedWidth);
+        var minAllowedHeight = Mathf.Min(MinWindowHeight, maxAllowedHeight);
+        var maxContentWidth = 0f;
+
+        foreach(var line in contentLines) {
+            var lineWidth = GUI.skin.label.CalcSize(new GUIContent(line)).x;
+            if(lineWidth > maxContentWidth) {
+                maxContentWidth = lineWidth;
+            }
+        }
+
+        var width = Mathf.Clamp(Mathf.Min(maxContentWidth + ContentPadding, maxAllowedWidth), minAllowedWidth, maxAllowedWidth);
+        var wantedHeight = contentLines.Length * ApproxLineHeight + ButtonAreaHeight;
+        var height = Mathf.Clamp(wantedHeight, minAllowedHeight, maxAllowedHeight);
+
+        windowRect = new Rect((Screen.width - width) / 2f, (Screen.height - height) / 2f, width, height);
     }
 
     private void OnGUI() {
-        if(isInitaialize) {
-            if(!isSpawn && Event.current.type == EventType.Repaint) {
-                windowRect = GUILayout.Window(120, windowRect, DrawWindow, $"Overlayer {version} {Main.Lang.Get("UPDATE", "Update")}", RGUIStyle.darkWindow);
-                windowRect.x = (int)((Screen.width * 0.5f) - (windowRect.width * 0.5f));
-                windowRect.y = (int)((Screen.height * 0.5f) - (windowRect.height * 0.5f));
-                isSpawn = true;
-            }
-            windowRect = GUILayout.Window(120, windowRect, DrawWindow, $"Overlayer {version} {Main.Lang.Get("UPDATE", "Update")}", RGUIStyle.darkWindow);
+        if(!isInitialized) {
+            return;
         }
+
+        if(!hasCalculatedWindowRect) {
+            CalculateWindowRect();
+            hasCalculatedWindowRect = true;
+        }
+
+        windowRect = GUILayout.Window(
+            120,
+            windowRect,
+            DrawWindow,
+            $"Overlayer {version} {Main.Lang.Get("UPDATE", "Update")}",
+            RGUIStyle.darkWindow
+        );
     }
 
     private void DrawWindow(int windowID) {
@@ -59,17 +159,23 @@ internal class UpdatePopup : MonoBehaviour {
         GUILayout.BeginVertical();
         GUILayout.Space(10);
 
-        GUILayout.FlexibleSpace();
+        var labelStyle = new GUIStyle(GUI.skin.label) {
+            wordWrap = true
+        };
+        var scrollHeight = Mathf.Max(80f, windowRect.height - ButtonAreaHeight);
 
-        foreach(var line in contentLines) {
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            GUILayout.Label(line, GUILayout.ExpandWidth(false));
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
+        using(var scrollScope = new GUILayout.ScrollViewScope(scrollPosition, GUILayout.Height(scrollHeight))) {
+            scrollPosition = scrollScope.scrollPosition;
+            GUILayout.BeginVertical();
+
+            foreach(var line in contentLines) {
+                GUILayout.Label(line, labelStyle, GUILayout.ExpandWidth(true));
+            }
+
+            GUILayout.EndVertical();
         }
 
-        GUILayout.FlexibleSpace();
+        GUILayout.Space(10);
 
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();

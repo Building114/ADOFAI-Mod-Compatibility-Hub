@@ -1,0 +1,25 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Visual Studio local files
+.vs/
+*.user
+*.suo
+
+# Build output
+bin/
+obj/
+packages/
+*.pdb
+
+# Local game path configuration
+Local.Build.props
+
+# Local temporary files
+*.tmp
+*.bak
+
+# Visual Studio / local build files
+*.vsidx
+_adofai_fix_backups/
