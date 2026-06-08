@@ -43,6 +43,16 @@ Original status: **Archived / read-only since 2026-05-31**
 |---|---|---|---:|---:|---|---|
 | KeyViewer XDBuilding | [Open](mods/KeyViewer/KeyViewer_XDBuilding/release/KeyViewer.zip) | Unofficial patch improving profile persistence, gameplay visibility, and NCalc loading for KeyViewer. | 4.13.1 | 4.14.0-preview.5 | Available | Included |
 
+## AdofaiTweaks
+
+[Original Repository](https://github.com/PizzaLovers007/AdofaiTweaks)
+
+Original status: **Active / not archived**
+
+| New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
+|---|---|---|---:|---:|---|---|
+| AdofaiTweaks 2.8.1-Fix | [Open](https://github.com/2228293026/AdofaiTweaks) | External community fork for AdofaiTweaks 2.8.1 compatibility fix. | 2.8.1 | 2.8.1-Fix | Available | Link only |
+
 ## Included Here
 
 - **Included**: this repository contains Building114's patch source and/or release for this entry, under `mods/<original mod>/<patch name>/`.
