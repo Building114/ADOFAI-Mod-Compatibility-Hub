@@ -1,6 +1,6 @@
 # Review Required Before Public Redistribution
 
-This cleaned 3.49.3 source archive fixes the obvious local-path, maintainer-label,
+This cleaned 3.49.4 source archive fixes the obvious local-path, maintainer-label,
 metadata, popup-layout, and notice problems found during static review.
 
 One item still needs a human check before treating the archive as fully cleared

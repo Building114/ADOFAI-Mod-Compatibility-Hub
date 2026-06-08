@@ -1,4 +1,4 @@
-﻿# Overlayer XDBuilding
+# Overlayer XDBuilding
 
 This is an unofficial temporary compatibility patch for Overlayer.
 
@@ -11,9 +11,9 @@ This is an unofficial temporary compatibility patch for Overlayer.
 | Original status | Archived / read-only since 2026-06-06 |
 | Patch name | Overlayer XDBuilding |
 | Base version | `3.49.0` |
-| Patch version | `3.49.3` |
+| Patch version | `3.49.4` |
 | Target ADOFAI version | `3.1.1` |
-| Status | Testing / editor save issue under investigation |
+| Status | Available |
 | Included here | Yes |
 
 ## Files
@@ -21,7 +21,7 @@ This is an unofficial temporary compatibility patch for Overlayer.
 | Type | Path |
 |---|---|
 | Source | `source/` |
-| Player release package | `release/Overlayer-XDBuilding-v3.49.3.zip` |
+| Player release package | `release/Overlayer-XDBuilding-v3.49.4.zip` |
 
 ## Notice
 
@@ -46,4 +46,13 @@ The original project is licensed under GPL-3.0.
 
 This repository includes the patched source for this entry so users can inspect the corresponding source for the included release package.
 
+## 3.49.4 fix note
 
+This release fixes the confirmed editor-save failure caused by loading shared System.* dependencies from Overlayer/lib before ADOFAI's own managed assemblies.
+
+The bootstrapper now prefers already-loaded assemblies and ADOFAI's own `A Dance of Fire and Ice_Data/Managed` copies for:
+
+- `System.Buffers`
+- `System.Memory`
+- `System.Runtime.CompilerServices.Unsafe`
+- `System.Threading.Tasks.Extensions`

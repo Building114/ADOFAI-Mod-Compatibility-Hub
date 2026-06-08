@@ -2,7 +2,7 @@
   "Id": "Overlayer",
   "DisplayName": "Overlayer XDBuilding",
   "Author": "modlist.org; Building114 (unofficial patch maintainer)",
-  "Version": "3.49.3",
+  "Version": "3.49.4",
   "AssemblyName": "Overlayer.Bootstrapper.dll",
   "EntryMethod": "Overlayer.Bootstrapper.Main.Load"
 }

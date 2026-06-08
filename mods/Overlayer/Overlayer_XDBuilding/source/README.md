@@ -6,7 +6,7 @@ This source package is unified under the following public metadata:
 
 - Name: Overlayer XDBuilding
 - Base version: Overlayer-Lagacy 3.49.0
-- Patch version: 3.49.3
+- Patch version: 3.49.4
 - Target ADOFAI version: 3.1.1
 - Patch maintainer: Building114
 - License: GPL-3.0
@@ -19,7 +19,7 @@ Current V5 upstream note: `modlist-org/Overlayer` is the V5 mainline. This 3.x p
 
 Original project: modlist-org/Overlayer-Lagacy  
 Base version: Overlayer-Lagacy 3.49.0  
-Patch version: Overlayer XDBuilding 3.49.3  
+Patch version: Overlayer XDBuilding 3.49.4  
 License: GPL-3.0
 
 ## Patch notes

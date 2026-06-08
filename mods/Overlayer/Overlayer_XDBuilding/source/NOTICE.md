@@ -10,7 +10,7 @@ Original project:
 
 Patch:
 - Name: Overlayer XDBuilding
-- Patch version: 3.49.3
+- Patch version: 3.49.4
 - Target ADOFAI version: 3.1.1
 - Patch maintainer: Building114
 - Included source status: included here as a temporary compatibility patch

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -50,6 +50,16 @@ public static class Main {
         "LibreHardwareMonitorLib"
     ];
 
+    // These assemblies are shared .NET base libraries. Loading Overlayer/lib copies first can
+    // pollute ADOFAI's global runtime and break editor saving through System.Text.Json.
+    // Prefer an already-loaded copy, then the game's Managed folder.
+    private static readonly HashSet<string> preferGameManagedDlls = new(StringComparer.OrdinalIgnoreCase) {
+        "System.Buffers",
+        "System.Memory",
+        "System.Runtime.CompilerServices.Unsafe",
+        "System.Threading.Tasks.Extensions"
+    };
+
     private static readonly string FailName = "Overlayer [FAIL]";
 
     public static void Load(ModEntry modEntry) {
@@ -62,41 +72,28 @@ public static class Main {
             return;
         }
 
+        string managedPath = FindGameManagedPath(modEntry.Path);
+        if(string.IsNullOrEmpty(managedPath)) {
+            modEntry.Logger.Log("[Bootstrapper] Game Managed folder not found. Some System.* dependency fixes may not work.");
+        } else {
+            modEntry.Logger.Log($"[Bootstrapper] Game Managed folder: {managedPath}");
+        }
+
         var allDllFiles = Directory.GetFiles(libPath, "*.dll", SearchOption.AllDirectories);
         modEntry.Logger.Log($"Found {allDllFiles.Length} DLL(s) in /lib/");
 
-        var loadedTitles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var dllByName = allDllFiles
             .GroupBy(path => Path.GetFileNameWithoutExtension(path), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => group.OrderBy(path => path.Length).First(), StringComparer.OrdinalIgnoreCase);
 
         foreach(string name in dependencyDlls) {
-            bool alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
-                .Any(a => a.GetName().Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-
-            if(alreadyLoaded) {
-                modEntry.Logger.Log($"Already loaded: {name}");
-                continue;
-            }
-
-            if(!dllByName.TryGetValue(name, out string dllPath)) {
-                continue;
-            }
-
-            try {
-                var assembly = Assembly.Load(File.ReadAllBytes(dllPath));
-                modEntry.Logger.Log($"Loaded: {assembly.GetName().Name}");
-                loadedTitles.Add(assembly.GetName().Name);
-            } catch(Exception e) {
-                modEntry.Logger.Log($"Failed to load {dllPath}: {e}");
-                SetFail();
+            if(!TryLoadDependency(name, dllByName, managedPath, modEntry, SetFail)) {
+                return;
             }
         }
 
         foreach(var required in requiredDlls) {
-            if(!loadedTitles.Contains(required) &&
-               !AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetName().Name.Equals(required, StringComparison.OrdinalIgnoreCase))) {
-
+            if(GetLoadedAssembly(required) == null) {
                 modEntry.Logger.Log($"[ERROR] Required assembly '{required}' not loaded.");
                 SetFail();
                 return;
@@ -120,5 +117,98 @@ public static class Main {
             modEntry.Logger.Log($"Failed to load or invoke Overlayer.dll: {e}");
             SetFail();
         }
+    }
+
+    private static bool TryLoadDependency(
+        string name,
+        Dictionary<string, string> dllByName,
+        string managedPath,
+        ModEntry modEntry,
+        Action setFail
+    ) {
+        var alreadyLoaded = GetLoadedAssembly(name);
+        if(alreadyLoaded != null) {
+            modEntry.Logger.Log($"Already loaded: {DescribeAssembly(alreadyLoaded)}");
+            return true;
+        }
+
+        if(preferGameManagedDlls.Contains(name)) {
+            if(!string.IsNullOrEmpty(managedPath)) {
+                string managedDllPath = Path.Combine(managedPath, name + ".dll");
+                if(File.Exists(managedDllPath)) {
+                    if(TryLoadFromPath(name, managedDllPath, "game Managed", modEntry, setFail)) {
+                        return true;
+                    }
+                }
+            }
+
+            if(dllByName.ContainsKey(name)) {
+                modEntry.Logger.Log($"[Bootstrapper] Skipped Overlayer/lib copy of shared dependency: {name}");
+            }
+            return true;
+        }
+
+        if(!dllByName.TryGetValue(name, out string dllPath)) {
+            return true;
+        }
+
+        return TryLoadFromPath(name, dllPath, "Overlayer/lib", modEntry, setFail);
+    }
+
+    private static bool TryLoadFromPath(
+        string expectedName,
+        string dllPath,
+        string sourceName,
+        ModEntry modEntry,
+        Action setFail
+    ) {
+        try {
+            var assembly = Assembly.Load(File.ReadAllBytes(dllPath));
+            modEntry.Logger.Log($"Loaded from {sourceName}: {DescribeAssembly(assembly)}");
+
+            if(!assembly.GetName().Name.Equals(expectedName, StringComparison.OrdinalIgnoreCase)) {
+                modEntry.Logger.Log($"[Bootstrapper] Warning: expected {expectedName}, but loaded {assembly.GetName().Name} from {dllPath}");
+            }
+
+            return true;
+        } catch(Exception e) {
+            modEntry.Logger.Log($"Failed to load {expectedName} from {sourceName} ({dllPath}): {e}");
+            setFail();
+            return false;
+        }
+    }
+
+    private static Assembly GetLoadedAssembly(string name) {
+        return AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(a => a.GetName().Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string DescribeAssembly(Assembly assembly) {
+        string location;
+        try {
+            location = string.IsNullOrEmpty(assembly.Location) ? "<in-memory>" : assembly.Location;
+        } catch {
+            location = "<unknown>";
+        }
+
+        return $"{assembly.GetName().Name}, Version={assembly.GetName().Version}, Location={location}";
+    }
+
+    private static string FindGameManagedPath(string modPath) {
+        try {
+            var current = new DirectoryInfo(modPath);
+            for(int i = 0; i < 8 && current != null; i++) {
+                string candidate = Path.Combine(current.FullName, "A Dance of Fire and Ice_Data", "Managed");
+                if(Directory.Exists(candidate)) {
+                    return candidate;
+                }
+
+                current = current.Parent;
+            }
+        } catch {
+            // Ignore and return null below.
+        }
+
+        return null;
     }
 }

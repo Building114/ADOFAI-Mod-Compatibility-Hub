@@ -1,8 +1,8 @@
 # Source Package Note
 
-This archive contains the cleaned source for **Overlayer XDBuilding 3.49.3**.
+This archive contains the cleaned source for **Overlayer XDBuilding 3.49.4**.
 
-Compared with the previous 3.49.3 source package, this revision also:
+Compared with the previous 3.49.4 source package, this revision also:
 
 - replaces the local example game path with a placeholder;
 - replaces temporary maintainer labels with `Building114`;
