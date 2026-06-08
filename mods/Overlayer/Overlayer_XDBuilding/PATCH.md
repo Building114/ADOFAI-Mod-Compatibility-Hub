@@ -46,16 +46,3 @@ The original project is licensed under GPL-3.0.
 
 This repository includes the patched source for this entry so users can inspect the corresponding source for the included release package.
 
-## Known Issue
-
-GitHub issue #2 reports that installing Overlayer v3.49 can make the ADOFAI level editor unable to save levels.
-Do not mark this build as fully available until that editor-save problem is reproduced, fixed, and tested.
-
-Temporary user advice: if saving fails, remove this mod first, retry saving the level, and attach the UnityModManager/MelonLoader log to the issue.
-
-
-## Testing
-
-This build still needs a focused editor-save test before it should be treated as stable.
-Minimum test: open a custom level, make a small edit, save it, close the editor, reopen the level, and confirm the edit remains.
-
