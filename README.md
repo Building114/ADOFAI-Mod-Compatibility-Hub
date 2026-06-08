@@ -1,4 +1,4 @@
-﻿# ADOFAI Mod Compatibility Hub
+# ADOFAI Mod Compatibility Hub
 
 ![Status](https://img.shields.io/badge/status-unofficial%20patch%20hub-orange)
 ![Official](https://img.shields.io/badge/official-no-red)

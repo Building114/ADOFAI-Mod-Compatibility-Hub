@@ -1,4 +1,4 @@
-﻿# Overlayer XDBuilding
+# Overlayer XDBuilding
 
 This is an unofficial temporary compatibility patch for Overlayer.
 
