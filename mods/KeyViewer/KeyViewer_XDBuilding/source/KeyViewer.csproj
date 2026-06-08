@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <GameDir Condition=" '$(GameDir)' == '' ">$(ADOFAI_GAME_DIR)</GameDir>
+    <ManagedDir>$(GameDir)\A Dance of Fire and Ice_Data\Managed</ManagedDir>
+    <ModDir>$(GameDir)\Mods\KeyViewer</ModDir>
+    <UMMInstallerDir>$(GameDir)\Mods\UnityModManager\UnityModManagerInstaller</UMMInstallerDir>
+    <ProjectGuid>{C6FD7749-0E74-4798-AA33-69BB08DC1402}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>KeyViewer</RootNamespace>
+    <AssemblyName>KeyViewer</AssemblyName>
+    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <LangVersion>14.0</LangVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony" Condition="Exists('$(UMMInstallerDir)\0Harmony.dll')">
+      <HintPath>$(UMMInstallerDir)\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0Harmony" Condition="!Exists('$(UMMInstallerDir)\0Harmony.dll')">
+      <HintPath>$(ManagedDir)\UnityModManager\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(ManagedDir)\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="DemiLib">
+      <HintPath>$(ManagedDir)\DemiLib.dll</HintPath>
+    </Reference>
+    <Reference Include="DOTween">
+      <HintPath>$(ManagedDir)\DOTween.dll</HintPath>
+    </Reference>
+    <Reference Include="DOTweenPro">
+      <HintPath>$(ManagedDir)\DOTweenPro.dll</HintPath>
+    </Reference>
+    <Reference Include="NCalc">
+      <HintPath>packages\ncalc.1.3.8\lib\NCalc.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ManagedDir)\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="RDTools">
+      <HintPath>$(ManagedDir)\RDTools.dll</HintPath>
+    </Reference>
+    <Reference Include="SkyHook.Unity, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ManagedDir)\SkyHook.Unity.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Unity.Addressables">
+      <HintPath>$(ManagedDir)\Unity.Addressables.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.MemoryProfiler">
+      <HintPath>$(ManagedDir)\Unity.MemoryProfiler.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.ResourceManager">
+      <HintPath>$(ManagedDir)\Unity.ResourceManager.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.ScriptableBuildPipeline">
+      <HintPath>$(ManagedDir)\Unity.ScriptableBuildPipeline.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(ManagedDir)\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AccessibilityModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AccessibilityModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AndroidJNIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AndroidJNIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AnimationModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ARModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ARModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AssetBundleModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(ManagedDir)\UnityEngine.AudioModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ClothModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ClothModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ClusterInputModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ClusterInputModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ClusterRendererModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ClusterRendererModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CrashReportingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.CrashReportingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.DirectorModule">
+      <HintPath>$(ManagedDir)\UnityEngine.DirectorModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.DSPGraphModule">
+      <HintPath>$(ManagedDir)\UnityEngine.DSPGraphModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.GameCenterModule">
+      <HintPath>$(ManagedDir)\UnityEngine.GameCenterModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.GIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.GIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.GridModule">
+      <HintPath>$(ManagedDir)\UnityEngine.GridModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.HotReloadModule">
+      <HintPath>$(ManagedDir)\UnityEngine.HotReloadModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(ManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.InputModule">
+      <HintPath>$(ManagedDir)\UnityEngine.InputModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.JSONSerializeModule">
+      <HintPath>$(ManagedDir)\UnityEngine.JSONSerializeModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.LocalizationModule">
+      <HintPath>$(ManagedDir)\UnityEngine.LocalizationModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.NVIDIAModule">
+      <HintPath>$(ManagedDir)\UnityEngine.NVIDIAModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ParticleSystemModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.PerformanceReportingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.PerformanceReportingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.Physics2DModule">
+      <HintPath>$(ManagedDir)\UnityEngine.Physics2DModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ProfilerModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ProfilerModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule">
+      <HintPath>$(ManagedDir)\UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ScreenCaptureModule">
+      <HintPath>$(ManagedDir)\UnityEngine.ScreenCaptureModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.SharedInternalsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.SharedInternalsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.SpriteMaskModule">
+      <HintPath>$(ManagedDir)\UnityEngine.SpriteMaskModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.SpriteShapeModule">
+      <HintPath>$(ManagedDir)\UnityEngine.SpriteShapeModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.StreamingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.StreamingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.SubstanceModule">
+      <HintPath>$(ManagedDir)\UnityEngine.SubstanceModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.SubsystemsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.SubsystemsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TerrainModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TerrainModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TerrainPhysicsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TerrainPhysicsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextCoreFontEngineModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextCoreTextEngineModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TilemapModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TilemapModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TLSModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TLSModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(ManagedDir)\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIElementsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UIElementsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UmbraModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UmbraModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityAnalyticsModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityAnalyticsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityConnectModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityConnectModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityCurlModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityCurlModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityTestProtocolModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityTestProtocolModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAssetBundleModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestTextureModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestWWWModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.VehiclesModule">
+      <HintPath>$(ManagedDir)\UnityEngine.VehiclesModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.VFXModule">
+      <HintPath>$(ManagedDir)\UnityEngine.VFXModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.VideoModule">
+      <HintPath>$(ManagedDir)\UnityEngine.VideoModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.VirtualTexturingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.VirtualTexturingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.VRModule">
+      <HintPath>$(ManagedDir)\UnityEngine.VRModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.WindModule">
+      <HintPath>$(ManagedDir)\UnityEngine.WindModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.XRModule">
+      <HintPath>$(ManagedDir)\UnityEngine.XRModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityModManager">
+      <HintPath>$(ManagedDir)\UnityModManager\UnityModManager.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Core\AssetManager.cs" />
+    <Compile Include="Core\Constants.cs" />
+    <Compile Include="Core\DllImporter.cs" />
+    <Compile Include="Core\EnsurePool.cs" />
+    <Compile Include="Core\FontManager.cs" />
+    <Compile Include="Controllers\GUIController.cs" />
+    <Compile Include="Core\GUILayoutEx.cs" />
+    <Compile Include="Core\IconManager.cs" />
+    <Compile Include="Core\Input\AsyncInputCompat.cs" />
+    <Compile Include="Core\Input\KeyInput.cs" />
+    <Compile Include="Core\Input\WinInput.cs" />
+    <Compile Include="Core\Interfaces\ICopyable.cs" />
+    <Compile Include="Core\Interfaces\IModel.cs" />
+    <Compile Include="Core\KPSCalculator.cs" />
+    <Compile Include="Core\MethodDrawable.cs" />
+    <Compile Include="Core\ModelDrawable.cs" />
+    <Compile Include="Core\NeoDrawer.cs" />
+    <Compile Include="Core\ProfileImporter.cs" />
+    <Compile Include="Core\RainImageManager.cs" />
+    <Compile Include="Core\TextReplacing\Replacer.cs" />
+    <Compile Include="Core\TextReplacing\Tag.cs" />
+    <Compile Include="Core\Translation\Translator.cs" />
+    <Compile Include="Main.cs" />
+    <Compile Include="Migration\Migrator.cs" />
+    <Compile Include="Migration\V2\KeySetting.cs" />
+    <Compile Include="Migration\V2\KeyViewerProfile.cs" />
+    <Compile Include="Migration\V2\KeyViewerSettings.cs" />
+    <Compile Include="Migration\V2\Point.cs" />
+    <Compile Include="Migration\V2\PoSize.cs" />
+    <Compile Include="Migration\V2\V2Migrator.cs" />
+    <Compile Include="Migration\V3\Direction.cs" />
+    <Compile Include="Migration\V3\Group.cs" />
+    <Compile Include="Migration\V3\KeyRain.Config.cs" />
+    <Compile Include="Migration\V3\Key.Config.cs" />
+    <Compile Include="Migration\V3\V3Profile.cs" />
+    <Compile Include="Migration\V3\SpecialKeyType.cs" />
+    <Compile Include="Migration\V3\V3Migrator.cs" />
+    <Compile Include="Migration\V3\V3Settings.cs" />
+    <Compile Include="Models\ActiveProfile.cs" />
+    <Compile Include="Models\BlurConfig.cs" />
+    <Compile Include="Models\Direction.cs" />
+    <Compile Include="Models\EaseConfig.cs" />
+    <Compile Include="Models\FileReference.cs" />
+    <Compile Include="Models\GColor.cs" />
+    <Compile Include="Models\KeyConfig.cs" />
+    <Compile Include="Models\Metadata.cs" />
+    <Compile Include="Models\PressRelease.cs" />
+    <Compile Include="Models\PressReleaseBase.cs" />
+    <Compile Include="Models\PressReleaseModel.cs" />
+    <Compile Include="Models\Profile.cs" />
+    <Compile Include="Models\RainConfig.cs" />
+    <Compile Include="Core\Drawer.cs" />
+    <Compile Include="Core\Interfaces\IDrawable.cs" />
+    <Compile Include="Models\RainImage.cs" />
+    <Compile Include="Models\RainImageDisplayMode.cs" />
+    <Compile Include="Models\VectorConfig.cs" />
+    <Compile Include="Models\ObjectConfig.cs" />
+    <Compile Include="Patches\GameLifecyclePatch.cs" />
+    <Compile Include="Unity\StandaloneFileBrowserShim.cs" />
+    <Compile Include="Unity\ImageConversionShim.cs" />
+    <Compile Include="Patches\OnResetScenePatch.cs" />
+    <Compile Include="Patches\RemoveFuckingUMMDummyLogPatch.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Models\Settings.cs" />
+    <Compile Include="rapidgui\Component\FastScrollView.cs" />
+    <Compile Include="rapidgui\Component\Fold.cs" />
+    <Compile Include="rapidgui\Component\Folds.cs" />
+    <Compile Include="rapidgui\Component\IDoGUI.cs" />
+    <Compile Include="rapidgui\Component\IMColorPicker\Scripts\Editor\IMColorPickerEditor.cs" />
+    <Compile Include="rapidgui\Component\IMColorPicker\Scripts\IMColorPicker.cs" />
+    <Compile Include="rapidgui\Component\IMColorPicker\Scripts\IMColorPreset.cs" />
+    <Compile Include="rapidgui\Component\IMColorPicker\Test\TestOnGUI.cs" />
+    <Compile Include="rapidgui\Component\MinMax.cs" />
+    <Compile Include="rapidgui\Component\Utilities\Cursor\Cursor.cs" />
+    <Compile Include="rapidgui\Component\Utilities\Cursor\CursorData.cs" />
+    <Compile Include="rapidgui\Component\Utilities\FocusChecker.cs" />
+    <Compile Include="rapidgui\Component\Utilities\IDoGUIWindow.cs" />
+    <Compile Include="rapidgui\Component\Utilities\LazyFindObject.cs" />
+    <Compile Include="rapidgui\Component\Utilities\RapidGUIBehaviour.cs" />
+    <Compile Include="rapidgui\Component\Utilities\Recursive.cs" />
+    <Compile Include="rapidgui\Component\Utilities\RGUILayoutUtility.cs" />
+    <Compile Include="rapidgui\Component\Utilities\RGUIStyle.cs" />
+    <Compile Include="rapidgui\Component\Utilities\RGUIUtility.cs" />
+    <Compile Include="rapidgui\Component\Utilities\TitleContent.cs" />
+    <Compile Include="rapidgui\Component\Utilities\TitleContents.cs" />
+    <Compile Include="rapidgui\Component\Utilities\TypeUtility.cs" />
+    <Compile Include="rapidgui\Component\Utilities\TypeUtilityMemberInfo.cs" />
+    <Compile Include="rapidgui\Component\Utilities\UnparsedStr.cs" />
+    <Compile Include="rapidgui\Component\Utilities\WarningLabel.cs" />
+    <Compile Include="rapidgui\Component\Utilities\WindowInvoker.cs" />
+    <Compile Include="rapidgui\Component\WindowLauncher.cs" />
+    <Compile Include="rapidgui\Component\WindowLaunchers.cs" />
+    <Compile Include="rapidgui\RGUI\CustomGUI\CustomGUI.cs" />
+    <Compile Include="rapidgui\RGUI\Field.cs" />
+    <Compile Include="rapidgui\RGUI\Field\BoolField.cs" />
+    <Compile Include="rapidgui\RGUI\Field\ColorField.cs" />
+    <Compile Include="rapidgui\RGUI\Field\EnumField.cs" />
+    <Compile Include="rapidgui\RGUI\Field\ListField.cs" />
+    <Compile Include="rapidgui\RGUI\Field\RecursiveField.cs" />
+    <Compile Include="rapidgui\RGUI\Field\StandardField.cs" />
+    <Compile Include="rapidgui\RGUI\MinMaxSlider.cs" />
+    <Compile Include="rapidgui\RGUI\MinMaxSlider\MinMaxSliderCore.cs" />
+    <Compile Include="rapidgui\RGUI\MinMaxSlider\RecursiveMinMaxSlider.cs" />
+    <Compile Include="rapidgui\RGUI\Popup.cs" />
+    <Compile Include="rapidgui\RGUI\PrefixLabel.cs" />
+    <Compile Include="rapidgui\RGUI\ResizableWindow.cs" />
+    <Compile Include="rapidgui\RGUI\Scope\BackgroundColorScope.cs" />
+    <Compile Include="rapidgui\RGUI\Scope\ColorScope.cs" />
+    <Compile Include="rapidgui\RGUI\Scope\CustomLabelScope.cs" />
+    <Compile Include="rapidgui\RGUI\Scope\EnabledScope.cs" />
+    <Compile Include="rapidgui\RGUI\Scope\IgnoreFieldScope.cs" />
+    <Compile Include="rapidgui\RGUI\Scope\IndentScope.cs" />
+    <Compile Include="rapidgui\RGUI\Scope\PrefixLabelIndentScope.cs" />
+    <Compile Include="rapidgui\RGUI\Slider.cs" />
+    <Compile Include="rapidgui\RGUI\Slider\RecursiveSlider.cs" />
+    <Compile Include="Unity\Key.cs" />
+    <Compile Include="Unity\Matrix2x3.cs" />
+    <Compile Include="Unity\KeyManager.cs" />
+    <Compile Include="Unity\Rain.cs" />
+    <Compile Include="Unity\StaticCoroutine.cs" />
+    <Compile Include="Unity\UI\RoundedCorners.cs" />
+    <Compile Include="Unity\UI\UICornersGradient.cs" />
+    <Compile Include="Unity\UI\UIGradient.cs" />
+    <Compile Include="Unity\UI\UITextCornersGradient.cs" />
+    <Compile Include="Unity\UI\UITextGradient.cs" />
+    <Compile Include="Utils\ADOUtils.cs" />
+    <Compile Include="Models\Anchor.cs" />
+    <Compile Include="Utils\CanEase.cs" />
+    <Compile Include="Utils\EnumHelper.cs" />
+    <Compile Include="Utils\Extensions.cs" />
+    <Compile Include="Utils\GradientUtils.cs" />
+    <Compile Include="Utils\IOUtils.cs" />
+    <Compile Include="Utils\KeyViewerUtils.cs" />
+    <Compile Include="Utils\MiscUtils.cs" />
+    <Compile Include="Utils\ModelUtils.cs" />
+    <Compile Include="Models\Pivot.cs" />
+    <Compile Include="Utils\StringConverter.cs" />
+    <Compile Include="Views\MultipleObjectConfigDrawer.cs" />
+    <Compile Include="Views\MultipleRainConfigDrawer.cs" />
+    <Compile Include="Views\ObjectConfigDrawer.cs" />
+    <Compile Include="Views\RainConfigDrawer.cs" />
+    <Compile Include="Views\MultipleKeyConfigDrawer.cs" />
+    <Compile Include="Views\KeyConfigDrawer.cs" />
+    <Compile Include="Views\ProfileDrawer.cs" />
+    <Compile Include="Views\SettingsDrawer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="MiscFiles\info.json" />
+    <None Include="MiscFiles\lang\en-US.json" />
+    <None Include="MiscFiles\lang\ko-KR.json" />
+    <None Include="MiscFiles\lang\zh-CN.json" />
+    <None Include="packages.config" />
+    <None Include="rapidgui\Component\IMColorPicker\Resources\imPreset.asset" />
+    <None Include="rapidgui\Component\IMColorPicker\Scripts\Editor\RapidGUI.IMColorPicier.Editor.asmdef" />
+    <None Include="rapidgui\Component\IMColorPicker\Test\IMColorPickerTest.unity" />
+    <None Include="rapidgui\Component\Utilities\Cursor\Resources\cursorData.asset" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="packages\ncalc.1.3.8\lib\NCalc.dll">
+      <LogicalName>KeyViewer.Dependencies.NCalc.dll</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MiscFiles\images\up.png" />
+    <EmbeddedResource Include="MiscFiles\images\RGUIoutline.png" />
+    <EmbeddedResource Include="MiscFiles\images\active.png" />
+    <EmbeddedResource Include="MiscFiles\images\inactive.png" />
+    <EmbeddedResource Include="MiscFiles\images\gradation.png" />
+    <EmbeddedResource Include="MiscFiles\images\updown.png" />
+    <EmbeddedResource Include="MiscFiles\images\xrotate.png" />
+    <EmbeddedResource Include="MiscFiles\images\zrotate.png" />
+    <EmbeddedResource Include="MiscFiles\images\copy.png" />
+    <EmbeddedResource Include="MiscFiles\images\anchormiddlecenter.png" />
+    <EmbeddedResource Include="MiscFiles\images\anchormiddleleft.png" />
+    <EmbeddedResource Include="MiscFiles\images\anchortopleft.png" />
+    <EmbeddedResource Include="MiscFiles\images\anchorfullstretch.png" />
+    <EmbeddedResource Include="MiscFiles\images\anchorhorizontalstretchtop.png" />
+    <EmbeddedResource Include="MiscFiles\images\anchorhorizontalstretchmiddle.png" />
+    <EmbeddedResource Include="MiscFiles\images\upleft.png" />
+    <EmbeddedResource Include="MiscFiles\images\center.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinback.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinbounce.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeincirc.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeincubic.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinelastic.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinexpo.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinoutback.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinoutbounce.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinoutcirc.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinoutcubic.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinoutelastic.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinoutexpo.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinoutquad.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinoutquart.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinoutquint.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinoutsine.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinquad.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinquart.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinquint.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeinsine.png" />
+    <EmbeddedResource Include="MiscFiles\images\easelinear.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeoutback.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeoutbounce.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeoutcirc.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeoutcubic.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeoutelastic.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeoutexpo.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeoutquad.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeoutquart.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeoutquint.png" />
+    <EmbeddedResource Include="MiscFiles\images\easeoutsine.png" />
+    <EmbeddedResource Include="MiscFiles\images\blur.png" />
+    <EmbeddedResource Include="MiscFiles\images\sun.png" />
+    <EmbeddedResource Include="MiscFiles\images\offset.png" />
+    <EmbeddedResource Include="MiscFiles\images\rotate.png" />
+    <EmbeddedResource Include="MiscFiles\images\scale.png" />
+    <EmbeddedResource Include="MiscFiles\images\duration.png" />
+    <EmbeddedResource Include="MiscFiles\images\speed.png" />
+    <EmbeddedResource Include="MiscFiles\images\length.png" />
+    <EmbeddedResource Include="MiscFiles\images\softness.png" />
+    <EmbeddedResource Include="MiscFiles\images\roundness.png" />
+    <EmbeddedResource Include="MiscFiles\images\poolsize.png" />
+    <EmbeddedResource Include="MiscFiles\images\color.png" />
+    <EmbeddedResource Include="MiscFiles\images\image.png" />
+    <EmbeddedResource Include="MiscFiles\images\random.png" />
+    <EmbeddedResource Include="MiscFiles\images\sequential.png" />
+    <Content Include="rapidgui\Component\IMColorPicker\Resources\imBorder.png" />
+    <Content Include="rapidgui\Component\IMColorPicker\Resources\imBorderHighlighted.png" />
+    <Content Include="rapidgui\Component\IMColorPicker\Resources\imCircle.png" />
+    <Content Include="rapidgui\Component\IMColorPicker\Resources\imLeft.png" />
+    <Content Include="rapidgui\Component\IMColorPicker\Resources\imRight.png" />
+    <Content Include="rapidgui\Component\Utilities\Cursor\Resources\cursor_ew.png" />
+    <Content Include="rapidgui\Component\Utilities\Cursor\Resources\cursor_ns.png" />
+    <Content Include="rapidgui\Component\Utilities\Cursor\Resources\cursor_nwse.png" />
+    <Content Include="rapidgui\RGUI\MinMaxSlider\Resources\minmax slider thumb act.png" />
+    <Content Include="rapidgui\RGUI\MinMaxSlider\Resources\minmax slider thumb.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if not exist "$(ModDir)\lib" mkdir "$(ModDir)\lib"
+xcopy /Y /I /S /E "$(ProjectDir)MiscFiles\lang\*" "$(ModDir)\lang\"
+xcopy /Y /I "$(ProjectDir)MiscFiles\info.json" "$(ModDir)\"
+xcopy /Y /I "$(ProjectDir)MiscFiles\KeyViewer.assets" "$(ModDir)\"
+xcopy /Y /I "$(ProjectDir)packages\ncalc.1.3.8\lib\NCalc.dll" "$(ModDir)\lib\"
+copy "$(TargetPath)" "$(ModDir)\KeyViewer.dll"</PostBuildEvent>
+  </PropertyGroup>
+  <Target Name="ValidateGameDir" BeforeTargets="ResolveReferences">
+    <Error Condition=" '$(GameDir)' == '' " Text="Set the ADOFAI_GAME_DIR environment variable or pass /p:GameDir=&quot;...&quot; before building." />
+    <Error Condition=" !Exists('$(ManagedDir)') " Text="Game managed directory not found: $(ManagedDir). Set ADOFAI_GAME_DIR or pass /p:GameDir=&quot;...&quot;." />
+  </Target>
+</Project>

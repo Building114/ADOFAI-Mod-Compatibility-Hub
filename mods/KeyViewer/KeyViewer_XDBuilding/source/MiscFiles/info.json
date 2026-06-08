@@ -1,0 +1,8 @@
+{
+    "Id": "KeyViewer",
+    "DisplayName": "KeyViewer",
+    "Author": "Square3ang & kkitut",
+    "Version": "4.14.0-preview.5",
+    "AssemblyName": "KeyViewer.dll",
+    "EntryMethod": "KeyViewer.Main.Load"
+}

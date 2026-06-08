@@ -1,0 +1,414 @@
+﻿using KeyViewer.Core;
+using KeyViewer.Core.Input;
+using KeyViewer.Core.Translation;
+using KeyViewer.Models;
+using KeyViewer.Utils;
+using RapidGUI;
+using SFB;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using UnityEngine;
+
+namespace KeyViewer.Views;
+
+public class SettingsDrawer(Settings settings) : ModelDrawable<Settings>(settings, Main.Lang.Get("SETTINGS", "Settings")) {
+    private bool isOpenedExtraMenu = false;
+    private string[] languages;
+    private string[] userLanguages;
+    internal bool NeedLangInit = true;
+    private bool drawLoadingState;
+    private bool drawLoadingStateInitialized;
+
+    public static float preparinglastUpdateTime = 0f;
+    public static string[] preparingsymbols = { "|", "/", "-", "\\" };
+    public static int preparingsymbolIndex = 0;
+    public static float helptime = 0f;
+
+    private void LanguageInit() {
+        helptime = 0f;
+        preparingsymbolIndex = 0;
+        languages = Main.Lang.GetLanguages();
+        userLanguages = Main.Lang.GetLanguageNativeNames();
+    }
+
+    private void LanguageUpdate(int index) {
+        Main.Lang.Language = languages[index];
+        model.Lang = Main.Lang.Language;
+    }
+
+    public override void OnceCall() {
+        LanguageInit();
+        destroyConfirm = [];
+    }
+
+    private static HashSet<string> destroyConfirm;
+
+    public override void Draw() {
+        bool reaction = false;
+
+        // IMGUI runs Layout and Repaint separately. Keep the same branch for the pair,
+        // otherwise translation completion can change the number of controls mid-frame.
+        if(Event.current.type == EventType.Layout || !drawLoadingStateInitialized) {
+            drawLoadingState = Main.Lang.IsLoading;
+            drawLoadingStateInitialized = true;
+        }
+
+        if(drawLoadingState) {
+            float elapsedTime = Time.time - preparinglastUpdateTime;
+
+            if(elapsedTime >= 0.05f) {
+                preparingsymbolIndex++;
+                if(preparingsymbolIndex >= preparingsymbols.Length) {
+                    preparingsymbolIndex = 0;
+                }
+                preparinglastUpdateTime = Time.time;
+            }
+
+            helptime += Time.deltaTime;
+            if(helptime >= 8f) {
+                GUILayout.Label("Is the Preparing is taking too long?? please get in touch with the developer for assistance!!");
+            } else {
+                GUILayout.Label("");
+            }
+            GUILayout.BeginHorizontal();
+            Drawer.Button("Loading translations for you, hang tight...", GUILayout.Width(480));
+            GUILayout.Space(10);
+            GUILayout.Label(preparingsymbols[preparingsymbolIndex]);
+            GUILayout.EndHorizontal();
+        } else {
+            if(NeedLangInit && Event.current.type == EventType.Layout) {
+                NeedLangInit = false;
+                languages = null;
+                userLanguages = null;
+                LanguageInit();
+            }
+
+            string languageDesc;
+            if(Main.Lang.IsDefault) {
+                languageDesc = $"! {Translator.FALLBACK_LANGUAGE} by KEYVIEWER";
+            } else {
+                int translatorsCount = Main.Lang.GetArrCount("0TRANSLATORS");
+
+                if(translatorsCount > 0) {
+                    var names = new List<string>();
+                    for(int i = 0; i < translatorsCount; i++) {
+                        names.Add(Main.Lang.GetArr("0TRANSLATORS", i, "[UNKNOWN]"));
+                    }
+                    string translatorsText = string.Join(" & ", names);
+                    languageDesc = $"| {Main.Lang.Get("0NATIVELANG", Main.Lang.Language)} by {translatorsText}";
+                } else {
+                    languageDesc = $"| {Main.Lang.Language}";
+                }
+            }
+
+            GUILayout.Label($"{Main.Lang.Get("SELECTLANGUAGE", "Select Language")} {languageDesc}");
+            if(Main.Lang.IsSomeFail) {
+                GUILayout.Label("<color=#FFFF00>Some translations are failed to load, See the log for details.</color>");
+            } else if(Main.Lang.IsFail) {
+                GUILayout.Label($"<color=#FF0000>All translations failed to load: {Main.Lang.FailState}</color>");
+            }
+            GUILayout.BeginHorizontal();
+            int selectedIndex = Array.IndexOf(languages, Main.Lang.Language);
+
+            if(Drawer.Button("◀", GUILayout.Width(40))) {
+                reaction = true;
+                selectedIndex = (selectedIndex - 1 + languages.Length) % languages.Length;
+                LanguageUpdate(selectedIndex);
+            }
+
+            if(Drawer.SelectionPopup(ref selectedIndex, userLanguages, "", GUILayout.Width(400))) {
+                reaction = true;
+                LanguageUpdate(selectedIndex);
+            }
+            if(Drawer.Button("▶", GUILayout.Width(40))) {
+                reaction = true;
+                selectedIndex = (selectedIndex + 1) % languages.Length;
+                LanguageUpdate(selectedIndex);
+            }
+
+            bool reloadLang = false;
+            try {
+                if(Drawer.Button(Main.Lang.Get("RELOADLANG", "Reload Language Pack"), GUILayout.Width(320))) {
+                    reaction = true;
+                    reloadLang = true;
+                }
+            } catch {
+            } finally {
+                GUILayout.EndHorizontal();
+            }
+
+            if(reloadLang) {
+                _ = Task.Run(async () => {
+                    await Main.Lang.Load(Path.Combine(Main.Mod.Path, "lang"));
+                    NeedLangInit = true;
+                });
+            }
+        }
+        GUILayout.BeginHorizontal();
+        if(Drawer.Button(Main.Lang.Get("EXTRA_MENU", "Extra Menu") + " " + (isOpenedExtraMenu ? "▼" : "▲"))) {
+            reaction = true;
+            isOpenedExtraMenu = !isOpenedExtraMenu;
+        }
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        if(isOpenedExtraMenu) {
+            if(Drawer.DrawBool(string.Format(Main.Lang.Get("USE_THIS", "Use {0}"), Main.Lang.Get("LEGACY_THEME", "Legacy Theme")), ref model.UseLegacyTheme)) {
+                reaction = true;
+                Drawer.SetStyle(model.UseLegacyTheme);
+                RGUIStyle.CreateStyles();
+            }
+            if(Main.IsWindows) {
+                if(Drawer.DrawBool(string.Format(Main.Lang.Get("USE_THIS", "Use {0}"), Main.Lang.Get("WIN_ASYNC_INPUT", "Windows Async Input")), ref model.UseWindowsAsyncInput)) {
+                    reaction = true;
+                    if(model.UseWindowsAsyncInput) {
+                        WinInput.StartPolling(model.PollingRate);
+                    } else {
+                        WinInput.StopPolling();
+                    }
+                }
+                if(MiscUtils.IsHovering()) {
+                    Main.Tooltip = Main.Lang.Get("WIN_ASYNC_DESC", "Uses <color=cyan>GetAsyncKeyState</color> on Windows to update key states.");
+                }
+                if(model.UseWindowsAsyncInput) {
+                    GUILayout.Label($"<b>{Main.Lang.Get("POLLINGRATE", "Polling Rate")}</b>");
+
+                    GUILayout.BeginHorizontal();
+                    Color old = GUI.color;
+
+                    PollingRate[] rates = {
+                        PollingRate.HzMonitor,
+                        PollingRate.Hz250,
+                        PollingRate.Hz500,
+                        PollingRate.Hz1000,
+                        PollingRate.Hz2000,
+                        PollingRate.Hz4000
+                    };
+
+                    foreach(var rate in rates) {
+                        Color col = old;
+
+                        if(model.PollingRate == rate) {
+                            switch(rate) {
+                                case PollingRate.HzMonitor:
+                                    col = Color.green;
+                                    break;
+                                case PollingRate.Hz250:
+                                case PollingRate.Hz500:
+                                case PollingRate.Hz1000:
+                                    col = Color.cyan;
+                                    break;
+                                case PollingRate.Hz2000:
+                                    col = Color.yellow;
+                                    break;
+                                case PollingRate.Hz4000:
+                                    col = Color.red;
+                                    break;
+                            }
+                        }
+
+                        GUI.color = col;
+
+                        if(Drawer.Button(rate.ToString(), GUILayout.Width(80f))) {
+                            reaction = true;
+                            model.PollingRate = rate;
+                            WinInput.SetPollingRate(rate);
+                        }
+                        if(MiscUtils.IsHovering()) {
+                            Main.Tooltip = rate switch {
+                                PollingRate.Hz4000 => Main.Lang.Get("POLLINGRATE_DESC_DANGER", "Extremely high polling rate.\nMay heavily increase CPU usage."),
+                                PollingRate.Hz2000 => Main.Lang.Get("POLLINGRATE_DESC_WARN", "Suitable polling rate for high-end systems.\nSome CPU load may occur."),
+                                _ => Main.Lang.Get("POLLINGRATE_DESC_NORMAL", "Acceptable polling rate for almost every hardware configuration."),
+                            };
+                        }
+                    }
+
+                    GUI.color = old;
+                    GUILayout.EndHorizontal();
+                }
+            }
+        }
+        GUILayout.BeginHorizontal();
+        if(Drawer.Button(Main.Lang.Get("IMPORT_PROFILE", "Import Profile"))) {
+            reaction = true;
+            var profiles = StandaloneFileBrowser.OpenFilePanel(Main.Lang.Get("SELECT_PROFILE", "Select Profile"), Main.ProfilePath, new[] { new ExtensionFilter("V4", "json"), new ExtensionFilter("V3", "xml"), }, true);
+            foreach(var profile in profiles) {
+                FileInfo file = new(profile);
+                if(file.Extension.Equals(".json", StringComparison.OrdinalIgnoreCase)) {
+                    string targetPath = GetImportTargetPath(file);
+                    bool copied = !string.Equals(
+                        Path.GetFullPath(file.FullName),
+                        Path.GetFullPath(targetPath),
+                        StringComparison.OrdinalIgnoreCase
+                    );
+
+                    try {
+                        if(copied) {
+                            file.CopyTo(targetPath);
+                        }
+
+                        var activeProfile = new ActiveProfile(
+                            Path.GetFileNameWithoutExtension(targetPath),
+                            true
+                        );
+                        UpsertActiveProfile(activeProfile);
+
+                        if(!Main.AddManager(activeProfile, true)) {
+                            model.ActiveProfiles.RemoveAll(
+                                p => string.Equals(p.Name, activeProfile.Name, StringComparison.OrdinalIgnoreCase)
+                            );
+                            if(copied && File.Exists(targetPath)) {
+                                File.Delete(targetPath);
+                            }
+                            Main.Logger.Log($"Failed to import profile {file.FullName}.");
+                            continue;
+                        }
+
+                        // The imported profile JSON is already on disk. Only persist
+                        // the active-profile row here; immediately serializing the imported
+                        // profile can discard fields unknown to this build.
+                        Main.SaveSettingsNow();
+                    } catch(Exception ex) {
+                        Main.Logger.Log($"Failed to import profile {file.FullName}: {ex}");
+                        if(copied && File.Exists(targetPath)) {
+                            File.Delete(targetPath);
+                        }
+                    }
+                } else if(file.Extension.Equals(".xml", StringComparison.OrdinalIgnoreCase)) {
+                    Main.MigrateFromV3Xml(file.FullName);
+                    Main.SaveAllNow();
+                }
+            }
+        }
+        if(Drawer.Button(Main.Lang.Get("CREATE_PROFILE", "Create New Profile"))) {
+            reaction = true;
+            var profile = new ActiveProfile(GetNewProfileName(), true);
+            UpsertActiveProfile(profile);
+            Profile newProfile = new();
+            File.WriteAllText(Path.Combine(Main.ProfilePath, $"{profile.Name}.json"), newProfile.Serialize().ToString());
+            Main.AddManager(profile, true);
+            Main.SaveAllNow();
+        }
+        if(Drawer.Button(Main.Lang.Get("OPEN_MOD_DIR", "Open Mod Directory"))) {
+            reaction = true;
+            Application.OpenURL(Path.GetFullPath(Main.Mod.Path));
+        }
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+
+        for(int i = 0; i < model.ActiveProfiles.Count; i++) {
+            GUILayout.BeginHorizontal();
+            var profile = model.ActiveProfiles[i];
+            bool profileActiveDiff = Drawer.DrawOnlyBool(ref profile.Active);
+            if(profileActiveDiff) {
+                model.ActiveProfiles[i] = profile;
+                if(!Main.SetManagerActive(profile)) {
+                    profile.Active = false;
+                    model.ActiveProfiles[i] = profile;
+                    Main.Logger.Log($"Cannot enable profile {profile.Name}: manager creation failed.");
+                }
+                Main.SaveSettingsNow();
+            }
+            GUI.color = profile.Active ? new Color(0.8f, 0.8f, 1f) : Color.gray;
+            if(Drawer.Button(Main.Lang.Get("EDIT", "Edit")) && profile.Active) {
+                if(!Overlayer.Core.DllImporter.NCalcInitialize()) {
+                    Main.Logger.Error($"Cannot edit profile {profile.Name}: NCalc dependency is unavailable.");
+                } else if(Main.TryGetManager(profile, true, out var manager)) {
+                    Main.GUI.Push(new ProfileDrawer(manager, manager.profile, profile.Name));
+                } else {
+                    Main.Logger.Log($"Cannot edit profile {profile.Name}: manager is missing.");
+                }
+            }
+            GUI.color = new Color(1f, 0.8f, 0.8f);
+            bool isConfirm = destroyConfirm.Contains(profile.Name);
+
+            if(isConfirm) {
+                if(Drawer.Button(Main.Lang.Get("ONE_MORE", "One More!"))) {
+                    Main.RemoveManager(profile, false);
+                    string path = Path.Combine(Main.ProfilePath, $"{profile.Name}.json");
+
+                    if(File.Exists(path)) {
+                        File.Delete(path);
+                    }
+
+                    Main.ToDeleteFiles.Add(path);
+                    model.ActiveProfiles.RemoveAll(
+                        p => string.Equals(p.Name, profile.Name, StringComparison.OrdinalIgnoreCase)
+                    );
+                    Main.SaveSettingsNow();
+
+                    destroyConfirm.Remove(profile.Name);
+                    break;
+                }
+            } else {
+                if(Drawer.Button(Main.Lang.Get("DESTROY", "Destroy"))) {
+                    destroyConfirm.Add(profile.Name);
+                }
+            }
+            GUI.color = new Color(1f, 0.8f, 1f);
+            if(Drawer.Button(Main.Lang.Get("EXPORT", "Export"))) {
+                reaction = true;
+                string target = StandaloneFileBrowser.SaveFilePanel(Main.Lang.Get("SELECT_PROFILE", "Select Profile"), Persistence.GetLastUsedFolder(), $"{profile.Name}.json", "json");
+                if(!string.IsNullOrWhiteSpace(target)) {
+                    if(Main.TryGetManager(profile, true, out var exportManager)) {
+                        Profile p = exportManager.profile;
+                        var node = p.Serialize();
+                        node["References"] = ProfileImporter.GetReferencesAsJson(p);
+                        File.WriteAllText(target, node.ToString());
+                    } else {
+                        Main.Logger.Log($"Cannot export profile {profile.Name}: manager is missing.");
+                    }
+                }
+            }
+            GUI.color = Color.white;
+            GUILayout.Label(profile.Name);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            if(reaction) {
+                destroyConfirm = [];
+            }
+
+        }
+    }
+
+    private void UpsertActiveProfile(ActiveProfile profile) {
+        int index = model.ActiveProfiles.FindIndex(
+            p => string.Equals(p.Name, profile.Name, StringComparison.OrdinalIgnoreCase)
+        );
+        if(index >= 0) {
+            model.ActiveProfiles[index] = profile;
+        } else {
+            model.ActiveProfiles.Add(profile);
+        }
+        Main.NormalizeActiveProfiles();
+    }
+
+    private static string GetImportTargetPath(FileInfo source) {
+        string baseName = Path.GetFileNameWithoutExtension(source.Name);
+        string target = Path.Combine(Main.ProfilePath, $"{baseName}.json");
+
+        if(string.Equals(
+            Path.GetFullPath(source.FullName),
+            Path.GetFullPath(target),
+            StringComparison.OrdinalIgnoreCase
+        )) {
+            return target;
+        }
+
+        int suffix = 1;
+        while(File.Exists(target)) {
+            target = Path.Combine(Main.ProfilePath, $"{baseName} ({suffix++}).json");
+        }
+        return target;
+    }
+
+    private static string GetNewProfileName() {
+        int num = 0;
+        while(File.Exists(Path.Combine(Main.ProfilePath, $"Profile {num}.json"))) {
+            num++;
+        }
+        return $"Profile {num}";
+    }
+}
