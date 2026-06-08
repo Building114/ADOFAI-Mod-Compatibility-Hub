@@ -1,33 +1,18 @@
-# Review Required Before Public Redistribution
+# Source Review Note
 
-This cleaned 3.49.4 source archive fixes the obvious local-path, maintainer-label,
-metadata, popup-layout, and notice problems found during static review.
+This source package includes `Overlayer/CodeEditor/` from the upstream Overlayer-Lagacy v3 source tree.
 
-One item still needs a human check before treating the archive as fully cleared
-for public redistribution.
+The upstream Overlayer-Lagacy README lists `UnityCodeEditor` as:
 
-## Code editor related source files
+> UnityCodeEditor — Unlicensed (uses MIT-licensed code)
 
-The package contains:
+Because of that upstream notice, this package keeps this note instead of claiming that the CodeEditor-related source is fully license-cleared.
 
-```text
-Overlayer/CodeEditor/
-```
+This does not necessarily mean the CodeEditor files must be removed. It means their exact upstream licensing status is unclear, so this package should not describe that part as fully verified unless it is checked later.
 
-The existing README described these files as related to UnityCodeEditor, but the
-archive itself did not include enough source-origin records or license text to
-verify the redistribution terms for every copied file.
+## Current handling
 
-Before public release:
-
-1. compare the files against the actual upstream source or commit;
-2. identify the license that applies to each copied file;
-3. add the matching copyright and license text;
-4. remove or replace any file whose redistribution terms cannot be confirmed.
-
-## Player package reminder
-
-This zip is a source package. It is not a player installation package.
-
-A player-facing release zip must be built separately, tested separately, and
-checked for third-party DLL notices separately.
+- The CodeEditor files are kept because they are part of the upstream Overlayer-Lagacy v3 source tree.
+- This package does not claim to be an official Overlayer release.
+- This package keeps upstream license uncertainty visible instead of hiding it.
+- If a clearer source or license is confirmed later, update this note and `THIRD_PARTY_NOTICES.md`.
