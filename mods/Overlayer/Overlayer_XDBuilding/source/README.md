@@ -49,6 +49,18 @@ Deployment to the local game Mods folder is opt-in. Build normally to compile on
 /p:DeployToGame=true
 ```
 
+## Third-party review note
+
+The RapidGUI MIT license text is preserved in
+`THIRD_PARTY_LICENSES/RapidGUI-LICENSE.md`.
+
+Jint is restored through NuGet. Its BSD-2-Clause license text is included for
+reference in `THIRD_PARTY_LICENSES/Jint-LICENSE.txt`.
+
+Some code-editor-related source files still need a source-origin and license
+review before this source package is treated as fully cleared for public
+redistribution. See `REVIEW_REQUIRED.md`.
+
 ---
 
 <img src = "ov3.png" width="25%" height="25%">
@@ -81,20 +93,3 @@ You can freely adapt the meaning to fit the style and culture of each language.
 
 If you are adding a new language instead of updating an existing one, you can refer to the official English or Korean translations.  
 ➡️ Please use a pull request!
-
-
-## Third-party review note
-
-The RapidGUI MIT license text is preserved in
-`THIRD_PARTY_LICENSES/RapidGUI-LICENSE.md`.
-
-Jint is restored through NuGet. Its BSD-2-Clause license text is included for
-reference in `THIRD_PARTY_LICENSES/Jint-LICENSE.txt`.
-
-Some code-editor-related source files still need a source-origin and license
-review before this source package is treated as fully cleared for public
-redistribution. See `REVIEW_REQUIRED.md`.
-## Known Issue
-
-A public report says Overlayer v3.49 may stop the ADOFAI level editor from saving levels.
-Treat this package as Testing until the editor-save problem is reproduced and fixed.
