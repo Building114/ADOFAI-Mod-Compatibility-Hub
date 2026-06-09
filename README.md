@@ -3,11 +3,14 @@
 ![Status](https://img.shields.io/badge/status-unofficial%20patch%20hub-orange)
 ![Official](https://img.shields.io/badge/official-no-red)
 ![Game](https://img.shields.io/badge/game-ADOFAI-blue)
+![External patches](https://img.shields.io/badge/external%20patches-link%20only-lightgrey)
 
 Unofficial ADOFAI mod patch hub maintained by Building114.
 
 This repository lists temporary compatibility patches for ADOFAI mods.
-External community patches are linked only. Their source code is not copied here.
+Link-only entries point to external repositories or releases. Their source code is not copied here.
+
+Current index: **4 original mod(s)**, **2 included patch(es)**, **3 link-only patch(es)**.
 
 ## Important Notice
 
@@ -53,11 +56,20 @@ Original status: **Active / not archived**
 |---|---|---|---:|---:|---|---|
 | AdofaiTweaks 2.8.1-Fix | [Open](https://github.com/2228293026/AdofaiTweaks) | External community fork for AdofaiTweaks 2.8.1 compatibility fix. | 2.8.1 | 2.8.1-Fix | Available | Link only |
 
+## ShowBPM
+
+[Original Repository](https://github.com/FLOWERs-Modding/ADOFAI_ShowBPM)
+
+Original status: **Active**
+
+| New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
+|---|---|---|---:|---:|---|---|
+| ShowBPM-Fix | [Open](https://github.com/2228293026/ShowBPM-Fix) | improve compatibility and add some logic | 1.2.0? | 1.4.4-preview.1 | Available | Link only |
+
 ## Included Here
 
 - **Included**: this repository contains Building114's patch source and/or release for this entry, under `mods/{original-mod}/{patch-name}/`.
 - **Link only**: this repository only links to another repository or release. Link-only entries are listed directly in the Patch List table.
-
 
 ## License
 
