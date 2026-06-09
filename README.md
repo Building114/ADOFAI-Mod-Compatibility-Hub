@@ -10,7 +10,7 @@ Unofficial ADOFAI mod patch hub maintained by Building114.
 This repository lists temporary compatibility patches for ADOFAI mods.
 Link-only entries point to external repositories or releases. Their source code is not copied here.
 
-Current index: **4 original mod(s)**, **2 included patch(es)**, **3 link-only patch(es)**.
+Current index: **5 original mod(s)**, **3 included patch(es)**, **3 link-only patch(es)**.
 
 ## Important Notice
 
@@ -65,6 +65,16 @@ Original status: **Active**
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
 | ShowBPM-Fix | [Open](https://github.com/2228293026/ShowBPM-Fix) | improve compatibility and add some logic | 1.2.0? | 1.4.4-preview.1 | Available | Link only |
+
+## TimingShow
+
+[Original Repository](https://github.com/SleepingCui/TimingShow)
+
+Original status: **Active**
+
+| New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
+|---|---|---|---:|---:|---|---|
+| TimingShow XDBuilding | [Open](mods/TimingShow/TimingShow_XDBuilding/release/TimingShow.zip) | Unofficial r143 compatibility patch restoring timing display, result text, and local multiplayer handling. | 1.3.0 | 1.3.2 | Available | Included |
 
 ## Included Here
 

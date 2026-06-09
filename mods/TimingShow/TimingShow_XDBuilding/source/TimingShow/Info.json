@@ -1,0 +1,8 @@
+{
+  "Id": "TimingShow",
+  "DisplayName": "TimingShow XDBuilding",
+  "Author": "SleepingCui",
+  "Version": "1.3.2",
+  "AssemblyName": "TimingShow.dll",
+  "EntryMethod": "TimingShow.Main.Load"
+}
