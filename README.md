@@ -55,12 +55,9 @@ Original status: **Active / not archived**
 
 ## Included Here
 
-- **Included**: this repository contains Building114's patch source and/or release for this entry, under `mods/<original mod>/<patch name>/`.
-- **Link only**: this repository only links to another repository or release.
+- **Included**: this repository contains Building114's patch source and/or release for this entry, under `mods/{original-mod}/{patch-name}/`.
+- **Link only**: this repository only links to another repository or release. Link-only entries are listed directly in the Patch List table.
 
-## External Community Patch Links
-
-External community patches are linked only. Do not copy their source code into this repository.
 
 ## License
 
