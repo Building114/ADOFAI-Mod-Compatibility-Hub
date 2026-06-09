@@ -2,17 +2,17 @@
 
 TimingShow XDBuilding is an unofficial temporary compatibility patch maintained by Building114.
 
-Original project:
+## Original Project
 
 - Original mod name: TimingShow
 - Original author: SleepingCui
 - Original repository: https://github.com/SleepingCui/TimingShow
-- Base version used for this patch: 1.3.0
-- Patch version: 1.3.2
+- Base version used for this patch: `1.3.0`
+- Patch version: `1.3.2`
 
 This patch is not an official release from the original TimingShow author.
 
-Original TimingShow files remain under their original author notice and license. This patch only adds or changes files needed for newer ADOFAI compatibility, including the compatibility layer, timing display adjustments, hit text handling, and local multiplayer handling.
+Original TimingShow files remain under their original author notice and license. This patch only adds or changes files needed for newer ADOFAI compatibility, including the compatibility layer, timing display adjustments, hit-text handling, result-text handling, and local multiplayer handling.
 
 Unless clearly stated otherwise:
 
