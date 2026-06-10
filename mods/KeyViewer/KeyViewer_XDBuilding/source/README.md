@@ -27,11 +27,11 @@ Patch hub: https://github.com/Building114/ADOFAI-Mod-Compatibility-Hub
 
 1. Install or locate A Dance of Fire and Ice.
 2. Set `ADOFAI_GAME_DIR`, or pass `GameDir` when building.
-3. Make sure `NCalc.dll` exists at:
-
+3. Restore NuGet packages before building.
+   `NCalc` is declared in `packages.config` as `ncalc` version `1.3.8`.
+   After restoring packages, `NCalc.dll` should exist at:
    `packages/ncalc.1.3.8/lib/NCalc.dll`
-
-   The current `packages.config` does not declare this package, so `nuget restore KeyViewer.sln` may not be enough on a clean checkout.
+   This source archive does not include the restored `packages/` folder or a copied `NCalc.dll` binary.
 4. Build `KeyViewer.sln`.
 
 Example:
