@@ -54,7 +54,7 @@ Original status: **Active / not archived**
 
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
-| AdofaiTweaks 2.8.1-Fix | [Open](https://github.com/2228293026/AdofaiTweaks) | External community fork for AdofaiTweaks 2.8.1 compatibility fix. | 2.8.1 | 2.8.1-Fix | Available | Link only |
+| AdofaiTweaks 2.8.1-Fix | [Open](https://github.com/2228293026/AdofaiTweaks) | External community fork for AdofaiTweaks 2.8.1 compatibility fix. CURRENTLY NOT COMPATIBLE WITH V3.2.0. | 2.8.1 | 2.8.1-Fix2 | UNAVAILABLE!! | Link only |
 
 ## ShowBPM
 

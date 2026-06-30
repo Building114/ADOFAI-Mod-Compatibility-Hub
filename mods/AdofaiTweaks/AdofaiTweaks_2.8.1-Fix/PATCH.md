@@ -8,8 +8,8 @@
 | Original status | Active / not archived |
 | Patch link | `https://github.com/2228293026/AdofaiTweaks` |
 | Base version | `2.8.1` |
-| Patch version | `2.8.1-Fix` |
-| Status | Available |
+| Patch version | `2.8.1-Fix2` |
+| Status | UNAVAILABLE!! |
 | Included here | Link only |
 
 ## Notice
@@ -25,5 +25,6 @@ https://github.com/2228293026/AdofaiTweaks
 ## Notes
 
 - Included here: Link only
-- If included, files live next to this PATCH.md, under `source/` and/or `release/`.
-- Description: External community fork for AdofaiTweaks 2.8.1 compatibility fix.
+- If included, files should live next to this PATCH.md, under `source/` and/or `release/`.
+- If link only, this repository should not copy the external patch source.
+- Description: External community fork for AdofaiTweaks 2.8.1 compatibility fix. CURRENTLY NOT COMPATIBLE WITH V3.2.0.
