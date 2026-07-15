@@ -5,11 +5,11 @@
 | Item | Value |
 |---|---|
 | Original project | `https://github.com/PizzaLovers007/AdofaiTweaks` |
-| Original status | Active / not archived |
+| Original status | **now supports the v3.2.0** |
 | Patch link | `https://github.com/2228293026/AdofaiTweaks` |
 | Base version | `2.8.1` |
 | Patch version | `2.8.1-Fix2` |
-| Status | UNAVAILABLE!! |
+| Status | UNAVAILABLE. |
 | Included here | Link only |
 
 ## Notice
