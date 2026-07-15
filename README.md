@@ -74,7 +74,7 @@ Original status: **now supports the v3.2.0**
 
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
-| TimingShow XDBuilding | [Open](mods/TimingShow/TimingShow_XDBuilding/release/TimingShow.zip) | no longer applicable, but there are still some timing functions in it? still, it's recommended to go download from the original repository | 1.3.0 | 1.3.2 | Available | Included |
+| TimingShow XDBuilding | [Open](mods/TimingShow/TimingShow_XDBuilding/release/TimingShow.zip) | the original repository has released new versions! but this one still has some timing functions and multiplayer mode adaptations | 1.3.0 | 1.3.2 | Available | Included |
 
 ## Included Here
 
