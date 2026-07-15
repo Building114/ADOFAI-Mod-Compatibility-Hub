@@ -54,7 +54,7 @@ Original status: **now supports the v3.2.0**
 
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
-| AdofaiTweaks 2.8.1-Fix | [Open](https://github.com/2228293026/AdofaiTweaks) | External community fork for AdofaiTweaks 2.8.1 compatibility fix. CURRENTLY NOT COMPATIBLE WITH V3.2.0. | 2.8.1 | 2.8.1-Fix2 | UNAVAILABLE. | Link only |
+| AdofaiTweaks 2.8.1-Fix | [Open](https://github.com/2228293026/AdofaiTweaks) | no longer applicable. pls go download from the original repository | 2.8.1 | 2.8.1-Fix2 | UNAVAILABLE. | Link only |
 
 ## ShowBPM
 
@@ -70,7 +70,7 @@ Original status: **Active**
 
 [Original Repository](https://github.com/SleepingCui/TimingShow)
 
-Original status: ****now supports the v3.2.0****
+Original status: **now supports the v3.2.0**
 
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
