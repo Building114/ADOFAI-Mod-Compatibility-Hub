@@ -50,7 +50,7 @@ Original status: **Archived / read-only since 2026-05-31**
 
 [Original Repository](https://github.com/PizzaLovers007/AdofaiTweaks)
 
-Original status: ****now supports the v3.2.0****
+Original status: **now supports the v3.2.0**
 
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
@@ -70,11 +70,11 @@ Original status: **Active**
 
 [Original Repository](https://github.com/SleepingCui/TimingShow)
 
-Original status: **Active**
+Original status: ****now supports the v3.2.0****
 
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
-| TimingShow XDBuilding | [Open](mods/TimingShow/TimingShow_XDBuilding/release/TimingShow.zip) | Unofficial r143 compatibility patch restoring timing display, result text, and local multiplayer handling. | 1.3.0 | 1.3.2 | Available | Included |
+| TimingShow XDBuilding | [Open](mods/TimingShow/TimingShow_XDBuilding/release/TimingShow.zip) | no longer applicable, but there are still some timing functions in it? still, it's recommended to go download from the original repository | 1.3.0 | 1.3.2 | Available | Included |
 
 ## Included Here
 
