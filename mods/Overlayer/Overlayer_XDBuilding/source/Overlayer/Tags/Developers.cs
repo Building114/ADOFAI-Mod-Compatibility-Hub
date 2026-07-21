@@ -24,6 +24,6 @@ public static class Developers {
     [TagDesc("Goodbye, Forever.")]
     public static string MipaNyang => "MipaNyang is God";
     [Tag("imBBBT", NotPlaying = true)]
-    //[TagDesc("")]
+    [TagDesc("显示imBBBT彩蛋文本")]
     public static string ImBBBT => "imBBBT is not beepbit futures";
 }

@@ -1,4 +1,4 @@
-﻿using Overlayer.Core;
+using Overlayer.Core;
 using Overlayer.Core.Patches;
 using Overlayer.Tags.Attributes;
 using System;
@@ -66,7 +66,10 @@ public static class TagManager {
     public static void SetTag(OverlayerTag tag) => tags[tag.Name] = tag;
     public static void RemoveTag(string name) => tags.Remove(name);
     public static void UpdatePatch() {
-        foreach(var tag in All) {
+                                                                                
+                                                                                 
+                                                          
+        foreach(var tag in All.ToArray()) {
             if(!tag.Referenced) {
                 LazyPatchManager.UnpatchAll(tag.Name);
             } else {

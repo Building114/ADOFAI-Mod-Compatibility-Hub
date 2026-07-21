@@ -56,10 +56,10 @@ public class ProfileConfig : IModel, ICopyable<ProfileConfig> {
             return;
         }
 
-        // Legacy object-list format: the whole file is directly [ TextConfig, TextConfig, ... ].
-        // Older Overlayer exports and some shared configs used this before profile files became
-        // { Active, Opacity, Objects: [...] }. Treat it as one active profile and preserve every
-        // object's own Active flag.
+                                                                                                 
+                                                                                                
+                                                                                                 
+                                    
         if(node is JArray legacyObjects) {
             Objects = DeserializeObjectList(legacyObjects);
             MigratedFromLegacyFormat = true;
@@ -70,9 +70,9 @@ public class ProfileConfig : IModel, ICopyable<ProfileConfig> {
             return;
         }
 
-        // Single-object export format: { PlayingText: "...", Font: "...", ... } or
-        // { Type: "Image", Images: [...] }. Import it as a one-object profile instead of
-        // silently creating an empty/default profile.
+                                                                                   
+                                                                                         
+                                                      
         if(IsObjectConfigLike(objNode) && objNode[nameof(Objects)] == null && objNode["Texts"] == null) {
             var cfg = DeserializeObjectConfig(objNode);
             if(cfg != null) {
@@ -151,7 +151,7 @@ public class ProfileConfig : IModel, ICopyable<ProfileConfig> {
             };
         }
 
-        // Heuristics for legacy files with no Type field.
+                                                          
         if(obj["Images"] != null || obj["PlayingCommand"] != null || obj["NotPlayingCommand"] != null) {
             return "Image";
         }

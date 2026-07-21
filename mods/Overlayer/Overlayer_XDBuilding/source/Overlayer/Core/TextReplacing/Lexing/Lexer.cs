@@ -101,9 +101,9 @@ public static class Lexer {
                 yield return new Token(TokenType.Colon, c.ToString());
                 colonActivated = true;
             } else if(c == config.TagArgSeparator) {
-                // Only the outermost tag-argument comma should split arguments.
-                // Inner commas are needed by expression tags, for example:
-                //   {Expr(max(OVE:2, OVL:2), 2)}
+                                                                                
+                                                                           
+                                                 
                 if(!tagStarted || colonActivated || argDepth > 1) {
                     sb.Append(c);
                     continue;

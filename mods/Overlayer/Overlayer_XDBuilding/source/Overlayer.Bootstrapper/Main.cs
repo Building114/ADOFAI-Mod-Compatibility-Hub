@@ -9,7 +9,7 @@ namespace Overlayer.Bootstrapper;
 
 public static class Main {
     private static readonly string[] dependencyDlls = [
-        // Low-level dependencies first.
+                                        
         "System.Runtime.CompilerServices.Unsafe",
         "System.Numerics.Vectors",
         "System.Buffers",
@@ -26,7 +26,7 @@ public static class Main {
         "System.Configuration.ConfigurationManager",
         "System.Diagnostics.EventLog",
 
-        // Main third-party libraries.
+                                      
         "NCalc",
         "Acornima",
         "Esprima",
@@ -50,9 +50,9 @@ public static class Main {
         "LibreHardwareMonitorLib"
     ];
 
-    // These assemblies are shared .NET base libraries. Loading Overlayer/lib copies first can
-    // pollute ADOFAI's global runtime and break editor saving through System.Text.Json.
-    // Prefer an already-loaded copy, then the game's Managed folder.
+                                                                                              
+                                                                                        
+                                                                     
     private static readonly HashSet<string> preferGameManagedDlls = new(StringComparer.OrdinalIgnoreCase) {
         "System.Buffers",
         "System.Memory",
@@ -206,7 +206,7 @@ public static class Main {
                 current = current.Parent;
             }
         } catch {
-            // Ignore and return null below.
+                                            
         }
 
         return null;

@@ -13,19 +13,19 @@ using System.Text.RegularExpressions;
 
 namespace Overlayer.Tags;
 
-/// <summary>
-/// Small math expressions inside Overlayer text.
-///
-/// Examples:
-///   {Expr(1 + 2 * 3)}
-///   {Expr(OVE + OVL)}
-///   {Expr(OVE:2 + OVL:2)}
-///   {Expr(@PlayerHit:TooEarly:2 + @PlayerHit:TooLate:2)}
-///
-/// Bare tag names without arguments are handled by NCalc's parameter callback.
-/// Tag calls with arguments are replaced before NCalc sees the expression,
-/// because NCalc does not accept ':' inside variable names.
-/// </summary>
+             
+                                                 
+   
+             
+                       
+                       
+                           
+                                                          
+   
+                                                                               
+                                                                           
+                                                            
+              
 public static class ExpressionTags
 {
     private static readonly Regex ExplicitTagRef = new(
@@ -39,12 +39,15 @@ public static class ExpressionTags
     );
 
     [Tag]
+    [TagDesc("计算数学表达式并返回数字，可直接使用无参数标签名\n支持ABS、ROUND、MIN、MAX、CLAMP、SQRT、POW和IF等函数\n示例:{Expr:OVE+OVL}或{Expr:@PlayerHit:VeryEarly:2+@PlayerHit:VeryLate:2}")]
     public static double Expr(string expression, int digits = -1) => EvaluateNumber(expression).Round(digits);
 
     [Tag("Calc")]
+    [TagDesc("Expr的简写，计算数学表达式并返回数字\n示例:{Calc:1+2*3}返回7")]
     public static double Calc(string expression, int digits = -1) => Expr(expression, digits);
 
     [Tag]
+    [TagDesc("计算数学表达式并按指定格式输出文本\n第二个参数使用数字格式，默认0.###\n示例:{ExprText:10/3:0.00}返回3.33")]
     public static string ExprText(string expression, string format = "0.###")
     {
         double value = EvaluateNumber(expression);
@@ -54,6 +57,7 @@ public static class ExpressionTags
     }
 
     [Tag]
+    [TagDesc("根据数学表达式选择文本，结果非0时返回第二个参数，否则返回第三个参数\n返回文本中可以继续使用标签\n示例:{IfExpr:OVE>0:偏早:正常}")]
     public static string IfExpr(string expression, string trueText = "1", string falseText = "0")
     {
         return Math.Abs(EvaluateNumber(expression)) > double.Epsilon
@@ -62,6 +66,7 @@ public static class ExpressionTags
     }
 
     [Tag]
+    [TagDesc("比较两段文本或数字并选择结果\n支持=、==、!=、<>、>、>=、<、<=、contains、starts和ends\n示例:{IfText:{DifficultyRaw}:=:Strict:严格:其他}")]
     public static string IfText(string left, string op, string right, string trueText = "1", string falseText = "0")
     {
         bool ok = Compare(ResolveInlineTags(left), op, ResolveInlineTags(right));
@@ -69,6 +74,7 @@ public static class ExpressionTags
     }
 
     [Tag]
+    [TagDesc("从左到右返回第一个有效内容，空文本、0和False会继续检查下一个参数\n适合给可能缺失的标签设置备用文本\n示例:{Coalesce:{XPerfectLastJudge}:{CHit}:无判定}")]
     public static string Coalesce(string first, string second = "", string third = "")
     {
         string a = ResolveInlineTags(first);
@@ -128,7 +134,7 @@ public static class ExpressionTags
                     return;
                 }
 
-                // Unknown variables should not crash a text replacement.
+                                                                         
                 args.Result = 0d;
             };
 
@@ -158,9 +164,9 @@ public static class ExpressionTags
     {
         string result = ExplicitTagRef.Replace(expression, match => ReplaceOneTagReference(match, injectedValues, true));
 
-        // Also allow the simpler style requested for multiplayer tags:
-        //   OVE:2 + OVL:2
-        // If the left side is not a real tag, leave the text alone.
+                                                                       
+                          
+                                                                    
         result = BareColonTagRef.Replace(result, match => ReplaceOneTagReference(match, injectedValues, false));
 
         return result;
@@ -173,8 +179,8 @@ public static class ExpressionTags
 
         if (!TryReadTagAsDouble(name, tagArgs, out double value))
         {
-            // Keep unknown explicit references as 0, because '@NotFound:1'
-            // cannot be parsed by NCalc anyway. Bare unknown text is preserved.
+                                                                           
+                                                                                
             if (explicitReference)
             {
                 value = 0;
@@ -211,7 +217,7 @@ public static class ExpressionTags
             return false;
         }
 
-        // Avoid accidental self-recursion.
+                                           
         if (tagName.Equals(nameof(Expr), StringComparison.OrdinalIgnoreCase) ||
             tagName.Equals(nameof(Calc), StringComparison.OrdinalIgnoreCase) ||
             tagName.Equals(nameof(ExprText), StringComparison.OrdinalIgnoreCase) ||

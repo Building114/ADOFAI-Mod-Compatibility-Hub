@@ -28,9 +28,9 @@ public static class VersionSafe
             return number;
         }
 
-        // Newer ADOFAI builds expose scrPlayerManager.  If releaseNumber is not
-        // readable, prefer the r141+ compatibility path instead of accidentally
-        // enabling legacy-only patches.
+                                                                                
+                                                                                
+                                        
         return MiscUtils.TypeByName("scrPlayerManager") != null ? 141 : 140;
     }
 
@@ -364,8 +364,8 @@ public static class VersionSafe
 
     public static int GetPlayerCount()
     {
-        // 优先从 instance 读，r141+ 版本 playerCount 挂在 instance 上；
-        // 旧版或读取失败时回退到静态成员读取。
+                                                             
+                             
         object inst = GetStaticMemberValue("scrPlayerManager", "instance");
         object instValue = FirstMemberValue(inst, "playerCount");
         if (TryToInt(instValue, out int instCount) && instCount > 0)
@@ -389,7 +389,7 @@ public static class VersionSafe
 
     public static bool IsCoopMode()
     {
-        // 同 GetPlayerCount：优先 instance，再静态，再 coopMode 字段
+                                                         
         object inst = GetStaticMemberValue("scrPlayerManager", "instance");
         object instValue = FirstMemberValue(inst, "playerCount");
         if (TryToInt(instValue, out int instCount))
@@ -612,7 +612,7 @@ public static class VersionSafe
         }
         catch
         {
-            // 版本差异下没有这个函数时直接跳过。
+                                
         }
     }
 

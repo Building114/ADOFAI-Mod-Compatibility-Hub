@@ -315,7 +315,7 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
         List<Material> materials = new();
 
         foreach(Material source in shared) {
-            // Unity objects can be "fake null", so use Unity's overloaded null check.
+                                                                                      
             if(source == null) {
                 continue;
             }

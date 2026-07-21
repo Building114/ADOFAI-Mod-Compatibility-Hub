@@ -1,22 +1,55 @@
-[ Add ]
-{ Tag }
-Expression / calculation tags
+﻿[3.49.5]
+
+基于官方3.49.0继续维护
+
+【重大修复】
+- 修复了由于我更新内容太多导致这个窗口会被撑爆，但是原作者没做任何措施的问题
+- 为所有tag补全了tooltip
+
+【无法修复】
+- 由于我这里更新日志写的太长导致你可能不会看的问题
+- 有人用出问题不去issues提给我或者联系我
+
+[新增]
+
+{表达式标签}
 - Expr
 - Calc
 - ExprText
 - IfExpr
 - IfText
 - Coalesce
+- 支持PI、E、常用数学函数和标签数值引用
+- 表达式无法解析时会返回默认值！
 
-{ Player / judgment tags }
-- Existing judgment tags now support an optional player number, for example {OVE:2}
+{判定与多人标签}
+- OTE
+- OVE
+- OEP
+- OP
+- OLP
+- OVL
+- OTL
+- OA
+- OPP
+- OFast
+- OSlow
+- OELP
+- OV
+- OT
+- MissCount
+- Overloads
+- Fail
+- 以上标签现在支持可选玩家编号，例如{OVE:2}
+- 判定标签直接读取游戏自身计数，Overlayer不会在重生时主动清零
 - PlayerHit
 - PlayerTotalHits
 - PlayerAccuracy
 - PlayerXAccuracy
 - PlayerAbsXAccuracy
+- 所有判定与精度标签都支持单人和多人
 
-{ XPerfect tags }
+{XPerfect标签}
 - XPerfectAvailable
 - XPerfectCount
 - XPlusPerfectCount
@@ -29,37 +62,135 @@ Expression / calculation tags
 - XPerfectShare
 - XPerfectPercent
 - XPerfectRate
+- 没有安装XPerfect时，额那就什么也不会发生。
 
-[ Change ]
-AutoUpdater is disabled in this Overlayer XDBuilding build to prevent the official updater from overwriting the custom build.
-AutoUpdate and AutoUpdateBeta settings are forced off.
-Version is updated from 3.49.0 to 3.49.4.
-GitHub and Wiki buttons now point to the Overlayer-Lagacy repository.
-Project references now use configurable GameDir / ADOFAI_GAME_DIR paths instead of one fixed Steam path.
-Build output now copies Overlayer.dll, language files, info.json, update.txt, logo, and dependency DLLs into Mods/Overlayer.
-Bootstrapper dependency loading now uses a fixed load order for required libraries.
-Text tag parsing was rewritten to better support escaped braces, nested tags, nested arguments, and expression-style arguments.
-Profile loading now supports newer profile JSON, legacy object-list JSON, and single-object JSON imports.
-Migrated legacy profiles are backed up as .legacy.bak before being rewritten.
-File selection now uses an internal Windows PowerShell / Windows Forms shim.
-Unity image loading and PNG encoding now use a compatibility shim for newer Unity assemblies.
-Inactive profiles now suspend tag references instead of keeping their objects active in patch logic.
+{脚本接口}
+- 新增Jint4.7.1互操作属性兼容层
+- 新增脚本需要的判定文本、图标、音频、输入、Discord和全局变量接口
+- 新增主线程同步执行通道
 
-[ Fix ]
-Removed stale project references to missing IMColorPicker test files so the source package can build cleanly.
-Improved compatibility with newer ADOFAI builds that moved player, planet, floor, mistake, and hit-text data.
-Fixed several direct field reads by routing them through version-safe accessors.
-Fixed judgment, combo, fail, checkpoint, BPM, progress, tile, and status tags for newer game field names.
-Fixed hit text script APIs for newer cached hit text layouts.
-Fixed profile and object cleanup when deleting, refreshing, importing, or disabling profiles.
-Fixed deep-copy behavior for text and image expression values.
-Fixed safer parsing for invalid color hex strings.
-Fixed safer delete popup behavior when an object or profile is already missing.
-Fixed safer expression parsing so unresolved inline tags do not crash expression evaluation.
-Fixed dependency packaging path handling for local builds.
-Fixed update popup layout so the window is measured during OnGUI and drawn only once per frame.
+{兼容组件}
+- 新增VersionSafe，统一处理字段、属性和方法在不同游戏版本中的变化（但失效概率很高。本mod只服务于最新的adofai版本，若在低版本遇见相关问题不作修复）
+- 新增DllImporter，运行时补充加载NCalc等依赖
+- 新增ImageConversionCompat，兼容不同Unity版本的图片加载和PNG编码
+- 新增StandaloneFileBrowserShim，通过PowerShell和WindowsForms打开文件选择窗口
+- 新增标签词法分析器Lexer、Token、TokenType和LexConfig
 
+[兼容性调整]
 
-[ 3.49.4 ]
-Fixed editor-save failure by avoiding Overlayer/lib copies of shared System.* dependencies.
-Bootstrapper now prefers ADOFAI managed assemblies for System.Memory, System.Buffers, Unsafe, and Tasks.Extensions.
+- 适配新版（截止3.3.0）中玩家、行星、地板、判定管理器和判定文本字段的变化
+- ADOFAI、BPM、检查点、连击、失败、判定、进度、状态和格子标签改用兼容读取
+- MonsterLove、scnGame、scrController、scrMisc、scrMistakeManager和scrPlanet补丁增加版本回退
+- HitFixPatch调整IL匹配，兼容玩家字段和自动判定字段变化
+- FontPatch覆盖新版判定文本缓存和布局路径（但失效概率很高。同上）
+- 不存在的反射成员尽量回退到默认值防止崩溃
+
+[标签解析]
+
+- 重写Parser并加入独立词法分析层
+- 支持转义花括号
+- 支持嵌套标签
+- 支持嵌套参数。对反正就是你能花括号里面再套花括号了
+- 支持表达式格式参数
+- 支持递归标签引用
+- ParsedTag、ReplaceableText和Replacer同步调整引用计数和生命周期
+- 参数求值时会先处理内部标签
+- 无法解析的内联花括号不会继续送进表达式引擎
+
+[JavaScript脚本]
+
+- 反正就是有一些脚本被删了（比如旧版自动播放，那个疑似已被移出代码）然后加了兼容就完了
+
+- 适配Jint4.7.1的函数创建和.NET互操作行为
+- 重做脚本启动、停止、重载和异常处理流程
+- 修复脚本注册和回调生命周期
+- 修复脚本导入和导出
+- 修复脚本全局变量读写
+- 修复判定文本API在新版缓存布局中的读取
+- 修复脚本图标和音频接口
+- 修复输入回调
+- 修复Discord相关接口
+- Unity相关脚本调用改为主线程执行
+- 脚本启动失败时会记录错误并安全退出
+
+[配置与对象]
+
+- ProfileManager增强配置加载、保存、迁移、备份、重命名和删除
+- ProfileConfig支持完整配置JSON、对象列表JSON和单对象JSON
+- 旧配置迁移前会生成备份
+- 损坏或缺失的配置会尽量恢复或跳过
+- 导入配置时兼容单对象、对象数组和完整配置结构
+- ObjectManager加强空对象清理、销毁、导出和刷新
+- 非活动配置会暂停标签引用，不再继续参与补丁逻辑
+- OverlayerProfile完善创建、销毁和引用清理
+- OverlayerText完善启停、字体、标签和配置应用
+- OverlayerImage完善启停、刷新和配置应用
+- TextConfig和ImageConfig完善复制和表达式生命周期
+- ExprValue改为独立复制，避免多个配置共享同一个可变状态
+
+[Bootstrapper与依赖]
+
+- 修正必需依赖的加载顺序
+- Bootstrapper优先复用ADOFAI Managed目录中的共享System程序集
+- System.Memory优先使用游戏自带版本
+- System.Buffers优先使用游戏自带版本
+- System.Runtime.CompilerServices.Unsafe优先使用游戏自带版本
+- System.Threading.Tasks.Extensions优先使用游戏自带版本
+- 主Overlayer.dll改为从字节加载，减少文件锁和加载上下文冲突
+- 缺少必需依赖时会写入日志并停止加载，避免进入半初始化状态
+- 修复编辑器保存失败
+
+[自动更新与维护入口]
+
+- 此版本已禁用官方AutoUpdater
+- GitHub和Wiki按钮改为指向Overlayer-Lagacy维护仓库
+- 更新弹窗改进长文本读取、自动换行和窗口尺寸计算
+- update.txt最多显示400行和32000字符
+
+[其他调整]
+
+- TagManager遍历标签时改用快照
+- OverlayerTag动态访问器缓存会区分静态成员和实例成员
+- 值类型成员访问失败时会安全回退
+- Main调整初始化顺序并接入脚本、输入回调和兼容层
+- Settings强制关闭正式版和测试版自动更新
+- Effect加强参数解析
+- StaticCoroutine增加主线程识别和加锁队列
+- DeletePopup增加对象或配置已经消失时的空值保护
+- MiscUtils增加安全反射查找和兼容辅助方法
+- Developers标签更新维护者和构建身份
+- CodeEditor轻微格式整理
+
+[修复]
+
+- 修复新版ADOFAI中直接读取旧字段导致的标签失效或异常
+- 修复BPM读取兼容和边界处理
+- 修复检查点统计字段变化
+- 修复连击统计和多人字段变化
+- 修复失败统计字段变化
+- 修复判定数据和多人字段变化
+- 修复进度统计字段变化
+- 修复状态标签描述和字段兼容
+- 修复当前格和关卡格数据读取
+- 修复字体替换无法覆盖新版判定文本缓存
+- 修复配置删除、刷新、导入和禁用时留下无效对象
+- 修复文本和图片表达式值浅复制
+- 修复无效颜色十六进制字符串可能抛出异常
+- 修复删除窗口遇到已经消失的对象或配置时出错
+- 修复空表达式和未解析标签进入表达式引擎
+- 修复标签回调修改集合时的枚举异常
+- 修复文件选择依赖外部StandaloneFileBrowser的问题
+- 修复新版Unity程序集缺少旧图片转换入口的问题
+- 修复旧配置JSON结构无法直接导入
+- 修复编辑器保存时共享System程序集冲突
+- 修复Bootstrapper重复加载游戏已经提供的依赖
+- 修复缺失IMColorPicker测试文件导致源码工程无法干净构建
+- 修复主线程外访问Unity对象可能出现的随机异常
+
+[移除]
+
+- 删除旧NuGet packages.config
+- 删除旧IMColorPicker测试场景
+- 删除旧IMColorPicker测试脚本
+- 删除源码包中的.gitattributes
+- 删除源码包中的.gitignore

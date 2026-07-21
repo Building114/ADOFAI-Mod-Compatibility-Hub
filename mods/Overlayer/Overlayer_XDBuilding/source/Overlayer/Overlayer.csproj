@@ -1,4 +1,4 @@
-﻿<?xml version='1.0' encoding='utf-8'?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="15.0">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <Import Project="Local.Build.props" Condition="Exists('Local.Build.props')" />
@@ -19,7 +19,7 @@
     <DeployToGame Condition="'$(DeployToGame)' == ''">false</DeployToGame>
     <ManagedDir>$(GameDir)\A Dance of Fire and Ice_Data\Managed</ManagedDir>
     <ModDir>$(GameDir)\Mods\Overlayer</ModDir>
-</PropertyGroup>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -42,29 +42,48 @@
   <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>$(ManagedDir)\UnityModManager\0Harmony.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>$(ManagedDir)\Assembly-CSharp-firstpass.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="DemiLib">
       <HintPath>$(ManagedDir)\DemiLib.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="DOTween">
       <HintPath>$(ManagedDir)\DOTween.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="DOTweenPro">
       <HintPath>$(ManagedDir)\DOTweenPro.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(ManagedDir)\Newtonsoft.Json.dll</HintPath>
-    <Private>False</Private></Reference>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="RDTools">
       <HintPath>$(ManagedDir)\RDTools.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="LibreHardwareMonitorLib">
+      <HintPath>$(USERPROFILE)\.nuget\packages\librehardwaremonitorlib\0.9.6\runtimes\win-x64\lib\net472\LibreHardwareMonitorLib.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -81,298 +100,484 @@
     <Reference Include="System.Xml" />
     <Reference Include="Unity.Addressables">
       <HintPath>$(ManagedDir)\Unity.Addressables.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
-    <Reference Include="Unity.AI.Navigation">
-      <HintPath>$(ManagedDir)\Unity.AI.Navigation.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.MemoryProfiler">
       <HintPath>$(ManagedDir)\Unity.MemoryProfiler.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.ResourceManager">
       <HintPath>$(ManagedDir)\Unity.ResourceManager.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.ScriptableBuildPipeline">
       <HintPath>$(ManagedDir)\Unity.ScriptableBuildPipeline.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core">
       <HintPath>$(ManagedDir)\Unity.Services.Core.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Analytics">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Analytics.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Configuration">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Configuration.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Device">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Device.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Environments">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Environments.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Environments.Internal">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Environments.Internal.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Internal">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Internal.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Networking">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Networking.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Registration">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Registration.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Scheduler">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Scheduler.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Telemetry">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Telemetry.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.Services.Core.Threading">
       <HintPath>$(ManagedDir)\Unity.Services.Core.Threading.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>$(ManagedDir)\Unity.TextMeshPro.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
-    <Reference Include="Unity.Timeline">
-      <HintPath>$(ManagedDir)\Unity.Timeline.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.AccessibilityModule">
       <HintPath>$(ManagedDir)\UnityEngine.AccessibilityModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.AIModule">
       <HintPath>$(ManagedDir)\UnityEngine.AIModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.AndroidJNIModule">
       <HintPath>$(ManagedDir)\UnityEngine.AndroidJNIModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.AnimationModule">
       <HintPath>$(ManagedDir)\UnityEngine.AnimationModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.ARModule">
       <HintPath>$(ManagedDir)\UnityEngine.ARModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
       <HintPath>$(ManagedDir)\UnityEngine.AssetBundleModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.AudioModule">
       <HintPath>$(ManagedDir)\UnityEngine.AudioModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.ClothModule">
       <HintPath>$(ManagedDir)\UnityEngine.ClothModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.ClusterInputModule">
       <HintPath>$(ManagedDir)\UnityEngine.ClusterInputModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.ClusterRendererModule">
       <HintPath>$(ManagedDir)\UnityEngine.ClusterRendererModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.ContentLoadModule">
       <HintPath>$(ManagedDir)\UnityEngine.ContentLoadModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.CrashReportingModule">
       <HintPath>$(ManagedDir)\UnityEngine.CrashReportingModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.DirectorModule">
       <HintPath>$(ManagedDir)\UnityEngine.DirectorModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.DSPGraphModule">
       <HintPath>$(ManagedDir)\UnityEngine.DSPGraphModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.GameCenterModule">
       <HintPath>$(ManagedDir)\UnityEngine.GameCenterModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.GIModule">
       <HintPath>$(ManagedDir)\UnityEngine.GIModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.GridModule">
       <HintPath>$(ManagedDir)\UnityEngine.GridModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.HotReloadModule">
       <HintPath>$(ManagedDir)\UnityEngine.HotReloadModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>$(ManagedDir)\UnityEngine.IMGUIModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>$(ManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.InputModule">
       <HintPath>$(ManagedDir)\UnityEngine.InputModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.JSONSerializeModule">
       <HintPath>$(ManagedDir)\UnityEngine.JSONSerializeModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.LocalizationModule">
       <HintPath>$(ManagedDir)\UnityEngine.LocalizationModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.NVIDIAModule">
       <HintPath>$(ManagedDir)\UnityEngine.NVIDIAModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.ParticleSystemModule">
       <HintPath>$(ManagedDir)\UnityEngine.ParticleSystemModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.PerformanceReportingModule">
       <HintPath>$(ManagedDir)\UnityEngine.PerformanceReportingModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Physics2DModule">
       <HintPath>$(ManagedDir)\UnityEngine.Physics2DModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>$(ManagedDir)\UnityEngine.PhysicsModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.ProfilerModule">
       <HintPath>$(ManagedDir)\UnityEngine.ProfilerModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.PropertiesModule">
       <HintPath>$(ManagedDir)\UnityEngine.PropertiesModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing">
       <HintPath>$(ManagedDir)\UnityEngine.Purchasing.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing.AppleCore">
       <HintPath>$(ManagedDir)\UnityEngine.Purchasing.AppleCore.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing.AppleMacosStub">
       <HintPath>$(ManagedDir)\UnityEngine.Purchasing.AppleMacosStub.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing.AppleStub">
       <HintPath>$(ManagedDir)\UnityEngine.Purchasing.AppleStub.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing.Codeless">
       <HintPath>$(ManagedDir)\UnityEngine.Purchasing.Codeless.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing.SecurityCore">
       <HintPath>$(ManagedDir)\UnityEngine.Purchasing.SecurityCore.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing.SecurityStub">
       <HintPath>$(ManagedDir)\UnityEngine.Purchasing.SecurityStub.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing.Stores">
       <HintPath>$(ManagedDir)\UnityEngine.Purchasing.Stores.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing.WinRTCore">
       <HintPath>$(ManagedDir)\UnityEngine.Purchasing.WinRTCore.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing.WinRTStub">
       <HintPath>$(ManagedDir)\UnityEngine.Purchasing.WinRTStub.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule">
       <HintPath>$(ManagedDir)\UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.ScreenCaptureModule">
       <HintPath>$(ManagedDir)\UnityEngine.ScreenCaptureModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.SharedInternalsModule">
       <HintPath>$(ManagedDir)\UnityEngine.SharedInternalsModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.SpriteMaskModule">
       <HintPath>$(ManagedDir)\UnityEngine.SpriteMaskModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.SpriteShapeModule">
       <HintPath>$(ManagedDir)\UnityEngine.SpriteShapeModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.StreamingModule">
       <HintPath>$(ManagedDir)\UnityEngine.StreamingModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.SubstanceModule">
       <HintPath>$(ManagedDir)\UnityEngine.SubstanceModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.SubsystemsModule">
       <HintPath>$(ManagedDir)\UnityEngine.SubsystemsModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.TerrainModule">
       <HintPath>$(ManagedDir)\UnityEngine.TerrainModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.TerrainPhysicsModule">
       <HintPath>$(ManagedDir)\UnityEngine.TerrainPhysicsModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.TextCoreFontEngineModule">
       <HintPath>$(ManagedDir)\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.TextCoreTextEngineModule">
       <HintPath>$(ManagedDir)\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>$(ManagedDir)\UnityEngine.TextRenderingModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.TilemapModule">
       <HintPath>$(ManagedDir)\UnityEngine.TilemapModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.TLSModule">
       <HintPath>$(ManagedDir)\UnityEngine.TLSModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>$(ManagedDir)\UnityEngine.UI.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UIElementsModule">
       <HintPath>$(ManagedDir)\UnityEngine.UIElementsModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>$(ManagedDir)\UnityEngine.UIModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UmbraModule">
       <HintPath>$(ManagedDir)\UnityEngine.UmbraModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UnityAnalyticsCommonModule">
       <HintPath>$(ManagedDir)\UnityEngine.UnityAnalyticsCommonModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UnityAnalyticsModule">
       <HintPath>$(ManagedDir)\UnityEngine.UnityAnalyticsModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UnityConnectModule">
       <HintPath>$(ManagedDir)\UnityEngine.UnityConnectModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UnityCurlModule">
       <HintPath>$(ManagedDir)\UnityEngine.UnityCurlModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UnityTestProtocolModule">
       <HintPath>$(ManagedDir)\UnityEngine.UnityTestProtocolModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UnityWebRequestAssetBundleModule">
       <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UnityWebRequestAudioModule">
       <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UnityWebRequestModule">
       <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UnityWebRequestTextureModule">
       <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UnityWebRequestWWWModule">
       <HintPath>$(ManagedDir)\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.VehiclesModule">
       <HintPath>$(ManagedDir)\UnityEngine.VehiclesModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.VFXModule">
       <HintPath>$(ManagedDir)\UnityEngine.VFXModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.VideoModule">
       <HintPath>$(ManagedDir)\UnityEngine.VideoModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.VirtualTexturingModule">
       <HintPath>$(ManagedDir)\UnityEngine.VirtualTexturingModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.VRModule">
       <HintPath>$(ManagedDir)\UnityEngine.VRModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.WindModule">
       <HintPath>$(ManagedDir)\UnityEngine.WindModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.XRModule">
       <HintPath>$(ManagedDir)\UnityEngine.XRModule.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityModManager">
       <HintPath>$(ManagedDir)\UnityModManager\UnityModManager.dll</HintPath>
-    <Private>False</Private><SpecificVersion>False</SpecificVersion></Reference>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CodeEditor\CodeEditor.cs" />
@@ -701,7 +906,6 @@
     <PackageReference Include="Esprima" Version="3.0.5" />
     <PackageReference Include="HidSharp" Version="2.6.4" />
     <PackageReference Include="Jint" Version="4.7.1" />
-    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <PackageReference Include="ncalc" Version="1.3.8" />
     <PackageReference Include="RAMSPDToolkit-NDD" Version="1.4.2" />
     <PackageReference Include="System.Buffers" Version="4.6.1" />
@@ -722,32 +926,23 @@
   </Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if /I "$(DeployToGame)"=="true" (
-if not exist "$(ModDir)" mkdir "$(ModDir)"
-if not exist "$(ModDir)\lang" mkdir "$(ModDir)\lang"
-if not exist "$(ModDir)\lib" mkdir "$(ModDir)\lib"
-
-copy /Y "$(TargetPath)" "$(ModDir)\Overlayer.dll"
-xcopy /Y /I /S /E "$(ProjectDir)MiscFiles\lang\*" "$(ModDir)\lang\"
-xcopy /Y /I "$(ProjectDir)MiscFiles\info.json" "$(ModDir)\"
-xcopy /Y /I "$(ProjectDir)MiscFiles\update.txt" "$(ModDir)\"
-xcopy /Y /I "$(ProjectDir)MiscFiles\ov3_logo.png" "$(ModDir)\"
-
-rem Keep lib deterministic. Do not leave old Unity/game DLLs here.
-del /Q "$(ModDir)\lib\*.dll" 2&gt;nul
-
-rem Copy NuGet/runtime dependencies from the build output.
-rem Game and Unity references have Private=False, so they should not appear here.
-for %%F in ("$(TargetDir)*.dll") do (
-  if /I not "%%~nxF"=="Overlayer.dll" copy /Y "%%~fF" "$(ModDir)\lib\"
-)
-
-rem LibreHardwareMonitorLib uses runtime-specific assets and may not be copied to TargetDir by classic net481 builds.
-set "LHM=%USERPROFILE%\.nuget\packages\librehardwaremonitorlib\0.9.6\runtimes\win-x64\lib\net472\LibreHardwareMonitorLib.dll"
-if not exist "$(TargetDir)LibreHardwareMonitorLib.dll" if exist "%LHM%" copy /Y "%LHM%" "$(TargetDir)LibreHardwareMonitorLib.dll"
-if exist "$(TargetDir)LibreHardwareMonitorLib.dll" copy /Y "$(TargetDir)LibreHardwareMonitorLib.dll" "$(ModDir)\lib\LibreHardwareMonitorLib.dll"
-) else (
-  echo DeployToGame is false; skipping copy to local ADOFAI Mods folder.
-)</PostBuildEvent>
+    <PostBuildEvent>
+    if /I "$(DeployToGame)"=="true" (
+      if not exist "$(ModDir)" mkdir "$(ModDir)"
+      if not exist "$(ModDir)\lang" mkdir "$(ModDir)\lang"
+      if not exist "$(ModDir)\lib" mkdir "$(ModDir)\lib"
+      copy /Y "$(TargetPath)" "$(ModDir)\Overlayer.dll"
+      xcopy /Y /I /S /E "$(ProjectDir)MiscFiles\lang\*" "$(ModDir)\lang\"
+      xcopy /Y /I "$(ProjectDir)MiscFiles\info.json" "$(ModDir)\"
+      xcopy /Y /I "$(ProjectDir)MiscFiles\update.txt" "$(ModDir)\"
+      xcopy /Y /I "$(ProjectDir)MiscFiles\ov3_logo.png" "$(ModDir)\"
+      del /Q "$(ModDir)\lib\*.dll" 2&gt;nul
+      for %%F in ("$(TargetDir)*.dll") do (
+        if /I not "%%~nxF"=="Overlayer.dll" copy /Y "%%~fF" "$(ModDir)\lib\"
+      )
+    ) else (
+      echo DeployToGame is false; skipping copy to local ADOFAI Mods folder.
+    )
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>

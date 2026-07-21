@@ -11,8 +11,8 @@ This is an unofficial temporary compatibility patch for Overlayer.
 | Original status | Archived / read-only since 2026-06-06 |
 | Patch name | Overlayer XDBuilding |
 | Base version | `3.49.0` |
-| Patch version | `3.49.4` |
-| Target ADOFAI version | `3.1.1` |
+| Patch version | `3.49.5` |
+| Target ADOFAI version | `3.3.0` |
 | Status | Available |
 | Included here | Yes |
 
@@ -21,7 +21,7 @@ This is an unofficial temporary compatibility patch for Overlayer.
 | Type | Path |
 |---|---|
 | Source | `source/` |
-| Player release package | `release/Overlayer-XDBuilding-v3.49.4.zip` |
+| Player release package | `release/Overlayer-XDBuilding-v3.49.5.zip` |
 
 ## Notice
 
@@ -31,7 +31,7 @@ Original author credits, upstream repository information, and license notices ar
 
 ## Purpose
 
-This patch makes Overlayer compatible with ADOFAI 3.1.1.
+This patch makes Overlayer compatible with ADOFAI 3.3.0.
 
 Main changes:
 

@@ -1,4 +1,4 @@
-using Overlayer.Tags.Attributes;
+﻿using Overlayer.Tags.Attributes;
 using Overlayer.Utils;
 using System;
 using System.Collections.Generic;
@@ -7,24 +7,24 @@ using System.Reflection;
 
 namespace Overlayer.Tags;
 
-/// <summary>
-/// Minimal source-exact soft adapter for XPerfect.
-///
-/// Reads only the public state that exists in XPerfect source:
-///   XPerfect.AccuracyState.PlusPerfectCount
-///   XPerfect.AccuracyState.XPerfectCount
-///   XPerfect.AccuracyState.MinusPerfectCount
-///   XPerfect.AccuracyState.LastJudge
-///   XPerfect.AccuracyState.LastJudgeForText
-///   XPerfect.AccuracyState.LastJudgeConsumedByMeter
-///
-/// It does not expose player parameters because current XPerfect keeps global
-/// static counters, not per-player counters. This avoids misleading tags such
-/// as {XPerfectCount:2}.
-///
-/// It still uses reflection so Overlayer does not need a hard reference to
-/// XPerfect.dll. Type/member lookups are cached.
-/// </summary>
+             
+                                                   
+   
+                                                               
+                                             
+                                          
+                                              
+                                      
+                                             
+                                                     
+   
+                                                                              
+                                                                              
+                         
+   
+                                                                           
+                                                 
+              
 public static class XPerfectTags
 {
     private const BindingFlags StaticAny =
@@ -40,39 +40,46 @@ public static class XPerfectTags
     private static DateTime lastMissingTypeScanUtc = DateTime.MinValue;
 
     [Tag(NotPlaying = true)]
+    [TagDesc("检查XPerfect是否已加载并且可以读取数据\n可配合IfExpr或IfText显示备用内容")]
     public static bool XPerfectAvailable => TryEnsureAccuracyStateType();
 
     [Tag]
+    [TagDesc("读取XPerfect记录的正中Perfect次数")]
     public static int XPerfectCount()
     {
         return ReadInt("XPerfectCount");
     }
 
     [Tag]
+    [TagDesc("读取XPerfect记录的+Perfect次数")]
     public static int XPlusPerfectCount()
     {
         return ReadInt("PlusPerfectCount");
     }
 
     [Tag]
+    [TagDesc("读取XPerfect记录的-Perfect次数")]
     public static int XMinusPerfectCount()
     {
         return ReadInt("MinusPerfectCount");
     }
 
     [Tag]
+    [TagDesc("读取+Perfect、正中Perfect和-Perfect的总数")]
     public static int XDetailedPerfectCount()
     {
         return XPlusPerfectCount() + XPerfectCount() + XMinusPerfectCount();
     }
 
     [Tag]
+    [TagDesc("把XPerfect的三类Perfect合并成一段文本\n输出格式为+次数/正中次数/-次数")]
     public static string XPerfectDetail()
     {
         return $"+{XPlusPerfectCount()}/{XPerfectCount()}/-{XMinusPerfectCount()}";
     }
 
     [Tag]
+    [TagDesc("读取XPerfect最近一次判定\n默认读取适合显示的LastJudgeForText，传入False时读取原始LastJudge\n示例:{XPerfectLastJudge}或{XPerfectLastJudge:False}")]
     public static string XPerfectLastJudge(bool textJudge = true)
     {
         object value = ReadMember(textJudge ? "LastJudgeForText" : "LastJudge");
@@ -80,12 +87,14 @@ public static class XPerfectTags
     }
 
     [Tag]
+    [TagDesc("最近一次XPerfect判定是否已被判定条消费\n适合脚本避免同一次判定被重复处理")]
     public static bool XPerfectLastJudgeConsumedByMeter()
     {
         return ReadBool("LastJudgeConsumedByMeter");
     }
 
     [Tag]
+    [TagDesc("当前记录是否只有正中Perfect且至少出现过一次判定\n可用于纯正中Perfect提示")]
     public static bool XPerfectPureRun()
     {
         return XDetailedPerfectCount() > 0 &&
@@ -95,6 +104,7 @@ public static class XPerfectTags
     }
 
     [Tag]
+    [TagDesc("正中Perfect占三类Perfect总数的百分比\ndigits控制小数位，-1使用默认精度\n示例:{XPerfectShare:2}")]
     public static double XPerfectShare(int digits = -1)
     {
         double total = XDetailedPerfectCount();
@@ -107,14 +117,16 @@ public static class XPerfectTags
     }
 
     [Tag]
+    [TagDesc("XPerfectShare的易读别名，返回正中Perfect占比\n示例:{XPerfectPercent:2}")]
     public static double XPerfectPercent(int digits = -1)
     {
-        // XPerfect source does not expose another percent field.
-        // This is only a friendly alias of XPerfectShare.
+                                                                 
+                                                          
         return XPerfectShare(digits);
     }
 
     [Tag("XPerfectRate")]
+    [TagDesc("XPerfectPercent的简写，返回正中Perfect占比\n示例:{XPerfectRate:2}")]
     public static double XPerfectRate(int digits = -1) => XPerfectPercent(digits);
 
     private static bool TryEnsureAccuracyStateType()

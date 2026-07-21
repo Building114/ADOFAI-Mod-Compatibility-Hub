@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
   <PropertyGroup>
-    <!-- 改成你的 ADOFAI 安装目录。 -->
-    <GameDir>E:\SteamLibrary\steamapps\common\A Dance of Fire and Ice</GameDir>
-
-    <!-- true = 编译后自动复制到 游戏目录\Mods\Overlayer。 -->
-    <DeployToGame>true</DeployToGame>
-
-    <!-- 通常不用改。 -->
+    <GameDir>C:\Path\To\A Dance of Fire and Ice</GameDir>
+    <DeployToGame>false</DeployToGame>
     <DeployModDir>$(GameDir)\Mods\Overlayer</DeployModDir>
-
-    <!-- 默认用 Release。 -->
     <Configuration>Release</Configuration>
   </PropertyGroup>
 </Project>

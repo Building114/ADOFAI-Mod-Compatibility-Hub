@@ -1,29 +1,20 @@
 # Notice
 
-This project is an unofficial temporary compatibility patch of Overlayer.
+Overlayer XDBuilding is an unofficial temporary compatibility patch maintained by Building114.
 
-Original project:
+## Original project
+
 - Name: Overlayer
-- Upstream: modlist-org/Overlayer-Lagacy
-- Base version: 3.49.0 Legacy
+- Original author credited by the upstream README: c3nb
+- Repository: https://github.com/modlist-org/Overlayer-Lagacy
+- Base version: 3.49.0
 - License: GNU General Public License v3.0
 
-Patch:
+## Patch
+
 - Name: Overlayer XDBuilding
-- Patch version: 3.49.4
-- Target ADOFAI version: 3.1.1
-- Patch maintainer: Building114
-- Included source status: included here as a temporary compatibility patch
+- Version: 3.49.5
+- Target compatibility recorded by the patch: ADOFAI through 3.3.0
+- Status: unofficial temporary compatibility patch
 
-This project is not an official release from modlist.org, c3nb, or the original Overlayer maintainers.
-
-The original copyright notices, license terms, and contributor credits are preserved.
-All modifications are distributed under GPL-3.0.
-
-Repository note:
-- `modlist-org/Overlayer` is the V5 mainline.
-- This 3.x patch points to the legacy repository `modlist-org/Overlayer-Lagacy`.
-
-Third-party dependency note:
-- Jint is referenced through NuGet as Jint 4.7.1.
-- This source package does not claim to bundle a modified `modlist-org/jint` DLL.
+This patch is not an official release from modlist.org, c3nb, or the original Overlayer maintainers. Original Overlayer files remain under their original notices and GPL v3.0 terms. Building114 maintains the compatibility modifications and packaging for this temporary patch.

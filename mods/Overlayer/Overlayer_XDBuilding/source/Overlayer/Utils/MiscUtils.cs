@@ -80,9 +80,42 @@ public static class MiscUtils {
     }
     public static MethodInfo MethodByName(string typeColonMethodName) {
         var typemethod = typeColonMethodName.Split(':');
-        var target = TypeByName(typemethod[0]).GetMethod(typemethod[1], (BindingFlags)15422);
-        target ??= TypeByName(typemethod[0]).GetMethod(typemethod[1], (BindingFlags)15420);
-        return target;
+        var type = TypeByName(typemethod[0]);
+        if(type == null) {
+                                                 
+                               
+            return null;
+        }
+        try {
+            return type.GetMethod(typemethod[1], (BindingFlags)15422) ?? type.GetMethod(typemethod[1], (BindingFlags)15420);
+        } catch(AmbiguousMatchException) {
+                                                  
+                                               
+            return type.GetMethods((BindingFlags)15420).FirstOrDefault(m => m.Name == typemethod[1]);
+        }
+    }
+                                                          
+    public static MethodInfo MethodByNames(params string[] candidates) {
+        return MethodsByNames(candidates).FirstOrDefault();
+    }
+
+                    
+                                                        
+                                              
+                                   
+    public static MethodInfo[] MethodsByNames(params string[] candidates) {
+        List<MethodInfo> methods = [];
+        HashSet<MethodInfo> seen = [];
+
+        foreach(var candidate in candidates) {
+            MethodInfo m = null;
+            try { m = MethodByName(candidate); } catch { }
+            if(m != null && seen.Add(m)) {
+                methods.Add(m);
+            }
+        }
+
+        return methods.ToArray();
     }
 
     public static bool SetAttr(object obj, string accessor = "", object value = null) {

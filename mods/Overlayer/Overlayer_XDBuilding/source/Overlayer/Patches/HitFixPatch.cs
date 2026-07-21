@@ -51,9 +51,9 @@ public class HitFixPatch : SafeConditionalPatch {
             return;
         }
 
-        // r141/r142 uses: ldarg.0 -> ldfld player -> callvirt scrPlayer.get_auto().
-        // After replacing callvirt with ldc.i4.0, that scrPlayer instance must be removed
-        // from the stack, otherwise the patched method will break at runtime.
+                                                                                    
+                                                                                          
+                                                                              
         if(list[callIndex - 1].opcode == OpCodes.Ldfld &&
            list[callIndex - 1].operand is FieldInfo field &&
            field.Name == "player") {

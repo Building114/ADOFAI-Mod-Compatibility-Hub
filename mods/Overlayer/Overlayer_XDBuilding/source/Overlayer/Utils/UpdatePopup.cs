@@ -1,4 +1,4 @@
-using DG.Tweening;
+﻿﻿using DG.Tweening;
 using Overlayer.Core;
 using RapidGUI;
 using System;
@@ -20,6 +20,7 @@ internal class UpdatePopup : MonoBehaviour {
     private const float MaxWindowHeightRatio = 0.82f;
     private const float ContentPadding = 40f;
     private const float ButtonAreaHeight = 70f;
+    private const float NonScrollExtraHeight = 105f;
     private const float ApproxLineHeight = 20f;
 
     private Rect windowRect;
@@ -29,6 +30,8 @@ internal class UpdatePopup : MonoBehaviour {
     private bool isInitialized = false;
     private bool isAnimating = false;
     private bool hasCalculatedWindowRect = false;
+    private int lastScreenWidth = 0;
+    private int lastScreenHeight = 0;
 
     public void Initialize() {
         version = Main.Mod.Version.ToString();
@@ -59,7 +62,8 @@ internal class UpdatePopup : MonoBehaviour {
             return;
         }
 
-        // GUI.skin is safest to read during OnGUI, so calculate the first layout there.
+                                                                                         
+                                                                                               
         isInitialized = true;
     }
 
@@ -121,8 +125,13 @@ internal class UpdatePopup : MonoBehaviour {
         var minAllowedHeight = Mathf.Min(MinWindowHeight, maxAllowedHeight);
         var maxContentWidth = 0f;
 
+        var labelStyle = GUI.skin != null ? GUI.skin.label : null;
+
         foreach(var line in contentLines) {
-            var lineWidth = GUI.skin.label.CalcSize(new GUIContent(line)).x;
+            var lineWidth = labelStyle != null
+                ? labelStyle.CalcSize(new GUIContent(line)).x
+                : line.Length * 8f;
+
             if(lineWidth > maxContentWidth) {
                 maxContentWidth = lineWidth;
             }
@@ -133,36 +142,39 @@ internal class UpdatePopup : MonoBehaviour {
         var height = Mathf.Clamp(wantedHeight, minAllowedHeight, maxAllowedHeight);
 
         windowRect = new Rect((Screen.width - width) / 2f, (Screen.height - height) / 2f, width, height);
+        lastScreenWidth = Screen.width;
+        lastScreenHeight = Screen.height;
+        hasCalculatedWindowRect = true;
     }
 
     private void OnGUI() {
-        if(!isInitialized) {
+        if(!isInitialized || contentLines == null || contentLines.Length == 0) {
             return;
         }
 
-        if(!hasCalculatedWindowRect) {
+        if(!hasCalculatedWindowRect || lastScreenWidth != Screen.width || lastScreenHeight != Screen.height) {
             CalculateWindowRect();
-            hasCalculatedWindowRect = true;
         }
 
-        windowRect = GUILayout.Window(
-            120,
-            windowRect,
-            DrawWindow,
-            $"Overlayer {version} {Main.Lang.Get("UPDATE", "Update")}",
-            RGUIStyle.darkWindow
-        );
+        var title = $"Overlayer {version} {Main.Lang.Get("UPDATE", "Update")}";
+
+                                                
+                                                                                                   
+                                                                                                      
+        windowRect = GUI.Window(120, windowRect, DrawWindow, title, RGUIStyle.darkWindow);
     }
 
     private void DrawWindow(int windowID) {
         GUI.BringWindowToFront(windowID);
+
         GUILayout.BeginVertical();
         GUILayout.Space(10);
 
         var labelStyle = new GUIStyle(GUI.skin.label) {
             wordWrap = true
         };
-        var scrollHeight = Mathf.Max(80f, windowRect.height - ButtonAreaHeight);
+
+        var scrollHeight = Mathf.Max(80f, windowRect.height - NonScrollExtraHeight);
 
         using(var scrollScope = new GUILayout.ScrollViewScope(scrollPosition, GUILayout.Height(scrollHeight))) {
             scrollPosition = scrollScope.scrollPosition;
@@ -188,7 +200,8 @@ internal class UpdatePopup : MonoBehaviour {
         GUILayout.Space(10);
         GUILayout.EndVertical();
 
-        //GUI.DragWindow();
+                                                                   
+                                                                
     }
 
     private IEnumerator DestroyCoroutine() {
@@ -199,15 +212,14 @@ internal class UpdatePopup : MonoBehaviour {
     private void AnimateAndDestroy() {
         if(isAnimating) {
             return;
-        } else {
-            isAnimating = true;
         }
+
+        isAnimating = true;
 
         StartCoroutine(DestroyCoroutine());
         DOTween.To(() => windowRect.position, x => windowRect.position = x,
                 new Vector2(windowRect.position.x, Screen.height * -1.3f), 0.4f)
             .SetEase(Ease.InBack)
             .SetUpdate(true);
-
     }
 }

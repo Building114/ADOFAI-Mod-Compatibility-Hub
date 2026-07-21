@@ -1,4 +1,7 @@
 using Jint;
+using Jint.Native;
+using Jint.Native.Function;
+using Jint.Runtime.Interop;
 using Jint.Runtime.Interop.Attributes;
 using Overlayer.Core.Scripting.JSNet.Utils;
 using System;
@@ -10,6 +13,131 @@ using System.Text;
 namespace Overlayer.Core.Scripting.JSNet.API;
 
 public class Api {
+    private const BindingFlags JintInternalFlags =
+        BindingFlags.Instance |
+        BindingFlags.Public |
+        BindingFlags.NonPublic;
+
+    private static readonly Type MethodDescriptorType =
+        typeof(Engine).Assembly.GetType(
+            "Jint.Runtime.Interop.MethodDescriptor",
+            throwOnError: true
+        );
+
+    private static readonly Type MethodInfoFunctionType =
+        typeof(Engine).Assembly.GetType(
+            "Jint.Runtime.Interop.MethodInfoFunction",
+            throwOnError: true
+        );
+
+    private static readonly ConstructorInfo MethodDescriptorConstructor =
+        MethodDescriptorType.GetConstructor(
+            JintInternalFlags,
+            binder: null,
+            types: new[] { typeof(MethodBase) },
+            modifiers: null
+        ) ?? throw new MissingMethodException(
+            MethodDescriptorType.FullName,
+            ".ctor(MethodBase)"
+        );
+
+    private static readonly ConstructorInfo MethodInfoFunctionConstructor =
+        MethodInfoFunctionType.GetConstructor(
+            JintInternalFlags,
+            binder: null,
+            types: new[] {
+                typeof(Engine),
+                typeof(Type),
+                typeof(object),
+                typeof(string),
+                MethodDescriptorType.MakeArrayType(),
+                typeof(ClrFunction)
+            },
+            modifiers: null
+        ) ?? throw new MissingMethodException(
+            MethodInfoFunctionType.FullName,
+            ".ctor(Engine, Type, object, string, MethodDescriptor[], ClrFunction)"
+        );
+
+    internal static JsValue CreateMethodFunction(
+        Engine engine,
+        string name,
+        MethodInfo methodInfo
+    ) {
+        if(!methodInfo.IsStatic) {
+            throw new NotSupportedException(
+                $"Scripting API method must be static: " +
+                $"{methodInfo.DeclaringType?.FullName}.{methodInfo.Name}"
+            );
+        }
+
+        object descriptor = MethodDescriptorConstructor.Invoke(
+            new object[] { methodInfo }
+        );
+
+        Array descriptors = Array.CreateInstance(
+            MethodDescriptorType,
+            length: 1
+        );
+        descriptors.SetValue(descriptor, index: 0);
+
+        Function methodFunction = (Function)MethodInfoFunctionConstructor.Invoke(
+            new object[] {
+                engine,
+                methodInfo.DeclaringType,
+                null,
+                name,
+                descriptors,
+                null
+            }
+        );
+
+        ParameterInfo[] parameters = methodInfo.GetParameters();
+        bool injectEngine =
+            parameters.Length > 0 &&
+            parameters[0].ParameterType == typeof(Engine);
+
+        if(!injectEngine) {
+            return (JsValue)methodFunction;
+        }
+
+        int visibleParameterCount = parameters
+            .Skip(1)
+            .Count(parameter =>
+                !parameter.IsOptional &&
+                !parameter.IsDefined(
+                    typeof(ParamArrayAttribute),
+                    inherit: false
+                )
+            );
+
+        return new ClrFunction(
+            engine,
+            name,
+            (thisObject, arguments) => {
+                var forwardedArguments =
+                    new JsValue[arguments.Length + 1];
+
+                forwardedArguments[0] =
+                    JsValue.FromObject(engine, engine);
+
+                Array.Copy(
+                    arguments,
+                    sourceIndex: 0,
+                    forwardedArguments,
+                    destinationIndex: 1,
+                    length: arguments.Length
+                );
+
+                return methodFunction.Call(
+                    thisObject,
+                    forwardedArguments
+                );
+            },
+            visibleParameterCount
+        );
+    }
+
     public List<(ApiAttribute, MethodInfo)> Methods { get; } = [];
 
     public List<(ApiAttribute, Type)> Types { get; } = [];
@@ -117,12 +245,28 @@ public class Api {
             op.AllowClrWrite().AllowReflection()
                 .Strict(strict: false);
         });
+
         foreach(var (apiAttribute, type) in Types) {
-            engine.SetValue(apiAttribute.Name ?? type.Name, type);
+            engine.SetValue(
+                apiAttribute.Name ?? type.Name,
+                type
+            );
         }
-        foreach(var (apiAttribute2, methodInfo) in Methods) {
-            engine.SetValue(apiAttribute2.Name ?? methodInfo.Name, methodInfo);
+
+        foreach(var (apiAttribute, methodInfo) in Methods) {
+            string name =
+                apiAttribute.Name ?? methodInfo.Name;
+
+            engine.SetValue(
+                name,
+                CreateMethodFunction(
+                    engine,
+                    name,
+                    methodInfo
+                )
+            );
         }
+
         return engine;
     }
 

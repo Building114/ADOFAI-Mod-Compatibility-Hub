@@ -79,8 +79,8 @@ public static class Main {
         Logger = modEntry.Logger;
         Ass = Assembly.GetExecutingAssembly();
 
-        // XDB merge: do not apply pending official updater payloads to an unofficial patch build.
-        UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.4.";
+                                                                                                  
+        UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.5.";
 
         GUI = new GUIController();
         Lang = new Translator();
@@ -135,13 +135,14 @@ public static class Main {
                 FileAttempt = new FileAttempt();
             }
             ProfileManager.Initialize();
+            Scripting.RunScriptsNonBlocking();
 
             GUI.Init(settingsDrawer);
             GUI.Flush();
 
             if(updateOnce) {
                 updateOnce = false;
-                UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.4.";
+                UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.5.";
             }
         } else {
             if(EgEnabled) {
@@ -318,7 +319,10 @@ public static class Main {
         Settings.Save();
     }
 
-    public static void OnUpdate(ModEntry modEntry, float delta) => MainThreadDispatcher.Update();
+    public static void OnUpdate(ModEntry modEntry, float delta) {
+        MainThreadDispatcher.Update();
+        Impl.UpdateInputCallbacks();
+    }
 
     public static bool IsPlaying {
         get {

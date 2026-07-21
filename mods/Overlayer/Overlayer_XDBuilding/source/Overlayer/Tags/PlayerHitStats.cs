@@ -1,7 +1,3 @@
-// XDB Patch modification: 2026-06-03
-// Purpose: compatibility with ADOFAI r141+ field and method changes.
-// Based on modlist-org/Overlayer-Lagacy 3.49.0, licensed under GPL-3.0.
-
 using Overlayer.Core;
 using Overlayer.Tags.Attributes;
 using Overlayer.Utils;
@@ -10,17 +6,6 @@ using System.Reflection;
 
 namespace Overlayer.Tags;
 
-/// <summary>
-/// Player-aware judgment tags for newer ADOFAI builds.
-///
-/// Text examples:
-///   {OVE}     -> player 1 Very Early count
-///   {OVE:2}   -> player 2 Very Early count
-///   {OFast:2} -> player 2 fast-side count
-///
-/// The public tag argument is 1-based because that is what users expect in text.
-/// Internally ADOFAI stores lists as 0-based, so player 2 becomes index 1.
-/// </summary>
 public static class PlayerHitStats
 {
     private const BindingFlags StaticPublic = BindingFlags.Public | BindingFlags.Static;
@@ -56,65 +41,99 @@ public static class PlayerHitStats
                 continue;
             }
 
-            // Replace the old no-argument tags with compatible methods.
-            // Old layouts still work because each method defaults to player 1.
             TagManager.SetTag(new OverlayerTag(method, new TagAttribute(tagName)));
         }
     }
 
+    [TagDesc("读取玩家的Too Early次数，直接使用游戏自身计数，重生时Overlayer不会主动清零\n示例:{OTE:2}显示玩家2的次数")]
     public static int OTE(int player = 1) => Count(player, HitMargin.TooEarly);
-    public static int OVE(int player = 1) => Count(player, HitMargin.VeryEarly);
-    public static int OEP(int player = 1) => Count(player, HitMargin.EarlyPerfect);
-    public static int OPP(int player = 1) => Count(player, HitMargin.Perfect);
-    public static int OLP(int player = 1) => Count(player, HitMargin.LatePerfect);
-    public static int OVL(int player = 1) => Count(player, HitMargin.VeryLate);
-    public static int OTL(int player = 1) => Count(player, HitMargin.TooLate);
-    public static int OA(int player = 1) => Count(player, HitMargin.Auto);
 
-    // Keep Overlayer's old OP meaning: Perfect + Auto.
+    [TagDesc("读取玩家的Very Early次数，直接使用游戏自身计数，重生时Overlayer不会主动清零\n示例:{OVE:2}显示玩家2的次数")]
+    public static int OVE(int player = 1) => Count(player, HitMargin.VeryEarly);
+
+    [TagDesc("读取玩家的Early Perfect次数，直接使用游戏自身计数，重生时Overlayer不会主动清零\n示例:{OEP:2}显示玩家2的次数")]
+    public static int OEP(int player = 1) => Count(player, HitMargin.EarlyPerfect);
+
+    [TagDesc("读取玩家的Perfect和Auto总数，直接使用游戏自身计数\n示例:{OP:2}显示玩家2的总数")]
     public static int OP(int player = 1) => OPP(player) + OA(player);
 
+    [TagDesc("读取玩家的Late Perfect次数，直接使用游戏自身计数，重生时Overlayer不会主动清零\n示例:{OLP:2}显示玩家2的次数")]
+    public static int OLP(int player = 1) => Count(player, HitMargin.LatePerfect);
+
+    [TagDesc("读取玩家的Very Late次数，直接使用游戏自身计数，重生时Overlayer不会主动清零\n示例:{OVL:2}显示玩家2的次数")]
+    public static int OVL(int player = 1) => Count(player, HitMargin.VeryLate);
+
+    [TagDesc("读取玩家的Too Late次数，直接使用游戏自身计数，重生时Overlayer不会主动清零\n示例:{OTL:2}显示玩家2的次数")]
+    public static int OTL(int player = 1) => Count(player, HitMargin.TooLate);
+
+    [TagDesc("读取玩家的Auto次数，直接使用游戏自身计数\n示例:{OA:2}显示玩家2的次数")]
+    public static int OA(int player = 1) => Count(player, HitMargin.Auto);
+
+    [TagDesc("读取玩家手动打出的Perfect次数，不包含Auto\n示例:{OPP:2}显示玩家2的次数")]
+    public static int OPP(int player = 1) => Count(player, HitMargin.Perfect);
+
+    [TagDesc("读取玩家的偏快判定总数，包含Too Early、Very Early和Early Perfect\n示例:{OFast:2}")]
     public static int OFast(int player = 1) => OTE(player) + OVE(player) + OEP(player);
+
+    [TagDesc("读取玩家的偏慢判定总数，包含Too Late、Very Late和Late Perfect\n示例:{OSlow:2}")]
     public static int OSlow(int player = 1) => OTL(player) + OVL(player) + OLP(player);
+
+    [TagDesc("读取玩家的Early Perfect和Late Perfect总数\n示例:{OELP:2}")]
     public static int OELP(int player = 1) => OEP(player) + OLP(player);
+
+    [TagDesc("读取玩家的Very Early和Very Late总数\n示例:{OV:2}")]
     public static int OV(int player = 1) => OVE(player) + OVL(player);
+
+    [TagDesc("读取玩家的Too Early和Too Late总数\n示例:{OT:2}")]
     public static int OT(int player = 1) => OTE(player) + OTL(player);
 
+    [TagDesc("读取玩家的Miss次数，直接使用游戏自身计数，重生时Overlayer不会主动清零\n示例:{MissCount:2}")]
     public static int MissCount(int player = 1) => Count(player, HitMargin.FailMiss);
+
+    [TagDesc("读取玩家的Overload次数，直接使用游戏自身计数，重生时Overlayer不会主动清零\n示例:{Overloads:2}")]
     public static int Overloads(int player = 1) => Count(player, HitMargin.FailOverload);
+
+    [TagDesc("读取玩家的Miss和Overload总数\n示例:{Fail:2}")]
     public static int Fail(int player = 1) => MissCount(player) + Overloads(player);
 
     [Tag]
+    [TagDesc("按判定名称读取玩家次数，直接使用游戏自身计数\n可用TooEarly、VeryEarly、EarlyPerfect、Perfect、LatePerfect、VeryLate、TooLate、Auto、FailMiss、FailOverload\n示例:{PlayerHit:VeryEarly:2}")]
     public static int PlayerHit(string margin, int player = 1)
     {
-        if (string.IsNullOrWhiteSpace(margin) || !Enum.TryParse(margin, true, out HitMargin parsed))
-        {
-            return 0;
-        }
-
-        return Count(player, parsed);
+        return TryParseMargin(margin, out HitMargin parsed) ? Count(player, parsed) : 0;
     }
 
     [Tag]
+    [TagDesc("读取玩家的有效击中总数，不包含Miss和Overload\n示例:{PlayerTotalHits:2}")]
     public static int PlayerTotalHits(int player = 1) => VersionSafe.GetHitMarginsTotal(ToPlayerIndex(player));
 
     [Tag]
+    [TagDesc("按游戏当前判定计数计算玩家Accuracy\ndigits控制小数位，-1使用默认精度\n示例:{PlayerAccuracy:2:2}")]
     public static double PlayerAccuracy(int player = 1, int digits = -1) => Accuracy(player, digits);
 
     [Tag]
+    [TagDesc("按游戏当前判定计数计算玩家XAccuracy，包含检查点惩罚\n示例:{PlayerXAccuracy:2:2}")]
     public static double PlayerXAccuracy(int player = 1, int digits = -1) => XAccuracy(player, false, digits);
 
     [Tag]
+    [TagDesc("按游戏当前判定计数计算玩家绝对XAccuracy，不计算检查点惩罚\n示例:{PlayerAbsXAccuracy:2:2}")]
     public static double PlayerAbsXAccuracy(int player = 1, int digits = -1) => XAccuracy(player, true, digits);
 
     public static int ToPlayerIndex(int player)
     {
-        // {OVE}, {OVE:0}, and {OVE:1} all mean player 1.
-        // {OVE:2} means player 2.
         return player <= 1 ? 0 : player - 1;
     }
 
-    private static int Count(int player, HitMargin margin) => VersionSafe.GetHitCount(margin, ToPlayerIndex(player));
+    private static bool TryParseMargin(string margin, out HitMargin parsed)
+    {
+        parsed = default;
+        return !string.IsNullOrWhiteSpace(margin) && Enum.TryParse(margin, true, out parsed);
+    }
+
+    private static int Count(int player, HitMargin margin)
+    {
+        return VersionSafe.GetHitCount(margin, ToPlayerIndex(player));
+    }
 
     private static double Accuracy(int player, int digits)
     {

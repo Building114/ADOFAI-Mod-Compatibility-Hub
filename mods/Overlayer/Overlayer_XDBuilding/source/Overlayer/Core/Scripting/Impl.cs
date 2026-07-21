@@ -1,4 +1,4 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using Discord;
 using HarmonyLib;
 using Jint;
@@ -35,18 +35,49 @@ public static class Impl {
         harmony = new Harmony("Overlayer.Scripting.Impl");
         globalVariables = [];
         registeredCustomTags = [];
+        customJudgeTexts = [];
+        customJudgeConfigs = [];
+        judgeTextShowPatchInjected = false;
+        anyKeyCallbacks = [];
+        anyKeyDownCallbacks = [];
+        keyCallbacks = [];
+        keyUpCallbacks = [];
+        keyDownCallbacks = [];
     }
     public static void Release() {
-        registeredCustomTags?.ForEach(TagManager.RemoveTag);
+        if(registeredCustomTags != null) {
+            if(Scripting.JSApi != null) {
+                var registeredNames = new HashSet<string>(
+                    registeredCustomTags
+                );
+
+                Scripting.JSApi.Methods.RemoveAll(
+                    method => registeredNames.Contains(
+                        method.Item1.Name
+                    )
+                );
+            }
+
+            registeredCustomTags.ForEach(
+                TagManager.RemoveTag
+            );
+        }
+
         registeredCustomTags = null;
         globalVariables = null;
+        customJudgeTexts = null;
+        customJudgeConfigs = null;
+        judgeTextShowPatchInjected = false;
+        anyKeyCallbacks = null;
+        anyKeyDownCallbacks = null;
+        keyCallbacks = null;
+        keyUpCallbacks = null;
+        keyDownCallbacks = null;
         harmony?.UnpatchAll(harmony.Id);
         harmony = null;
         jsTypes = null;
         Adofai.autoTextInjected = false;
-        Adofai.startRadiusInjected = false;
         alreadyExecutedScripts = null;
-        StaticCoroutine.Queue(StaticCoroutine.SyncRunner(ProfileManager.Refresh));
         DisposeWrapperAssembly();
     }
     public static void Reload() {
@@ -59,9 +90,16 @@ public static class Impl {
         string currentScript = Path.GetFileName(Scripting.CurrentExecutingScriptPath);
         for(int i = 0; i < tagsOrProxies.Length; i++) {
             var tagOrProxy = tagsOrProxies[i];
-            if(TagManager.GetTag(tagOrProxy) != null) {
+            if(TagManager.GetTag(tagOrProxy) is OverlayerTag tag) {
                 LazyPatchManager.PatchAll(tagOrProxy).ForEach(lp => lp.Locked = true);
-                engine.SetValue(tagOrProxy, TagManager.GetTag(tagOrProxy).Tag.GetterOriginal);
+                engine.SetValue(
+                    tagOrProxy,
+                    Api.CreateMethodFunction(
+                        engine,
+                        tagOrProxy,
+                        tag.Tag.GetterOriginal
+                    )
+                );
                 Main.Logger.Log($"[{currentScript}] Using '{tagOrProxy}' Tag.");
             } else {
                 bool isUri = false;
@@ -85,9 +123,29 @@ public static class Impl {
                     if(isProxy = code.StartsWith("// [Overlayer.Scripting JS Wrapper]")) {
                         foreach(var (alias, member) in Scripting.ImportJSProxy(code)) {
                             if(member is Type t) {
-                                engine.SetValue(alias, TypeReference.CreateTypeReference(engine, t));
-                            } else if(member is MethodInfo m) {
-                                engine.SetValue(alias, m);
+                                engine.SetValue(
+                                    alias,
+                                    TypeReference.CreateTypeReference(
+                                        engine,
+                                        t
+                                    )
+                                );
+                            }
+                            else if(member is MethodInfo m) {
+                                engine.SetValue(
+                                    alias,
+                                    Api.CreateMethodFunction(
+                                        engine,
+                                        alias,
+                                        m
+                                    )
+                                );
+                            }
+                            else {
+                                Main.Logger.Log(
+                                    $"[{currentScript}] Proxy member " +
+                                    $"'{alias}' could not be resolved; skipped."
+                                );
                             }
                         }
                     } else {
@@ -227,15 +285,30 @@ public static class Impl {
         return $"{t?.FullName}[{AggregateGenericArgs(args.ToArray())}]";
     }
     [Api("getGlobalVariable")]
-    public static object GetGlobalVariable(Engine engine, string name) => globalVariables.TryGetValue(name, out var value) ? value : null;
-    public delegate object CallWrapper(params object[] args);
-    [Api("setGlobalVariable")]
-    public static object SetGlobalVariable(Engine engine, string name, object obj) {
-        if(obj is Function fi) {
-            FIWrapper wrapper = new(fi);
-            obj = (CallWrapper)wrapper.Call;
+    public static JsValue GetGlobalVariable(
+        Engine engine,
+        string name
+    ) {
+        if(!globalVariables.TryGetValue(
+            name,
+            out object value
+        )) {
+            return JsValue.Undefined;
         }
-        return globalVariables[name] = obj;
+
+        return value is JsValue jsValue
+            ? jsValue
+            : JsValue.FromObject(engine, value);
+    }
+
+    [Api("setGlobalVariable")]
+    public static JsValue SetGlobalVariable(
+        Engine engine,
+        string name,
+        JsValue value
+    ) {
+        globalVariables[name] = value;
+        return value;
     }
     [Api("registerTag")]
     public static void RegisterTag(Engine engine, string name, JsValue func, bool notplaying, string tooltip) {
@@ -253,7 +326,7 @@ public static class Impl {
         StaticCoroutine.Queue(StaticCoroutine.SyncRunner(ProfileManager.Refresh));
         registeredCustomTags.Add(name);
         if(tooltip != null) {
-            TagDesc.Desc[name] = tooltip;
+            TagDesc.Desc[name.ToUpperInvariant()] = tooltip;
         }
         Main.Logger.Log($"Registered Tag \"{name}\" (NotPlaying:{notplaying})");
     }
@@ -262,7 +335,7 @@ public static class Impl {
         Scripting.JSApi.Methods.RemoveAll(t => t.Item1.Name == name);
         Expression.expressions.Clear();
         TagManager.RemoveTag(name);
-        TagDesc.Desc.Remove(name);
+        TagDesc.Desc.Remove(name.ToUpperInvariant());
         StaticCoroutine.Queue(StaticCoroutine.SyncRunner(ProfileManager.Refresh));
     }
     /*[Api("prefix")]
@@ -399,7 +472,34 @@ public static class Impl {
     [Api("colorToHexRGBA")]
     public static string ToHexRGBA(Engine engine, Color color) => ColorUtility.ToHtmlStringRGBA(color);
     [Api("getTagValueSafe")]
-    public static string GetTagValueSafe(Engine engine, string tagName, params string[] args) => TagManager.GetTag(tagName)?.Tag.Getter.Invoke(null, args)?.ToString() ?? "";
+    public static string GetTagValueSafe(
+        Engine engine,
+        string tagName,
+        params string[] args
+    ) {
+        OverlayerTag overlayerTag =
+            TagManager.GetTag(tagName);
+
+        if(overlayerTag == null) {
+            return "";
+        }
+
+        args ??= Array.Empty<string>();
+
+        object[] callArgs =
+            new object[overlayerTag.Tag.ArgumentCount];
+
+        for(int i = 0; i < callArgs.Length; i++) {
+            callArgs[i] =
+                i < args.Length
+                    ? args[i]
+                    : "";
+        }
+
+        return overlayerTag.Tag.GetterDelegate
+            .DynamicInvoke(callArgs)
+            ?.ToString() ?? "";
+    }
     [Api("parseFastInt")]
     public static int ParseFastInt(string str) => StringConverter.ToInt32(str);
     [Api("parseFastFloat")]
@@ -493,6 +593,98 @@ public static class Impl {
         "Set Audio(UnityEngine.AudioClip) With Callback (.mp3, .ogg, .aiff, .wav)"
     ], RequireTypes = [typeof(AudioSource)])]
     public static void SetAudio(string path, AudioSource source) => AudioPlayer.LoadAudio(path, clip => source.clip = clip);
+    private static void InvokeEventCallback(
+        FIWrapper wrapper,
+        string eventName,
+        params object[] args
+    ) {
+        try {
+            wrapper.Call(args);
+        }
+        catch(Exception e) {
+            Main.Logger.Log(
+                $"[Scripting] {eventName} callback failed:" +
+                $"\n{e}"
+            );
+        }
+    }
+
+    private static void RegisterInputCallback(
+        Dictionary<KeyCode, List<FIWrapper>> callbacks,
+        KeyCode key,
+        FIWrapper wrapper
+    ) {
+        if(!callbacks.TryGetValue(key, out var list)) {
+            list = [];
+            callbacks[key] = list;
+        }
+
+        list.Add(wrapper);
+    }
+
+    private static void InvokeInputCallbacks(
+        FIWrapper[] callbacks,
+        string eventName
+    ) {
+        for(int i = 0; i < callbacks.Length; i++) {
+            InvokeEventCallback(
+                callbacks[i],
+                eventName
+            );
+        }
+    }
+
+    public static void UpdateInputCallbacks() {
+        if(anyKeyCallbacks == null ||
+            anyKeyDownCallbacks == null ||
+            keyCallbacks == null ||
+            keyUpCallbacks == null ||
+            keyDownCallbacks == null) {
+            return;
+        }
+
+        if(Input.anyKey && anyKeyCallbacks.Count > 0) {
+            InvokeInputCallbacks(
+                anyKeyCallbacks.ToArray(),
+                "anyKey"
+            );
+        }
+
+        if(Input.anyKeyDown && anyKeyDownCallbacks.Count > 0) {
+            InvokeInputCallbacks(
+                anyKeyDownCallbacks.ToArray(),
+                "anyKeyDown"
+            );
+        }
+
+        foreach(var pair in keyCallbacks.ToArray()) {
+            if(Input.GetKey(pair.Key)) {
+                InvokeInputCallbacks(
+                    pair.Value.ToArray(),
+                    $"key:{pair.Key}"
+                );
+            }
+        }
+
+        foreach(var pair in keyUpCallbacks.ToArray()) {
+            if(Input.GetKeyUp(pair.Key)) {
+                InvokeInputCallbacks(
+                    pair.Value.ToArray(),
+                    $"keyUp:{pair.Key}"
+                );
+            }
+        }
+
+        foreach(var pair in keyDownCallbacks.ToArray()) {
+            if(Input.GetKeyDown(pair.Key)) {
+                InvokeInputCallbacks(
+                    pair.Value.ToArray(),
+                    $"keyDown:{pair.Key}"
+                );
+            }
+        }
+    }
+
     public class On {
         [Api("rewind", Comment =
         [
@@ -504,7 +696,10 @@ public static class Impl {
             }
 
             FIWrapper wrapper = new(fi);
-            harmony.Postfix(MiscUtils.MethodByName("scrController:Awake_Rewind"), new Action(() => wrapper.Call()));
+                                                         
+            foreach(var target in MiscUtils.MethodsByNames("scrController:Awake_Rewind", "scrPlayer:Awake_Rewind")) {
+                harmony.Postfix(target, new Action(() => InvokeEventCallback(wrapper, "rewind")));
+            }
         }
         [Api("hit", Comment =
         [
@@ -516,7 +711,10 @@ public static class Impl {
             }
 
             FIWrapper wrapper = new(fi);
-            harmony.Postfix(MiscUtils.MethodByName("scrController:Hit"), new Action(() => wrapper.Call()));
+                                                                
+            foreach(var target in MiscUtils.MethodsByNames("scrController:Hit", "scrPlayer:Hit")) {
+                harmony.Postfix(target, new Action(() => InvokeEventCallback(wrapper, "hit")));
+            }
         }
         [Api("dead", Comment =
         [
@@ -528,11 +726,14 @@ public static class Impl {
             }
 
             FIWrapper wrapper = new(fi);
-            harmony.Postfix(MiscUtils.MethodByName("scrController:FailAction"), new Action<scrController>(__instance => {
-                if(!VersionSafe.IsNoFail(__instance)) {
-                    wrapper.Call();
-                }
-            }));
+                                                                    
+            foreach(var target in MiscUtils.MethodsByNames("scrController:FailAction", "scrPlayer:FailAction")) {
+                harmony.Postfix(target, new Action(() => {
+                    if(!VersionSafe.IsNoFail(scrController.instance)) {
+                        InvokeEventCallback(wrapper, "dead");
+                    }
+                }));
+            }
         }
         [Api("fail", Comment =
         [
@@ -544,7 +745,9 @@ public static class Impl {
             }
 
             FIWrapper wrapper = new(fi);
-            harmony.Postfix(MiscUtils.MethodByName("scrController:FailAction"), new Action<scrController>(__instance => wrapper.Call()));
+            foreach(var target in MiscUtils.MethodsByNames("scrController:FailAction", "scrPlayer:FailAction")) {
+                harmony.Postfix(target, new Action(() => InvokeEventCallback(wrapper, "fail")));
+            }
         }
         [Api("clear", Comment =
         [
@@ -556,11 +759,13 @@ public static class Impl {
             }
 
             FIWrapper wrapper = new(fi);
-            harmony.Postfix(MiscUtils.MethodByName("scrController:OnLandOnPortal"), new Action<scrController>(__instance => {
-                if(VersionSafe.IsGameWorld(__instance)) {
-                    wrapper.Call();
-                }
-            }));
+            foreach(var target in MiscUtils.MethodsByNames("scrController:OnLandOnPortal", "scrPlayer:OnLandOnPortal")) {
+                harmony.Postfix(target, new Action(() => {
+                    if(VersionSafe.IsGameWorld(scrController.instance)) {
+                        InvokeEventCallback(wrapper, "clear");
+                    }
+                }));
+            }
         }
         #region KeyEvents
         [Api("anyKey", Comment =
@@ -568,80 +773,57 @@ public static class Impl {
             "On Any Key Pressed"
         ])]
         public static void AnyKey(Engine engine, JsValue func) {
-            if(func is not Function fi) {
-                return;
+            if(func is Function fi) {
+                anyKeyCallbacks.Add(new FIWrapper(fi));
             }
-
-            FIWrapper wrapper = new(fi);
-            harmony.Postfix(MiscUtils.MethodByName("scrController:Update"), () => {
-                if(Input.anyKey) {
-                    wrapper.Call();
-                }
-            });
         }
         [Api("anyKeyDown", Comment =
         [
             "On Any Key Down"
         ])]
         public static void AnyKeyDown(Engine engine, JsValue func) {
-            if(func is not Function fi) {
-                return;
+            if(func is Function fi) {
+                anyKeyDownCallbacks.Add(new FIWrapper(fi));
             }
-
-            FIWrapper wrapper = new(fi);
-            harmony.Postfix(MiscUtils.MethodByName("scrController:Update"), new Action(() => {
-                if(Input.anyKeyDown) {
-                    wrapper.Call();
-                }
-            }));
         }
         [Api("key", Comment =
         [
             "On Key Pressed"
         ])]
         public static void Key(Engine engine, KeyCode key, JsValue func) {
-            if(func is not Function fi) {
-                return;
+            if(func is Function fi) {
+                RegisterInputCallback(
+                    keyCallbacks,
+                    key,
+                    new FIWrapper(fi)
+                );
             }
-
-            FIWrapper wrapper = new(fi);
-            harmony.Postfix(MiscUtils.MethodByName("scrController:Update"), () => {
-                if(Input.GetKey(key)) {
-                    wrapper.Call();
-                }
-            });
         }
         [Api("keyUp", Comment =
         [
             "On Key Up"
         ])]
         public static void KeyUp(Engine engine, KeyCode key, JsValue func) {
-            if(func is not Function fi) {
-                return;
+            if(func is Function fi) {
+                RegisterInputCallback(
+                    keyUpCallbacks,
+                    key,
+                    new FIWrapper(fi)
+                );
             }
-
-            FIWrapper wrapper = new(fi);
-            harmony.Postfix(MiscUtils.MethodByName("scrController:Update"), () => {
-                if(Input.GetKeyUp(key)) {
-                    wrapper.Call();
-                }
-            });
         }
         [Api("keyDown", Comment =
         [
             "On Key Down"
         ])]
         public static void KeyDown(Engine engine, KeyCode key, JsValue func) {
-            if(func is not Function fi) {
-                return;
+            if(func is Function fi) {
+                RegisterInputCallback(
+                    keyDownCallbacks,
+                    key,
+                    new FIWrapper(fi)
+                );
             }
-
-            FIWrapper wrapper = new(fi);
-            harmony.Postfix(MiscUtils.MethodByName("scrController:Update"), () => {
-                if(Input.GetKeyDown(key)) {
-                    wrapper.Call();
-                }
-            });
         }
         #endregion
     }
@@ -659,11 +841,41 @@ public static class Impl {
         ])]
     public class Adofai {
         [Api("getPlanetRenderer", ReturnComment = "UnityEngine.SpriteRenderer (Planet SpriteRenderer)")]
-        public static SpriteRenderer GetPlanetRenderer(scrPlanet planet, PlanetRenderer planetrenderer) => planet.GetOrAddRenderer(planetrenderer);
+        public static SpriteRenderer GetPlanetRenderer(
+            scrPlanet planet,
+            PlanetRenderer planetrenderer
+        ) {
+            if(!planet || !planetrenderer) {
+                Main.Logger.Log(
+                    "[Scripting] getPlanetRenderer skipped: " +
+                    "planet or PlanetRenderer is not ready."
+                );
+                return null;
+            }
+
+            try {
+                return planet.GetOrAddRenderer(planetrenderer);
+            }
+            catch(Exception e) {
+                Main.Logger.Log(
+                    "[Scripting] getPlanetRenderer failed: " +
+                    $"{e.GetType().Name}: {e.Message}"
+                );
+                return null;
+            }
+        }
         [Api("scalePlanet")]
         public static void ScalePlanet(PlanetRenderer planetrender, Vector2 vec) {
+            if(!planetrender) {
+                Main.Logger.Log(
+                    "[Scripting] scalePlanet skipped: " +
+                    "PlanetRenderer is not ready."
+                );
+                return;
+            }
+
             ScaleAll([
-                (mr.GetValue(planetrender.sprite) as SpriteRenderer)?.transform,
+                FindPlanetBaseRenderer(planetrender)?.transform,
                 planetrender.coreParticles?.transform,
                 planetrender.tailParticles?.transform,
                 planetrender.sparks?.transform,
@@ -676,44 +888,143 @@ public static class Impl {
                 planetrender.samuraiSprite?.transform
             ], vec);
         }
-        [Api("setDiscordRp")]
-        public static void SetDiscordRp(string title, string state, string details) {
-            static string Validate(string s) => s.Length <= 60 ? s : s.Substring(0, 57) + "...";
-            Discord.Discord discord = typeof(DiscordController).GetField("discord", (BindingFlags)15420).GetValue(DiscordController.instance) as Discord.Discord;
-            Activity activity = default;
-            activity.State = Validate(state);
-            activity.Details = Validate(details);
-            activity.Assets.LargeImage = "planets_icon_stars";
-            activity.Assets.LargeText = title;
-            discord.GetActivityManager().UpdateActivity(activity, delegate { });
+        private static T FindLoadedComponent<T>() where T : Component {
+            return Resources
+                .FindObjectsOfTypeAll<T>()
+                .FirstOrDefault(component =>
+                    component &&
+                    component.gameObject &&
+                    component.gameObject.scene.IsValid()
+                );
         }
+
+        [Api("setDiscordRp")]
+        public static void SetDiscordRp(
+            string title,
+            string state,
+            string details
+        ) {
+            static string Validate(string value) {
+                value ??= "";
+                return value.Length <= 60
+                    ? value
+                    : value.Substring(0, 57) + "...";
+            }
+
+            try {
+                var controller = DiscordController.instance;
+                FieldInfo discordField = typeof(DiscordController)
+                    .GetField("discord", (BindingFlags)15420);
+
+                var discord = discordField?.GetValue(controller)
+                    as Discord.Discord;
+
+                if(discord == null) {
+                    Main.Logger.Log(
+                        "[Scripting] setDiscordRp skipped: " +
+                        "Discord is not initialized."
+                    );
+                    return;
+                }
+
+                Activity activity = default;
+                activity.State = Validate(state);
+                activity.Details = Validate(details);
+                activity.Assets.LargeImage = "planets_icon_stars";
+                activity.Assets.LargeText = Validate(title);
+
+                discord
+                    .GetActivityManager()
+                    .UpdateActivity(activity, delegate { });
+            }
+            catch(Exception e) {
+                Main.Logger.Log(
+                    "[Scripting] setDiscordRp failed: " +
+                    $"{e.GetType().Name}: {e.Message}"
+                );
+            }
+        }
+
         [Api("setBuildText")]
         public static void SetBuildText(string text) {
-            var betaText = UnityEngine.Object.FindObjectOfType<scrEnableIfBeta>();
-            betaText.gameObject.SetActive(true);
-            betaText.GetComponent<TMP_Text>().text = text;
+            var betaObject = FindLoadedComponent<scrEnableIfBeta>();
+            if(!betaObject) {
+                Main.Logger.Log(
+                    "[Scripting] setBuildText skipped: " +
+                    "scrEnableIfBeta is not loaded in the current scene."
+                );
+                return;
+            }
+
+            TMP_Text label =
+                betaObject.GetComponent<TMP_Text>() ??
+                betaObject.GetComponentInChildren<TMP_Text>(true);
+
+            if(!label) {
+                Main.Logger.Log(
+                    "[Scripting] setBuildText skipped: " +
+                    "no TMP_Text was found."
+                );
+                return;
+            }
+
+            betaObject.gameObject.SetActive(true);
+            label.text = text ?? "";
         }
+
+        private static UnityEngine.UI.Text FindAutoText() {
+            var debugObject = FindLoadedComponent<scrShowIfDebug>();
+            if(!debugObject) {
+                return null;
+            }
+
+            debugObject.gameObject.SetActive(true);
+            return
+                debugObject.GetComponent<UnityEngine.UI.Text>() ??
+                debugObject.GetComponentInChildren<UnityEngine.UI.Text>(true);
+        }
+
         [Api("setAutoText")]
         public static void SetAutoText(string text) {
             InjectAutoTextUpdate();
-            var betaText = UnityEngine.Object.FindObjectOfType<scrShowIfDebug>();
-            betaText.gameObject.SetActive(true);
-            betaText.GetComponent<UnityEngine.UI.Text>().text = text;
+
+            UnityEngine.UI.Text label = FindAutoText();
+            if(!label) {
+                Main.Logger.Log(
+                    "[Scripting] setAutoText skipped: " +
+                    "scrShowIfDebug or its Text component is not loaded."
+                );
+                return;
+            }
+
+            label.text = text ?? "";
         }
+
         [Api("configAutoText", ParamComment =
         [
             "UnityEngine.UI.Text Callback"
         ])]
-        public static void ConfigAutoText(Engine engine, JsValue configFunc) {
+        public static void ConfigAutoText(JsValue configFunc) {
             if(configFunc is not Function func) {
                 return;
             }
 
-            FIWrapper wrapper = new(func);
             InjectAutoTextUpdate();
-            var betaText = UnityEngine.Object.FindObjectOfType<scrShowIfDebug>();
-            betaText.gameObject.SetActive(true);
-            wrapper.Call(betaText.GetComponent<UnityEngine.UI.Text>());
+
+            UnityEngine.UI.Text label = FindAutoText();
+            if(!label) {
+                Main.Logger.Log(
+                    "[Scripting] configAutoText skipped: " +
+                    "scrShowIfDebug or its Text component is not loaded."
+                );
+                return;
+            }
+
+            InvokeEventCallback(
+                new FIWrapper(func),
+                "configAutoText",
+                label
+            );
         }
         [Api("setTileSprite")]
         public static void SetTileSprite(Sprite sprite, float scale) {
@@ -722,68 +1033,425 @@ public static class Impl {
                 floor.floorRenderer.transform.localScale = new Vector2(scale, scale);
             }
         }
-        [Api("setTileIcon")]
-        public static void SetTileIcon(Sprite sprite, float scale) {
-            foreach(var floor in UnityEngine.Object.FindObjectsOfType<scrFloor>()) {
-                floor.SetIconSprite(sprite);
-                floor.SetIconScale(scale);
+        private const string ScriptTileIconObjectName = "OverlayerScriptTileIcon";
+
+        private static bool HasIconName(string value) =>
+            !string.IsNullOrWhiteSpace(value) &&
+            value.IndexOf("icon", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        private static void AddTileIconRenderer(
+            object value,
+            HashSet<SpriteRenderer> renderers
+        ) {
+            if(value == null || renderers == null) {
+                return;
+            }
+
+            if(value is SpriteRenderer spriteRenderer) {
+                if(spriteRenderer) {
+                    renderers.Add(spriteRenderer);
+                }
+                return;
+            }
+
+            if(value is GameObject gameObject) {
+                foreach(var renderer in gameObject.GetComponentsInChildren<SpriteRenderer>(true)) {
+                    if(renderer) {
+                        renderers.Add(renderer);
+                    }
+                }
+                return;
+            }
+
+            if(value is Component component) {
+                foreach(var renderer in component.GetComponentsInChildren<SpriteRenderer>(true)) {
+                    if(renderer) {
+                        renderers.Add(renderer);
+                    }
+                }
+                return;
+            }
+
+            if(value is Array array) {
+                foreach(object item in array) {
+                    AddTileIconRenderer(item, renderers);
+                }
             }
         }
+
+        private static void ApplyTileIconMemberValues(
+            scrFloor floor,
+            Sprite sprite,
+            float scale,
+            HashSet<SpriteRenderer> renderers
+        ) {
+            const BindingFlags flags = (BindingFlags)15420;
+            Type type = floor.GetType();
+
+            foreach(FieldInfo field in type.GetFields(flags)) {
+                if(field.IsStatic || !HasIconName(field.Name)) {
+                    continue;
+                }
+
+                try {
+                    if(field.FieldType == typeof(Sprite) && !field.IsInitOnly) {
+                        field.SetValue(floor, sprite);
+                    }
+                    else if(
+                        field.Name.IndexOf("scale", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                        !field.IsInitOnly
+                    ) {
+                        if(field.FieldType == typeof(float)) {
+                            field.SetValue(floor, scale);
+                        }
+                        else if(field.FieldType == typeof(Vector2)) {
+                            field.SetValue(floor, new Vector2(scale, scale));
+                        }
+                        else if(field.FieldType == typeof(Vector3)) {
+                            field.SetValue(floor, new Vector3(scale, scale, 1f));
+                        }
+                    }
+
+                    AddTileIconRenderer(field.GetValue(floor), renderers);
+                }
+                catch {
+                                                                                           
+                }
+            }
+
+            foreach(PropertyInfo property in type.GetProperties(flags)) {
+                if(
+                    !HasIconName(property.Name) ||
+                    property.GetIndexParameters().Length != 0
+                ) {
+                    continue;
+                }
+
+                try {
+                    MethodInfo setter = property.GetSetMethod(true);
+                    if(setter != null && !setter.IsStatic) {
+                        if(property.PropertyType == typeof(Sprite)) {
+                            property.SetValue(floor, sprite);
+                        }
+                        else if(
+                            property.Name.IndexOf("scale", StringComparison.OrdinalIgnoreCase) >= 0
+                        ) {
+                            if(property.PropertyType == typeof(float)) {
+                                property.SetValue(floor, scale);
+                            }
+                            else if(property.PropertyType == typeof(Vector2)) {
+                                property.SetValue(floor, new Vector2(scale, scale));
+                            }
+                            else if(property.PropertyType == typeof(Vector3)) {
+                                property.SetValue(floor, new Vector3(scale, scale, 1f));
+                            }
+                        }
+                    }
+
+                    MethodInfo getter = property.GetGetMethod(true);
+                    if(getter != null && !getter.IsStatic) {
+                        AddTileIconRenderer(property.GetValue(floor), renderers);
+                    }
+                }
+                catch {
+                                                                                           
+                }
+            }
+        }
+
+        private static SpriteRenderer GetOrCreateTileIconRenderer(scrFloor floor) {
+            Transform iconTransform = floor.transform.Find(ScriptTileIconObjectName);
+            GameObject iconObject;
+
+            if(iconTransform) {
+                iconObject = iconTransform.gameObject;
+            }
+            else {
+                iconObject = new GameObject(ScriptTileIconObjectName);
+                iconObject.transform.SetParent(floor.transform, false);
+                iconObject.transform.localPosition = Vector3.zero;
+            }
+
+            SpriteRenderer renderer = iconObject.GetComponent<SpriteRenderer>();
+            if(!renderer) {
+                renderer = iconObject.AddComponent<SpriteRenderer>();
+            }
+
+            SpriteRenderer floorRenderer =
+                floor.floorRenderer == null
+                    ? null
+                    : floor.floorRenderer.transform.GetComponent<SpriteRenderer>();
+            if(floorRenderer) {
+                renderer.sortingLayerID = floorRenderer.sortingLayerID;
+                renderer.sortingOrder = floorRenderer.sortingOrder + 1;
+            }
+
+            return renderer;
+        }
+
+        private static void ConfigureTileIconRenderer(
+            SpriteRenderer renderer,
+            SpriteRenderer floorRenderer,
+            Sprite sprite,
+            float scale
+        ) {
+            if(!renderer || renderer == floorRenderer) {
+                return;
+            }
+
+            renderer.sprite = sprite;
+            renderer.enabled = sprite != null;
+            renderer.transform.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        [Api("setTileIcon")]
+        public static void SetTileIcon(Sprite sprite, float scale) {
+            int floorsSeen = 0;
+            int renderersUpdated = 0;
+            int nativeFailures = 0;
+
+            foreach(var floor in UnityEngine.Object.FindObjectsOfType<scrFloor>()) {
+                if(!floor) {
+                    continue;
+                }
+
+                floorsSeen++;
+                SpriteRenderer floorRenderer =
+                    floor.floorRenderer == null
+                        ? null
+                        : floor.floorRenderer.transform.GetComponent<SpriteRenderer>();
+                var renderers = new HashSet<SpriteRenderer>();
+
+                try {
+                    floor.SetIconSprite(sprite);
+                    floor.SetIconScale(scale);
+                }
+                catch {
+                    nativeFailures++;
+                }
+
+                ApplyTileIconMemberValues(
+                    floor,
+                    sprite,
+                    scale,
+                    renderers
+                );
+
+                SpriteRenderer[] children = floor.GetComponentsInChildren<SpriteRenderer>(true);
+                foreach(SpriteRenderer renderer in children) {
+                    if(!renderer || renderer == floorRenderer) {
+                        continue;
+                    }
+
+                    if(
+                        HasIconName(renderer.name) ||
+                        HasIconName(renderer.transform.parent?.name)
+                    ) {
+                        renderers.Add(renderer);
+                    }
+                }
+
+                if(renderers.Count == 0) {
+                    renderers.Add(GetOrCreateTileIconRenderer(floor));
+                }
+
+                foreach(SpriteRenderer renderer in renderers) {
+                    ConfigureTileIconRenderer(
+                        renderer,
+                        floorRenderer,
+                        sprite,
+                        scale
+                    );
+
+                    if(renderer && renderer != floorRenderer) {
+                        renderersUpdated++;
+                    }
+                }
+            }
+
+            Main.Logger.Log(
+                "[Scripting] setTileIcon: " +
+                $"updated {renderersUpdated} renderer(s) across {floorsSeen} floor(s); " +
+                $"native setter failures={nativeFailures}."
+            );
+        }
         [Api("configTiles")]
-        public static void ConfigTiles(Engine engine, JsValue configFunc) {
+        public static void ConfigTiles(JsValue configFunc) {
             if(configFunc is not Function func) {
                 return;
             }
 
+            var levelMaker = scrLevelMaker.instance;
+            var list = levelMaker?.listFloors;
+            if(list == null) {
+                Main.Logger.Log(
+                    "[Scripting] configTiles skipped: level floors are not ready."
+                );
+                return;
+            }
+
             FIWrapper wrapper = new(func);
-            var list = scrLevelMaker.instance.listFloors;
             for(int i = 0; i < list.Count; i++) {
-                wrapper.Call(wrapper.args.Length == 1 ? [list[i]] : [i, list[i]]);
+                try {
+                    wrapper.Call(
+                        wrapper.args.Length == 1
+                            ? [list[i]]
+                            : [i, list[i]]
+                    );
+                }
+                catch(Exception e) {
+                    Main.Logger.Log(
+                        $"[Scripting] configTiles callback failed at tile {i}: " +
+                        $"{e.GetType().Name}: {e.Message}"
+                    );
+                }
             }
         }
         [Api("setJudgeText")]
         public static void SetJudgeText(HitMargin hitMargin, string text) {
+            InjectJudgeTextShowPatch();
+
+            customJudgeTexts[hitMargin] = text ?? "";
+            Main.Logger.Log($"[Scripting] setJudgeText: registered replacement for {hitMargin}");
+
+                                                        
+                                                                
             StaticCoroutine.Run(StaticCoroutine.SyncRunner(() => {
-                var hitTexts = GetCachedHitTexts();
-
-                if(hitTexts == null || !hitTexts.TryGetValue(hitMargin, out var texts) || texts == null) {
-                    return;
-                }
-
-                foreach(var t in texts) {
-                    var mesh = GetHitTextMeshText(t);
-                    if(mesh != null) {
-                        mesh.text = text;
+                int applied = 0;
+                foreach(var textMesh in Resources.FindObjectsOfTypeAll<scrHitTextMesh>()) {
+                    if(ApplyRegisteredJudgeText(textMesh, null)) {
+                        applied++;
                     }
                 }
+
+                Main.Logger.Log($"[Scripting] setJudgeText: refreshed {applied} currently loaded hit text object(s) for registered replacements");
             }));
         }
+
         [Api("configJudgeText", ParamComment =
         [
             "scrHitTextMesh Callback"
         ])]
-        public static void ConfigJudgeText(Engine engine, HitMargin hitMargin, JsValue configFunc) {
+        public static void ConfigJudgeText(HitMargin hitMargin, JsValue configFunc) {
             if(configFunc is not Function func) {
                 return;
             }
 
             FIWrapper wrapper = new(func);
+            InjectJudgeTextShowPatch();
+
+            if(!customJudgeConfigs.TryGetValue(hitMargin, out var wrappers)) {
+                wrappers = customJudgeConfigs[hitMargin] = [];
+            }
+
+            wrappers.Add(wrapper);
+
+                                                           
             StaticCoroutine.Run(StaticCoroutine.SyncRunner(() => {
-                var hitTexts = GetCachedHitTexts();
-
-                if(hitTexts == null || !hitTexts.TryGetValue(hitMargin, out var texts) || texts == null) {
-                    return;
-                }
-
-                foreach(var t in texts) {
-                    wrapper.Call(wrapper.args.Length == 1 ? [t] : [hitMargin, t]);
+                foreach(var t in Resources.FindObjectsOfTypeAll<scrHitTextMesh>()) {
+                    if(TryGetHitTextMargin(t, null, out var actualMargin) && actualMargin == hitMargin) {
+                        InvokeJudgeTextConfig(wrapper, hitMargin, t);
+                    }
                 }
             }));
         }
         [Api("setSfxSound")]
-        public static void SetSfxSound(SfxSound sfx, string audio) => AudioPlayer.LoadAudio(audio, clip => Tags.ADOFAI.RDC.soundEffects[(int)sfx] = clip);
+        public static bool SetSfxSound(SfxSound sfx, string audio) {
+            if(string.IsNullOrWhiteSpace(audio)) {
+                Main.Logger.Log(
+                    "[Scripting] setSfxSound skipped: audio path is empty."
+                );
+                return false;
+            }
+
+            AudioPlayer.LoadAudio(audio, clip => {
+                try {
+                    if(!clip) {
+                        Main.Logger.Log(
+                            "[Scripting] setSfxSound skipped: audio clip is null."
+                        );
+                        return;
+                    }
+
+                    var constants = Tags.ADOFAI.RDC;
+                    if(constants == null || constants.soundEffects == null) {
+                        Main.Logger.Log(
+                            "[Scripting] setSfxSound skipped: " +
+                            "RDConstants soundEffects is not ready."
+                        );
+                        return;
+                    }
+
+                    int index = (int)sfx;
+                    if(index < 0 || index >= constants.soundEffects.Length) {
+                        Main.Logger.Log(
+                            "[Scripting] setSfxSound skipped: " +
+                            $"enum index {index} is outside soundEffects length {constants.soundEffects.Length}."
+                        );
+                        return;
+                    }
+
+                    constants.soundEffects[index] = clip;
+                    Main.Logger.Log(
+                        "[Scripting] setSfxSound: " +
+                        $"replaced {sfx} at index {index} with '{clip.name}'."
+                    );
+                }
+                catch(Exception e) {
+                    Main.Logger.Log(
+                        "[Scripting] setSfxSound callback failed:" +
+                        $"\n{e}"
+                    );
+                }
+            });
+
+            return true;
+        }
+
         [Api("setHitSound")]
-        public static void SetHitSound(HitSound hit, string audio) => AudioPlayer.LoadAudio(audio, clip => AudioManager.Instance.audioLib[$"snd{hit}"] = clip);
+        public static bool SetHitSound(HitSound hit, string audio) {
+            if(string.IsNullOrWhiteSpace(audio)) {
+                Main.Logger.Log(
+                    "[Scripting] setHitSound skipped: audio path is empty."
+                );
+                return false;
+            }
+
+            AudioPlayer.LoadAudio(audio, clip => {
+                try {
+                    if(!clip) {
+                        Main.Logger.Log(
+                            "[Scripting] setHitSound skipped: audio clip is null."
+                        );
+                        return;
+                    }
+
+                    var manager = AudioManager.Instance;
+                    if(manager == null || manager.audioLib == null) {
+                        Main.Logger.Log(
+                            "[Scripting] setHitSound skipped: " +
+                            "AudioManager audioLib is not ready."
+                        );
+                        return;
+                    }
+
+                    string key = $"snd{hit}";
+                    manager.audioLib[key] = clip;
+                    Main.Logger.Log(
+                        "[Scripting] setHitSound: " +
+                        $"replaced '{key}' with '{clip.name}'."
+                    );
+                }
+                catch(Exception e) {
+                    Main.Logger.Log(
+                        "[Scripting] setHitSound callback failed:" +
+                        $"\n{e}"
+                    );
+                }
+            });
+
+            return true;
+        }
         [Api("setLobbyBgm")]
         public static void SetLobbyBgm(string audio) => AudioPlayer.LoadAudio(audio, clip => {
             var lobbySource = scrConductor.instance.GetComponentsInChildren<AudioSource>()?.FirstOrDefault(a => a.clip?.name == "1-X-wav");
@@ -791,13 +1459,6 @@ public static class Impl {
                 lobbySource.clip = clip;
             }
         });
-        [Api("setStartRadius")]
-        public static void SetStartRadius(float radius) {
-            InjectStartRadius();
-            startRadius = radius;
-        }
-        [Api("setOldAuto")]
-        public static void SetWeakAuto(bool enabled) => RDC.useOldAuto = enabled;
         [Api("getAngleFromFloor")]
         public static double GetAngleFromFloor(scrFloor floor) => Math.Abs(floor.entryangle - floor.exitangle) * Mathf.Rad2Deg;
         private static Dictionary<HitMargin, scrHitTextMesh[]> GetCachedHitTexts() {
@@ -808,29 +1469,265 @@ public static class Impl {
             return value as Dictionary<HitMargin, scrHitTextMesh[]>;
         }
 
+                                                       
+        internal static IEnumerable<Dictionary<HitMargin, scrHitTextMesh[]>> GetAllCachedHitTexts() {
+            HashSet<object> seen = [];
+            if(VersionSafe.FirstMemberValue(Tags.ADOFAI.Controller, "cachedHitTexts", "hitTexts")
+                is Dictionary<HitMargin, scrHitTextMesh[]> fromController && seen.Add(fromController)) {
+                yield return fromController;
+            }
+
+            for(int i = 0; i < VersionSafe.GetMaxPlayerCount(); i++) {
+                object player = VersionSafe.GetPlayerByIndex(i);
+                if(player == null) {
+                    break;
+                }
+
+                if(VersionSafe.FirstMemberValue(player, "cachedHitTexts", "hitTexts")
+                    is Dictionary<HitMargin, scrHitTextMesh[]> fromPlayer && seen.Add(fromPlayer)) {
+                    yield return fromPlayer;
+                }
+            }
+
+                                                                   
+            if(VersionSafe.FirstMemberValue(VersionSafe.GetPlayerOne(Tags.ADOFAI.Controller), "cachedHitTexts", "hitTexts")
+                is Dictionary<HitMargin, scrHitTextMesh[]> fromPlayerOne && seen.Add(fromPlayerOne)) {
+                yield return fromPlayerOne;
+            }
+        }
+
+        private static void InjectJudgeTextShowPatch() {
+            if(judgeTextShowPatchInjected) {
+                return;
+            }
+
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+            MethodInfo postfixMethod = typeof(Adofai).GetMethod(nameof(AfterHitTextShow), flags);
+            if(postfixMethod == null) {
+                Main.Logger.Log("[Scripting] setJudgeText: failed to find AfterHitTextShow postfix method");
+                return;
+            }
+
+            var postfix = new HarmonyMethod(postfixMethod);
+            int patched = 0;
+
+            foreach(var method in typeof(scrHitTextMesh).GetMethods(flags).Where(m => m.Name == "Show")) {
+                try {
+                    harmony.Patch(method, postfix: postfix);
+                    patched++;
+                }
+                catch(Exception e) {
+                    Main.Logger.Log($"[Scripting] setJudgeText: failed to patch scrHitTextMesh.Show overload: {e.GetType().Name}: {e.Message}");
+                }
+            }
+
+            judgeTextShowPatchInjected = patched > 0;
+            Main.Logger.Log($"[Scripting] setJudgeText: patched {patched} scrHitTextMesh.Show overload(s)");
+        }
+
+        private static void AfterHitTextShow(scrHitTextMesh __instance, object[] __args) {
+            ApplyRegisteredJudgeText(__instance, __args);
+            ApplyRegisteredJudgeConfigs(__instance, __args);
+        }
+
+        private static void ApplyRegisteredJudgeConfigs(scrHitTextMesh hitText, object[] args) {
+            if(!hitText || customJudgeConfigs == null || customJudgeConfigs.Count <= 0) {
+                return;
+            }
+
+            if(!TryGetHitTextMargin(hitText, args, out var margin)) {
+                return;
+            }
+
+            if(!customJudgeConfigs.TryGetValue(margin, out var wrappers)) {
+                return;
+            }
+
+            foreach(var wrapper in wrappers.ToArray()) {
+                InvokeJudgeTextConfig(wrapper, margin, hitText);
+            }
+        }
+
+        private static void InvokeJudgeTextConfig(
+            FIWrapper wrapper,
+            HitMargin margin,
+            scrHitTextMesh hitText
+        ) {
+            try {
+                wrapper.Call(
+                    wrapper.args.Length == 1
+                        ? new object[] { hitText }
+                        : new object[] { margin, hitText }
+                );
+            }
+            catch(Exception e) {
+                Main.Logger.Log(
+                    $"[Scripting] configJudgeText callback failed for {margin}: " +
+                    $"{e.GetType().Name}: {e.Message}"
+                );
+            }
+        }
+
+        private static bool ApplyRegisteredJudgeText(scrHitTextMesh hitText, object[] args) {
+            if(!hitText || customJudgeTexts == null || customJudgeTexts.Count <= 0) {
+                return false;
+            }
+
+            if(!TryGetHitTextMargin(hitText, args, out var margin)) {
+                return false;
+            }
+
+            if(!customJudgeTexts.TryGetValue(margin, out var replacement)) {
+                return false;
+            }
+
+            return SetHitTextString(hitText, replacement);
+        }
+
+        private static bool TryGetHitTextMargin(scrHitTextMesh hitText, object[] args, out HitMargin margin) {
+            margin = default;
+
+            if(TryGetHitMarginFromArgs(args, out margin)) {
+                return true;
+            }
+
+            object value = VersionSafe.FirstMemberValue(hitText, "hitMargin", "margin");
+            return TryConvertToHitMargin(value, out margin);
+        }
+
+        private static bool TryGetHitMarginFromArgs(object[] args, out HitMargin margin) {
+            margin = default;
+
+            if(args == null) {
+                return false;
+            }
+
+            foreach(var arg in args) {
+                if(TryConvertToHitMargin(arg, out margin)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryConvertToHitMargin(object value, out HitMargin margin) {
+            margin = default;
+
+            if(value == null) {
+                return false;
+            }
+
+            if(value is HitMargin direct) {
+                margin = direct;
+                return true;
+            }
+
+            Type type = value.GetType();
+            if(type.IsEnum) {
+                string name = value.ToString();
+                if(Enum.TryParse(name, true, out margin)) {
+                    return true;
+                }
+
+                                                           
+                                                                 
+                if(type == typeof(HitMargin) || type.Name.IndexOf("Margin", StringComparison.OrdinalIgnoreCase) >= 0) {
+                    int raw = Convert.ToInt32(value);
+                    if(Enum.IsDefined(typeof(HitMargin), raw)) {
+                        margin = (HitMargin)raw;
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            if(value is string str) {
+                return Enum.TryParse(str, true, out margin);
+            }
+
+            if(value is int i && Enum.IsDefined(typeof(HitMargin), i)) {
+                margin = (HitMargin)i;
+                return true;
+            }
+
+            return false;
+        }
+
+                                                         
+        internal static bool SetHitTextString(scrHitTextMesh hitText, string str) {
+            if(hitText == null) {
+                return false;
+            }
+
+            if(GetHitTextMeshText(hitText) is TextMesh mesh) {
+                mesh.text = str;
+                return true;
+            }
+
+            var tmp = FindHitTextTMP(hitText);
+            if(tmp != null) {
+                tmp.text = str;
+                return true;
+            }
+
+            return false;
+        }
+
+        internal static TMP_Text FindHitTextTMP(scrHitTextMesh hitText) {
+            if(hitText == null) {
+                return null;
+            }
+
+            if(VersionSafe.FirstMemberValue(hitText, "mainText", "text", "textMesh") is TMP_Text directText) {
+                return directText;
+            }
+
+                                          
+            foreach(var f in hitText.GetType().GetFields((BindingFlags)15420)) {
+                if(typeof(TMP_Text).IsAssignableFrom(f.FieldType) && f.GetValue(hitText) is TMP_Text fieldText) {
+                    return fieldText;
+                }
+            }
+
+            return hitText.GetComponentInChildren<TMP_Text>(true);
+        }
+
         private static TextMesh GetHitTextMeshText(scrHitTextMesh hitTextMesh) =>
-            VersionSafe.FirstMemberValue(hitTextMesh, "text", "textMesh", "mesh") as TextMesh;
-        private static float startRadius = 1;
+            (VersionSafe.FirstMemberValue(hitTextMesh, "text", "textMesh", "mesh") as TextMesh)
+            ?? hitTextMesh?.GetComponentInChildren<TextMesh>(true);
         internal static bool autoTextInjected = false;
-        internal static bool startRadiusInjected = false;
         private static void InjectAutoTextUpdate() {
             if(autoTextInjected) {
                 return;
             }
 
-            harmony.Patch(typeof(scrShowIfDebug).GetMethod("Update", (BindingFlags)15420), new HarmonyMethod(EmitUtils.Wrap(() => false)));
-            autoTextInjected = true;
-        }
-        private static void InjectStartRadius() {
-            if(startRadiusInjected) {
+            MethodInfo target = typeof(scrShowIfDebug)
+                .GetMethod("Update", (BindingFlags)15420);
+            MethodInfo prefixMethod = EmitUtils.Wrap(() => false);
+
+            if(target == null || prefixMethod == null) {
+                Main.Logger.Log(
+                    "[Scripting] auto text patch skipped: " +
+                    "scrShowIfDebug.Update is unavailable."
+                );
                 return;
             }
 
-            harmony.Patch(typeof(scrController).GetMethod("get_startRadius", (BindingFlags)15420), new HarmonyMethod(EmitUtils.Wrap(new RefFunc<float, bool>((ref float __result) => {
-                __result = startRadius;
-                return false;
-            }))));
-            startRadiusInjected = true;
+            try {
+                harmony.Patch(
+                    target,
+                    prefix: new HarmonyMethod(prefixMethod)
+                );
+                autoTextInjected = true;
+            }
+            catch(Exception e) {
+                Main.Logger.Log(
+                    "[Scripting] auto text patch failed: " +
+                    $"{e.GetType().Name}: {e.Message}"
+                );
+            }
         }
         private static void ScaleAll(Transform[] t, Vector2 vec) {
             for(int i = 0; i < t.Length; i++) {
@@ -843,6 +1740,14 @@ public static class Impl {
     }
     #endregion
     static Harmony harmony;
+    static Dictionary<HitMargin, string> customJudgeTexts;
+    static Dictionary<HitMargin, List<FIWrapper>> customJudgeConfigs;
+    static bool judgeTextShowPatchInjected;
+    static List<FIWrapper> anyKeyCallbacks;
+    static List<FIWrapper> anyKeyDownCallbacks;
+    static Dictionary<KeyCode, List<FIWrapper>> keyCallbacks;
+    static Dictionary<KeyCode, List<FIWrapper>> keyUpCallbacks;
+    static Dictionary<KeyCode, List<FIWrapper>> keyDownCallbacks;
     public static HashSet<string> alreadyExecutedScripts;
     public static List<string> registeredCustomTags;
     public static Dictionary<string, object> globalVariables;
@@ -864,24 +1769,91 @@ public static class Impl {
     static MethodInfo transpilerAdapter = typeof(Impl).GetMethod("TranspilerAdapter", AccessTools.all);
     static AssemblyBuilder ApiAssembly;
     static ModuleBuilder ApiModule;
-    static FieldInfo mr = typeof(PlanetRenderer).GetField("meshRenderer", (BindingFlags)15420);
-    // From PlanetTweaks By tjwogud
-    public static SpriteRenderer GetOrAddRenderer(this scrPlanet planet, PlanetRenderer planetrender) {
-        if(!planet) {
+    static SpriteRenderer FindPlanetBaseRenderer(
+        PlanetRenderer planetrender
+    ) {
+        if(!planetrender) {
             return null;
         }
 
-        SpriteRenderer renderer = planet.transform.Find("PlanetTweaksRenderer")?.GetComponent<SpriteRenderer>();
-        if(!renderer) {
-            GameObject obj = new("PlanetTweaksRenderer");
-            obj.AddComponent<RendererController>();
-            renderer = obj.AddComponent<SpriteRenderer>();
-            renderer.sortingOrder = (mr.GetValue(planetrender.sprite) as SpriteRenderer).sortingOrder + 1;
-            renderer.sortingLayerID = planetrender.faceDetails.sortingLayerID;
-            renderer.sortingLayerName = planetrender.faceDetails.sortingLayerName;
-            renderer.transform.SetParent(planet.transform);
-            renderer.transform.position = planet.transform.position;
+        try {
+            object spriteObject = VersionSafe.FirstMemberValue(
+                planetrender,
+                "sprite"
+            );
+
+            if(spriteObject is SpriteRenderer directRenderer) {
+                return directRenderer;
+            }
+
+            if(spriteObject != null) {
+                object nestedRenderer = VersionSafe.FirstMemberValue(
+                    spriteObject,
+                    "meshRenderer",
+                    "spriteRenderer",
+                    "renderer"
+                );
+
+                if(nestedRenderer is SpriteRenderer reflectedRenderer) {
+                    return reflectedRenderer;
+                }
+
+                if(spriteObject is Component component) {
+                    return
+                        component.GetComponent<SpriteRenderer>() ??
+                        component.GetComponentInChildren<SpriteRenderer>(true);
+                }
+            }
+
+            return
+                planetrender.GetComponent<SpriteRenderer>() ??
+                planetrender.GetComponentInChildren<SpriteRenderer>(true);
         }
+        catch(Exception e) {
+            Main.Logger.Log(
+                "[Scripting] planet base renderer lookup failed: " +
+                $"{e.GetType().Name}: {e.Message}"
+            );
+            return null;
+        }
+    }
+
+    // From PlanetTweaks By tjwogud
+    public static SpriteRenderer GetOrAddRenderer(
+        this scrPlanet planet,
+        PlanetRenderer planetrender
+    ) {
+        if(!planet || !planetrender) {
+            return null;
+        }
+
+        SpriteRenderer renderer = planet.transform
+            .Find("PlanetTweaksRenderer")
+            ?.GetComponent<SpriteRenderer>();
+
+        if(renderer) {
+            return renderer;
+        }
+
+        GameObject obj = new("PlanetTweaksRenderer");
+        obj.transform.SetParent(planet.transform, false);
+        obj.transform.localPosition = Vector3.zero;
+
+        renderer = obj.AddComponent<SpriteRenderer>();
+
+        SpriteRenderer sourceRenderer =
+            FindPlanetBaseRenderer(planetrender);
+
+        if(sourceRenderer) {
+            renderer.sortingOrder =
+                sourceRenderer.sortingOrder + 1;
+            renderer.sortingLayerID =
+                sourceRenderer.sortingLayerID;
+            renderer.sortingLayerName =
+                sourceRenderer.sortingLayerName;
+        }
+
+        obj.AddComponent<RendererController>();
         return renderer;
     }
     static MethodInfo GenerateTagWrapper(FIWrapper wrapper) {
@@ -976,10 +1948,22 @@ public static class Impl {
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, false);
         wrapperInitialized = false;
     }
-    private static MethodInfo Postfix<T>(this Harmony harmony, MethodBase target, T del) where T : Delegate
-       => harmony.Patch(target, postfix: new HarmonyMethod(del.Wrap()));
-    private static MethodInfo Prefix<T>(this Harmony harmony, MethodBase target, T del) where T : Delegate
-        => harmony.Patch(target, new HarmonyMethod(del.Wrap()));
+    private static MethodInfo Postfix<T>(this Harmony harmony, MethodBase target, T del) where T : Delegate {
+                                          
+                                                 
+        if(target == null) {
+            Main.Logger.Log("[Scripting] Patch target not found (game version mismatch?), callback skipped.");
+            return null;
+        }
+        return harmony.Patch(target, postfix: new HarmonyMethod(del.Wrap()));
+    }
+    private static MethodInfo Prefix<T>(this Harmony harmony, MethodBase target, T del) where T : Delegate {
+        if(target == null) {
+            Main.Logger.Log("[Scripting] Patch target not found (game version mismatch?), callback skipped.");
+            return null;
+        }
+        return harmony.Patch(target, new HarmonyMethod(del.Wrap()));
+    }
     // From PlanetTweaks By tjwogud
     public class RendererController : MonoBehaviour {
         private scrPlanet planet;
@@ -987,30 +1971,41 @@ public static class Impl {
         private SpriteRenderer renderer;
 
         private void Awake() {
-            planet = GetComponentInParent<scrPlanet>();
-            planetrender = GetComponentInParent<PlanetRenderer>();
-            renderer = planet.GetOrAddRenderer(planetrender);
+            RefreshReferences();
         }
 
-        private void Update() {
+        private void RefreshReferences() {
             if(!planet) {
                 planet = GetComponentInParent<scrPlanet>();
             }
 
             if(!planetrender) {
-                planetrender = GetComponentInParent<PlanetRenderer>();
+                planetrender =
+                    GetComponentInParent<PlanetRenderer>();
             }
 
             if(!renderer) {
-                renderer = planet.GetOrAddRenderer(planetrender);
+                renderer = GetComponent<SpriteRenderer>();
+            }
+        }
+
+        private void Update() {
+            RefreshReferences();
+
+            if(!planet || !planetrender || !renderer) {
+                return;
             }
 
-            if(planet && renderer) {
-                if(planet.dummyPlanets) {
-                    Destroy(gameObject);
-                    return;
-                }
-                renderer.enabled = planetrender.sprite.visible;
+            if(planet.dummyPlanets) {
+                Destroy(gameObject);
+                return;
+            }
+
+            SpriteRenderer sourceRenderer =
+                FindPlanetBaseRenderer(planetrender);
+
+            if(sourceRenderer) {
+                renderer.enabled = sourceRenderer.enabled;
             }
         }
     }

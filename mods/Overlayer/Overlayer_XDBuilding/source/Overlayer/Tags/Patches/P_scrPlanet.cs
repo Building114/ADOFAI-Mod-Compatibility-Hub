@@ -1,6 +1,6 @@
-// XDB Patch modification: 2026-06-03
-// Purpose: compatibility with ADOFAI r141+ field and method changes.
-// Based on modlist-org/Overlayer-Lagacy 3.49.0, licensed under GPL-3.0.
+                                     
+                                                                     
+                                                                        
 
 using Overlayer.Core.Patches;
 using System;

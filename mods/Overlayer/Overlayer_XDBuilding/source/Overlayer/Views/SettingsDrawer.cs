@@ -192,7 +192,7 @@ public class SettingsDrawer : ModelDrawable<Settings> {
                 }
                 model.AutoUpdate = false;
                 model.AutoUpdateBeta = false;
-                GUILayout.Label("AutoUpdater disabled in Overlayer XDBuilding 3.49.4.");
+                GUILayout.Label("AutoUpdater disabled in Overlayer XDBuilding 3.49.5.");
                 Drawer.DrawBool(string.Format(Main.Lang.Get("USE_THIS", "Use {0}"), Main.Lang.Get("TOOLTIP", "Tooltip")), ref model.Tooltip);
                 Drawer.HoverTooltip(Main.Lang.Get("TOOLTIP_DESC", "You are currently viewing this"));
                 if(Drawer.DrawBool(Main.Lang.Get("LEGACY_THEME", "Legacy Theme"), ref model.LegacyTheme)) {

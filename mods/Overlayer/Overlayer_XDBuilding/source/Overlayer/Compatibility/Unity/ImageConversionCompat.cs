@@ -3,17 +3,17 @@ using System.Reflection;
 
 namespace UnityEngine;
 
-/// <summary>
-/// Compile-time shim for UnityEngine.ImageConversionModule.
-///
-/// Newer ADOFAI Unity assemblies can make UnityEngine.ImageConversionModule require
-/// netstandard 2.1. Referencing that module directly from this .NET Framework mod
-/// breaks the whole project with mscorlib/netstandard duplicate core types.
-///
-/// This shim keeps source calls such as texture.LoadImage(bytes),
-/// ImageConversion.LoadImage(texture, bytes), and texture.EncodeToPNG() compiling.
-/// At runtime it forwards to Unity's real ImageConversion methods by reflection.
-/// </summary>
+             
+                                                            
+   
+                                                                                    
+                                                                                  
+                                                                            
+   
+                                                                  
+                                                                                   
+                                                                                 
+              
 public static class ImageConversion {
     private static readonly Type RuntimeType =
         Type.GetType("UnityEngine.ImageConversion, UnityEngine.ImageConversionModule") ??

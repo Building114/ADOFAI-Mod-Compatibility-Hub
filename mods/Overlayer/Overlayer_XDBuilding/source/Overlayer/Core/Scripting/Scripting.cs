@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using Newtonsoft.Json.Linq;
 using Overlayer.Core.Patches;
 using Overlayer.Core.Scripting.JSNet.API;
@@ -35,6 +35,7 @@ public static class Scripting {
     static string SandboxResult = "...";
 
     public static void Initalize() {
+        Main.Logger.Log("[Scripting] Full API closeout v8.3 active. Tile icon compatibility, audio verification guards, and 66 active APIs enabled.");
         JSApi = new Api();
         JSApi.RegisterType(typeof(Impl));
         foreach(var tag in TagManager.All) {
@@ -48,7 +49,6 @@ public static class Scripting {
             }
         };
 
-        RunScriptsNonBlocking();
     }
 
     public static void Release() {
@@ -106,6 +106,7 @@ public static class Scripting {
             return;
         }
         ScriptsRunning = true;
+        try {
         Main.Logger.Log("Start Running Scripts..");
         Directory.CreateDirectory(ScriptPath);
         Directory.CreateDirectory(ScriptProxyPath);
@@ -123,6 +124,17 @@ public static class Scripting {
         Impl.Reload();
         foreach(string script in Directory.GetFiles(ScriptPath, "*.js")) {
             var nameWithoutExt = Path.GetFileNameWithoutExtension(script);
+
+                                                                                  
+                                                                                 
+                                         
+            if(nameWithoutExt.EndsWith(
+                ".tmp",
+                StringComparison.OrdinalIgnoreCase
+            )) {
+                continue;
+            }
+
             if(nameWithoutExt is "Impl" or
                 "CImpl") {
                 continue;
@@ -140,24 +152,90 @@ public static class Scripting {
                 continue;
             }
 
-            await RunScript(script, File.ReadAllText(script));
-        }
-        ScriptsRunning = false;
-    }
-    public static async Task<bool> RunScript(string path, string script) {
-        return await Task.Run(() => {
-            string name = Path.GetFileName(path);
+            if(!File.Exists(script)) {
+                Main.Logger.Log(
+                    $"Skipped Script \"{Path.GetFileName(script)}\": " +
+                    "file was removed before execution."
+                );
+                continue;
+            }
+
+            string code;
             try {
-                CurrentExecutingScript = script;
-                CurrentExecutingScriptPath = path;
-                BeginScript();
-                var time = MiscUtils.MeasureTime(() => JSApi.PrepareInterpreter().Execute(JSUtils.RemoveImports(script)));
-                EndScript();
-                Main.Logger.Log($"Executed \"{name}\" Script Successfully. ({time.TotalMilliseconds}ms)");
-                return true;
-            } catch(Exception e) { Main.Logger.Log($"Exception At Executing Script \"{name}\":\n{e}"); return false; }
-        });
+                code = File.ReadAllText(script);
+            }
+            catch(Exception e) when(
+                e is FileNotFoundException ||
+                e is DirectoryNotFoundException
+            ) {
+                Main.Logger.Log(
+                    $"Skipped Script \"{Path.GetFileName(script)}\": " +
+                    $"{e.GetType().Name}: {e.Message}"
+                );
+                continue;
+            }
+
+            await RunScript(script, code);
+        }
+        } catch(Exception e) {
+                                                     
+                                                                   
+            Main.Logger.Log($"Exception While Preparing Scripts:\n{e}");
+        } finally {
+                                                                                         
+                                                                                         
+                                                            
+            StaticCoroutine.Queue(
+                StaticCoroutine.SyncRunner(
+                    ProfileManager.Refresh
+                )
+            );
+
+            ScriptsRunning = false;
+        }
     }
+    public static Task<bool> RunScript(
+        string path,
+        string script
+    ) {
+        string name = Path.GetFileName(path);
+        bool succeeded;
+
+        try {
+            CurrentExecutingScript = script;
+            CurrentExecutingScriptPath = path;
+            BeginScript();
+
+            var time = MiscUtils.MeasureTime(
+                () => JSApi
+                    .PrepareInterpreter()
+                    .Execute(
+                        JSUtils.RemoveImports(script)
+                    )
+            );
+
+            Main.Logger.Log(
+                $"Executed \"{name}\" Script Successfully. " +
+                $"({time.TotalMilliseconds}ms)"
+            );
+
+            succeeded = true;
+        }
+        catch(Exception e) {
+            Main.Logger.Log(
+                $"Exception At Executing Script " +
+                $"\"{name}\":\n{e}"
+            );
+
+            succeeded = false;
+        }
+        finally {
+            EndScript();
+        }
+
+        return Task.FromResult(succeeded);
+    }
+
     public static async void RunScriptsNonBlocking() => await RunScripts();
     public static void BeginScript(bool sandbox = false) {
         if(sandbox) {
@@ -241,9 +319,32 @@ public static class Scripting {
                         var nameSplit = decTypeSplit[1].Split('#');
                         var name = nameSplit[0];
                         var parametersSplit = nameSplit[1].Split('&');
-                        var parameters = parametersSplit[0].Split(',').Select(pType => MiscUtils.TypeByName(pType));
+                        var parameterNames = parametersSplit[0];
+                        Type[] parameters = string.IsNullOrWhiteSpace(parameterNames)
+                            ? Type.EmptyTypes
+                            : parameterNames
+                                .Split(',')
+                                .Select(MiscUtils.TypeByName)
+                                .ToArray();
                         var alias = parametersSplit[1];
-                        return (alias, (MemberInfo)decType?.GetMethod(name, (BindingFlags)15420, null, parameters.ToArray(), null));
+
+                        if(
+                            decType == null ||
+                            parameters.Any(parameter => parameter == null)
+                        ) {
+                            return (alias, (MemberInfo)null);
+                        }
+
+                        return (
+                            alias,
+                            (MemberInfo)decType.GetMethod(
+                                name,
+                                (BindingFlags)15420,
+                                null,
+                                parameters,
+                                null
+                            )
+                        );
                     })) {
                         yield return staticMethod;
                     }
@@ -252,14 +353,23 @@ public static class Scripting {
         }
     }
     public static byte[] ExportTexts(IEnumerable<OverlayerText> texts) {
+        List<OverlayerText> textList = texts?
+            .Where(text => text?.Config != null)
+            .ToList() ?? [];
+
+        var textArray = new JArray();
+        foreach(OverlayerText text in textList) {
+            textArray.Add(text.Config.Serialize());
+        }
+
         var node = new JObject {
-            ["Texts"] = JArray.FromObject(texts.Select(ot => ot.Config).ToList())
+            ["Texts"] = textArray
         };
 
         var scriptsArray = new JArray();
         node["Scripts"] = scriptsArray;
 
-        var scripts = texts
+        var scripts = textList
             .SelectMany(t => t.PlayingReplacer.References
                 .Union(t.NotPlayingReplacer.References)
                 .Select(ResolveScriptTag)

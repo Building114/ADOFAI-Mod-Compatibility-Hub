@@ -1,4 +1,4 @@
-﻿using Overlayer.Core.TextReplacing;
+using Overlayer.Core.TextReplacing;
 using Overlayer.Tags.Attributes;
 using Overlayer.Utils;
 using System;
@@ -253,7 +253,15 @@ public class OverlayerTag {
         bool staticAccess = obj is Type;
         Type objType = obj is Type t ? t : obj.GetType();
         accessor = accessor.TrimEnd('.');
-        if(accessorCache.TryGetValue($"{objType}_Accessor_{accessor}", out var del)) {
+
+        string cacheKey =
+            $"{objType}_Accessor_{accessor}_" +
+            (staticAccess ? "Static" : "Instance");
+
+        if(accessorCache.TryGetValue(
+            cacheKey,
+            out var del
+        )) {
             return del(obj);
         }
 
@@ -292,10 +300,28 @@ public class OverlayerTag {
             }
             type = result.GetType();
         }
-        accessorCache[$"{objType}_Accessor_{accessor}"] = (Func<object, object>)CreateMemberAccessor(objType, accessor, staticAccess).CreateDelegate(typeof(Func<object, object>));
+        DynamicMethod accessorMethod =
+            CreateMemberAccessor(
+                objType,
+                accessor,
+                staticAccess
+            );
+
+        if(accessorMethod != null) {
+            accessorCache[cacheKey] =
+                (Func<object, object>)accessorMethod
+                    .CreateDelegate(
+                        typeof(Func<object, object>)
+                    );
+        }
+
         return result;
     }
     public static DynamicMethod CreateMemberAccessor(Type type, string accessor, bool staticAccess) {
+        if(!staticAccess && type.IsValueType) {
+            return null;
+        }
+
         string name = $"{type}_Accessor_{accessor}" + (staticAccess ? "_Static" : "");
         if(accessorCacheDM.TryGetValue(name, out var dm)) {
             return dm;
@@ -324,7 +350,15 @@ public class OverlayerTag {
             }
 
             toEmitMembers.Add(result);
+
+            if(
+                i < accessors.Length - 1 &&
+                t.IsValueType
+            ) {
+                return null;
+            }
         }
+
         MemberInfo last = toEmitMembers.Last();
         Type rt = last is FieldInfo ff ? ff.FieldType : last is PropertyInfo pp ? pp.PropertyType : typeof(object);
         accessorCacheDM[name] = dm = new DynamicMethod(name, typeof(object), [typeof(object)], typeof(OverlayerTag), true);
