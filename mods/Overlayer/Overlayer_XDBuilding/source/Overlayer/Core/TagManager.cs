@@ -15,6 +15,7 @@ public static class TagManager {
     public static IEnumerable<OverlayerTag> All => tags.Values;
     public static IEnumerable<OverlayerTag> NP => tags.Values.Where(ot => ot.NotPlaying);
     public static event Action OnLoadUnload = delegate { };
+    public static void NotifyChanged() => OnLoadUnload?.Invoke();
 
     internal static string testerValue;
 
@@ -49,7 +50,7 @@ public static class TagManager {
 
             SetTag(new OverlayerTag(prop, attr));
         }
-        OnLoadUnload?.Invoke();
+        NotifyChanged();
     }
     public static void Unload(Assembly ass) {
         foreach(var t in ass.GetExportedTypes()) {
@@ -60,7 +61,7 @@ public static class TagManager {
         foreach(var key in tags.Where(kvp => kvp.Value.DeclaringType == type).Select(kvp => kvp.Key).ToList()) {
             tags.Remove(key);
         }
-        OnLoadUnload?.Invoke();
+        NotifyChanged();
     }
     public static OverlayerTag GetTag(string name) => name.StartsWith("INTERNAL_TESTER_TAG_1234512345") ? testerTag : tags.TryGetValue(name, out var ot) ? ot : null;
     public static void SetTag(OverlayerTag tag) => tags[tag.Name] = tag;

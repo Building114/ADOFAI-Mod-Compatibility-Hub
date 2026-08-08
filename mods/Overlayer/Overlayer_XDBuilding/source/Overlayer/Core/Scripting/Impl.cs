@@ -1,4 +1,4 @@
-﻿using DG.Tweening;
+using DG.Tweening;
 using Discord;
 using HarmonyLib;
 using Jint;
@@ -46,11 +46,11 @@ public static class Impl {
     }
     public static void Release() {
         if(registeredCustomTags != null) {
-            if(Scripting.JSApi != null) {
-                var registeredNames = new HashSet<string>(
-                    registeredCustomTags
-                );
+            var registeredNames = new HashSet<string>(
+                registeredCustomTags
+            );
 
+            if(Scripting.JSApi != null) {
                 Scripting.JSApi.Methods.RemoveAll(
                     method => registeredNames.Contains(
                         method.Item1.Name
@@ -58,9 +58,14 @@ public static class Impl {
                 );
             }
 
-            registeredCustomTags.ForEach(
-                TagManager.RemoveTag
-            );
+            foreach(var registeredName in registeredNames) {
+                TagManager.RemoveTag(registeredName);
+                TagDesc.Desc.Remove(registeredName.ToUpperInvariant());
+            }
+
+            if(registeredNames.Count > 0) {
+                TagManager.NotifyChanged();
+            }
         }
 
         registeredCustomTags = null;
@@ -323,11 +328,12 @@ public static class Impl {
         Expression.expressions.Clear();
         string pathOrScript = Scripting.CurrentExecutingScriptPath == "Sandbox.js" ? Scripting.CurrentExecutingScript : Scripting.CurrentExecutingScriptPath;
         TagManager.SetTag(new ScriptTag(pathOrScript, tagWrapper, new Tags.Attributes.TagAttribute(name) { NotPlaying = notplaying }));
-        StaticCoroutine.Queue(StaticCoroutine.SyncRunner(ProfileManager.Refresh));
         registeredCustomTags.Add(name);
         if(tooltip != null) {
             TagDesc.Desc[name.ToUpperInvariant()] = tooltip;
         }
+        TagManager.NotifyChanged();
+        StaticCoroutine.Queue(StaticCoroutine.SyncRunner(ProfileManager.Refresh));
         Main.Logger.Log($"Registered Tag \"{name}\" (NotPlaying:{notplaying})");
     }
     [Api("unregisterTag")]
@@ -336,6 +342,8 @@ public static class Impl {
         Expression.expressions.Clear();
         TagManager.RemoveTag(name);
         TagDesc.Desc.Remove(name.ToUpperInvariant());
+        registeredCustomTags?.RemoveAll(tagName => tagName == name);
+        TagManager.NotifyChanged();
         StaticCoroutine.Queue(StaticCoroutine.SyncRunner(ProfileManager.Refresh));
     }
     /*[Api("prefix")]

@@ -100,6 +100,43 @@ public static class Scripting {
         Drawer.DrawString("", ref temp);
     }
 
+    public static IEnumerator RunScriptsAfterStartup() {
+        yield return null;
+        yield return null;
+        RunScriptsNonBlocking();
+    }
+
+    private static int GetScriptOrder(string path) {
+        try {
+            foreach(string rawLine in File.ReadLines(path).Take(32)) {
+                string line = rawLine.Trim();
+                if(!line.StartsWith("//", StringComparison.Ordinal)) {
+                    continue;
+                }
+
+                string directive = line.Substring(2).TrimStart();
+                if(!directive.StartsWith("@order", StringComparison.OrdinalIgnoreCase)) {
+                    continue;
+                }
+
+                string value = directive
+                    .Substring("@order".Length)
+                    .TrimStart(' ', '\t', ':', '=');
+
+                if(int.TryParse(value, out int order)) {
+                    return order;
+                }
+            }
+        } catch(Exception e) {
+            Main.Logger.Log(
+                $"[Scripting] Failed to read script order for {Path.GetFileName(path)}: " +
+                $"{e.GetType().Name}: {e.Message}"
+            );
+        }
+
+        return 0;
+    }
+
     public static async Task RunScripts() {
         if(ScriptsRunning) {
             Main.Logger.Log("Scripts Already Running! Aborting..");
@@ -122,7 +159,13 @@ public static class Scripting {
         File.WriteAllText(Path.Combine(ScriptProxyPath, "Unity.js"), GenerateJSProxy("Square3ang & Kkitut", unityTypes.Select(t => (t.Name, t)), null, new Version(1, 0, 0)));
         Main.Logger.Log("Preparing Executing Scripts..");
         Impl.Reload();
-        foreach(string script in Directory.GetFiles(ScriptPath, "*.js")) {
+        string[] scripts = Directory
+            .GetFiles(ScriptPath, "*.js")
+            .OrderBy(GetScriptOrder)
+            .ThenBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        foreach(string script in scripts) {
             var nameWithoutExt = Path.GetFileNameWithoutExtension(script);
 
                                                                                   

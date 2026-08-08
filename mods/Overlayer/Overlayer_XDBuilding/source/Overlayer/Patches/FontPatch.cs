@@ -1,10 +1,13 @@
-﻿using Overlayer.Core;
+using HarmonyLib;
+using Overlayer.Core;
 using Overlayer.Core.Patches;
 using Overlayer.Core.Scripting;
 using Overlayer.Unity;
 using Overlayer.Utils;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
@@ -13,6 +16,10 @@ using UnityEngine.UI;
 namespace Overlayer.Patches;
 
 public static class FontPatch {
+    public static void Reset() {
+        FontAttacher.Reset();
+    }
+
     [LazyPatch("Patches.FontPatch.FontChanger", "RDString", "GetFontDataForLanguage")]
     public static class FontChanger {
         public static bool Prefix(ref FontData __result) {
@@ -41,14 +48,76 @@ public static class FontPatch {
                                        
         static bool updating;
         static float nextUpdateTime;
+        static bool hitTextShowPatchAttempted;
+        static bool hitTextShowPatchInjected;
+
+        internal static void Reset() {
+            updating = false;
+            nextUpdateTime = 0f;
+            hitTextShowPatchAttempted = false;
+            hitTextShowPatchInjected = false;
+        }
+
         public static void Postfix(scrController __instance) {
             if(!Main.Settings.ChangeFont || updating || Time.unscaledTime < nextUpdateTime) {
                 return;
             }
 
-                                                                  
+            EnsureHitTextShowPatch();
             StaticCoroutine.Run(UpdateFontCo());
         }
+        static void EnsureHitTextShowPatch() {
+            if(hitTextShowPatchAttempted) {
+                return;
+            }
+
+            hitTextShowPatchAttempted = true;
+            const BindingFlags flags =
+                BindingFlags.Public |
+                BindingFlags.NonPublic |
+                BindingFlags.Instance |
+                BindingFlags.Static;
+
+            MethodInfo postfixMethod = typeof(FontAttacher).GetMethod(
+                nameof(AfterHitTextShow),
+                BindingFlags.NonPublic | BindingFlags.Static
+            );
+            if(postfixMethod == null) {
+                return;
+            }
+
+            var postfix = new HarmonyMethod(postfixMethod);
+            int patched = 0;
+            foreach(var method in typeof(scrHitTextMesh)
+                .GetMethods(flags)
+                .Where(method => method.Name == "Show")) {
+                try {
+                    LazyPatchManager.Harmony.Patch(method, postfix: postfix);
+                    patched++;
+                } catch(Exception e) {
+                    Main.Logger.Log($"Failed to patch scrHitTextMesh.Show for font refresh: {e.Message}");
+                }
+            }
+
+            hitTextShowPatchInjected = patched > 0;
+            if(hitTextShowPatchInjected) {
+                Main.Logger.Log($"Patched {patched} scrHitTextMesh.Show overload(s) for font refresh.");
+            }
+        }
+
+        static void AfterHitTextShow(scrHitTextMesh __instance) {
+            if(!hitTextShowPatchInjected || !Main.Settings.ChangeFont || __instance == null) {
+                return;
+            }
+
+            bool resolved = FontManager.TryGetFont(Main.Settings.AdofaiFont.name, out var font);
+            bool fontUsable = resolved && font.font != null && font.font.dynamic;
+            bool tmpUsable = resolved && font.fontTMP != null;
+            if(fontUsable || tmpUsable) {
+                ApplyFontToHitText(__instance, font, fontUsable, tmpUsable);
+            }
+        }
+
         static IEnumerator UpdateFontCo() {
             if(!Main.Settings.ChangeFont) {
                 yield break;

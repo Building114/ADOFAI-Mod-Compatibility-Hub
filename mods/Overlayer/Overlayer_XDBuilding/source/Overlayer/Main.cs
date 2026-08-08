@@ -80,7 +80,7 @@ public static class Main {
         Ass = Assembly.GetExecutingAssembly();
 
                                                                                                   
-        UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.5.";
+        UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.6.";
 
         GUI = new GUIController();
         Lang = new Translator();
@@ -106,6 +106,7 @@ public static class Main {
 
     public static bool OnToggle(ModEntry modEntry, bool toggle) {
         if(toggle) {
+            FontPatch.Reset();
             Settings.Load();
             Lang.Language = Settings.Lang;
             Lang.OnInitialize += OnLanguageInitialize;
@@ -135,14 +136,14 @@ public static class Main {
                 FileAttempt = new FileAttempt();
             }
             ProfileManager.Initialize();
-            Scripting.RunScriptsNonBlocking();
+            StaticCoroutine.Run(Scripting.RunScriptsAfterStartup());
 
             GUI.Init(settingsDrawer);
             GUI.Flush();
 
             if(updateOnce) {
                 updateOnce = false;
-                UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.5.";
+                UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.6.";
             }
         } else {
             if(EgEnabled) {

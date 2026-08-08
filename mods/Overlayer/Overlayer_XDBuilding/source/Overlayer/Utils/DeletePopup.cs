@@ -1,4 +1,4 @@
-﻿using Overlayer.Core;
+using Overlayer.Core;
 using Overlayer.Unity;
 using RapidGUI;
 using System;
@@ -12,7 +12,6 @@ internal class DeletePopup : MonoBehaviour {
     private string[] contentLines;
 
     private bool isInitaialize = false;
-    private bool isAnimating = false;
     private bool isSpawn = false;
 
     private OverlayerObject obj;

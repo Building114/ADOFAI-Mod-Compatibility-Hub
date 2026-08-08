@@ -1,4 +1,4 @@
-# Building Overlayer XDBuilding
+# Building Overlayer XDBuilding 3.49.6
 
 ## Requirements
 
@@ -9,19 +9,31 @@
 - NuGet restore support
 - A compiler supporting the configured C# 13 language version
 
-The project references ADOFAI, Unity, Harmony, and UnityModManager assemblies from the local game installation.
+The main Overlayer project targets x64.
 
 ## Configure the game folder
 
-Set an environment variable:
+Use an environment variable:
 
 ```bat
 set "ADOFAI_GAME_DIR=C:\Path\To\A Dance of Fire and Ice"
 ```
 
-Or copy `Overlayer\Local.Build.props.example` to `Overlayer\Local.Build.props` and edit the local path. The real local props file must not be committed.
+Or copy:
 
-## Build both projects
+```text
+Overlayer\Local.Build.props.example
+```
+
+to:
+
+```text
+Overlayer\Local.Build.props
+```
+
+and edit the local path. `Local.Build.props` is machine-specific and is intentionally excluded from the public source package.
+
+## Build
 
 Use the root solution:
 
@@ -29,44 +41,24 @@ Use the root solution:
 msbuild Overlayer.sln /restore /p:Configuration=Release
 ```
 
-You can pass the game directory directly:
+You can pass the game directory explicitly:
 
 ```bat
 msbuild Overlayer.sln /restore /p:Configuration=Release /p:GameDir="C:\Path\To\A Dance of Fire and Ice"
 ```
 
-Expected project outputs:
-
-```text
-Overlayer\bin\Release\
-Overlayer.Bootstrapper\bin\Release\
-```
-
-Do not build only `Overlayer\Overlayer.sln`; that duplicate solution contains the main project only and will leave an older Bootstrapper in the game folder.
-
-## Optional local deployment
-
-Deployment is disabled by default.
+Optional local deployment:
 
 ```bat
 msbuild Overlayer.sln /restore /p:Configuration=Release /p:DeployToGame=true
 ```
 
-The post-build deployment deletes existing DLL files under `Mods\Overlayer\lib` before copying dependencies. Use it only against a backed-up local test installation.
+## Known restore limitation
 
-## Known restore issue
+`Overlayer.csproj` references `LibreHardwareMonitorLib.dll` from the user's global NuGet cache at version 0.9.6, but the package is not declared as a `PackageReference`.
 
-`Overlayer.csproj` references `LibreHardwareMonitorLib.dll` from the user's global NuGet cache, but version 3.49.5 does not declare `LibreHardwareMonitorLib` as a `PackageReference`.
+Therefore a completely clean machine may still need `LibreHardwareMonitorLib` 0.9.6 present in the expected NuGet cache path before the project builds.
 
-A clean machine can therefore fail even after `/restore`. Add and verify a reproducible restore declaration before claiming fully reproducible builds.
+## Release check
 
-## Final package verification
-
-For the 3.49.5 package, verify both assemblies before archiving:
-
-```bat
-findstr /m /c:"obj\Release\Overlayer.pdb" Overlayer.dll
-findstr /m /c:"obj\Release\Overlayer.Bootstrapper.pdb" Overlayer.Bootstrapper.dll
-```
-
-Also confirm that the ZIP contains no PDB, `.vs`, `bin`, `obj`, or local build settings files.
+The player archive used for this 3.49.6 release reports version `3.49.6` in `info.json` and is the same tested archive supplied to this packaging step.

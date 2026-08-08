@@ -1,35 +1,69 @@
-# Third-Party Notices
+# Third Party Notices
 
-## Overlayer
-
-This package is derived from Overlayer-Lagacy 3.49.0.
-
-- Repository: https://github.com/modlist-org/Overlayer-Lagacy
-- License: GNU General Public License v3.0
-- Preserved license: `LICENSE.md`
+This project is based on Overlayer and keeps the upstream third-party notices.
 
 ## RapidGUI
 
-RapidGUI source files are present under `Overlayer/RapidGUI/`.
+RapidGUI is included in source form.
 
-- Verified license: MIT License
-- Preserved text: `THIRD_PARTY_LICENSES/RapidGUI-LICENSE.md`
+License:
+- MIT License
 
-## Code editor related source
+## UnityCodeEditor
 
-Code-editor-related files are present under `Overlayer/CodeEditor/`.
+UnityCodeEditor-related code is included in source form.
 
-The supplied upstream README describes UnityCodeEditor as unlicensed while using MIT-licensed code. The exact origin, revision, and redistribution terms for every copied file remain unresolved. See `REVIEW_REQUIRED.md`.
+Upstream notice:
+- Unlicensed project using MIT-licensed code.
 
 ## Jint
 
-The project references Jint 4.7.1 through NuGet.
+Jint is referenced through NuGet as `Jint` 4.7.1.
 
-- Verified license: BSD 2-Clause License
-- Preserved text: `THIRD_PARTY_LICENSES/Jint-LICENSE.txt`
+License:
+- BSD-2-Clause License
 
-## Other dependencies
+Notice:
+- This repository does not claim ownership of Jint.
+- This source package does not claim to bundle a modified `modlist-org/jint` DLL.
+- If a future binary release includes a modified Jint DLL, that release should clearly state where the corresponding source or upstream fork can be found.
 
-The project also references Acornima, BlackSharp.Core, DiskInfoToolkit, Esprima, HidSharp, LibreHardwareMonitorLib, NCalc, RAMSPDToolkit-NDD, System libraries, and Vostok.Sys.Metrics.PerfCounters.
+## JipperResourcePack reference
 
-Their binaries are not included in this source archive. A binary release must preserve every notice required by each redistributed dependency. Package-specific terms not verified here are marked for review rather than guessed.
+Earlier XDB-related notes mentioned JipperResourcePack as a public reference for changed ADOFAI field names.
+
+No JipperResourcePack source code is bundled in this repository unless explicitly stated elsewhere.
+If code is copied from that project in the future, its license must be checked and included here.
+
+## NuGet dependencies
+
+This project uses NuGet `PackageReference` entries listed in `Overlayer/Overlayer.csproj`.
+
+Known dependencies include:
+
+- Acornima 1.3.2
+- BlackSharp.Core 1.0.7
+- DiskInfoToolkit 1.1.2
+- Esprima 3.0.5
+- HidSharp 2.6.4
+- Jint 4.7.1
+- LibreHardwareMonitorLib 0.9.6
+- ncalc 1.3.8
+- RAMSPDToolkit-NDD 1.4.2
+- System.Buffers 4.6.1
+- System.CodeDom 10.0.2
+- System.IO.Compression.ZipFile 4.3.0
+- System.Management 10.0.2
+- System.Memory 4.6.3
+- System.Numerics.Vectors 4.6.1
+- System.Runtime.CompilerServices.Unsafe 6.1.2
+- System.Security.AccessControl 6.0.0
+- System.Security.Principal.Windows 5.0.0
+- System.Threading.AccessControl 10.0.3
+- System.Threading.Tasks.Extensions 4.6.3
+- Vostok.Sys.Metrics.PerfCounters 0.0.8
+
+These packages are not committed into this repository.
+They should be restored through NuGet when building the project.
+
+For binary releases, included dependency DLLs should keep their original license notices where required.

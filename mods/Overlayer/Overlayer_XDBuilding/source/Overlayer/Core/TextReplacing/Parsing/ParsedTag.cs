@@ -1,4 +1,4 @@
-﻿using Overlayer;
+using Overlayer;
 using Overlayer.Core;
 using Overlayer.Core.TextReplacing;
 using System;
@@ -21,13 +21,16 @@ public class ParsedTag : IParsed {
     }
     public void Emit(ILGenerator il) {
         var parameters = tag.GetterOriginal.GetParameters();
+        bool lazyArguments = tag.Name.Equals("Coalesce", StringComparison.OrdinalIgnoreCase);
         for(int i = 0; i < tag.ArgumentCount; i++) {
             string rawArg = args.Count - 1 < i
                 ? parameters[i].DefaultValue?.ToString() ?? string.Empty
                 : args[i];
 
             il.Emit(OpCodes.Ldstr, rawArg ?? string.Empty);
-            il.Emit(OpCodes.Call, ResolveArgumentMethod);
+            if(!lazyArguments) {
+                il.Emit(OpCodes.Call, ResolveArgumentMethod);
+            }
         }
         il.Emit(OpCodes.Call, tag.Getter);
     }

@@ -5,29 +5,38 @@ Overlayer XDBuilding is an unofficial temporary compatibility patch for the lega
 - Original mod: Overlayer
 - Original repository: https://github.com/modlist-org/Overlayer-Lagacy
 - Base version: 3.49.0
-- Patch version: 3.49.5
+- Patch version: 3.49.6
+- Previous patch version: 3.49.5
 - Target compatibility recorded by this patch: ADOFAI through 3.3.0
 - Patch maintainer: Building114
 - Overlayer-derived source license: GNU GPL v3.0
 
 This is not an official release from modlist.org, c3nb, or the original Overlayer maintainers. Original authorship, notices, and license terms remain in effect.
 
-## Main changes
+## 3.49.6
 
-- Compatibility accessors for changed ADOFAI, Unity, player, planet, floor, judgement, and text fields.
-- Expression, multiplayer judgement, player hit statistic, and XPerfect integration tags.
-- Reworked tag lexing and parsing with escaped braces, nested tags, nested parameters, and expression arguments.
-- Jint 4.7.1 interop and scripting lifecycle updates.
-- Stronger profile import, migration, backup, deletion, and object lifecycle handling.
-- Dependency loading, image conversion, file picker, and main-thread compatibility helpers.
-- The upstream automatic updater is disabled for this unofficial build.
+3.49.6 is a small maintenance update on top of XDBuilding 3.49.5.
 
-See `PATCH_NOTES.md` for the consolidated change summary and `BUILDING.md` for the actual build path.
+Main fixes:
+
+- Refresh the selected global font when judgement text is shown, so short-lived judgement text is less likely to keep the old font.
+- Use the native Windows common file dialog first, with the previous PowerShell file picker retained only as a fallback.
+- Refresh script-created tag consumers when dynamic tags are registered, removed, or released.
+- Fix the tag picker when a previously selected dynamic tag disappears.
+- Fix colon-separated multi-argument tag parsing and make `Coalesce` stop at the first valid value.
+- Delay automatic script startup slightly so later UnityModManager mods can finish loading first.
+- Allow deterministic script order with a `// @order N` header.
+- Target x64 explicitly to match the AMD64 LibreHardwareMonitor dependency.
+- Clean a few confirmed unused variables and fields.
+
+The large compatibility work remains the 3.49.5 baseline. See `PATCH_NOTES.md` for the exact 3.49.5 -> 3.49.6 file list.
+
+## Building
+
+See `BUILDING.md`.
 
 ## Package notes
 
-The source archive excludes local paths, editor state, build output, compiled binaries, PDB files, restored packages, nested release archives, and the local deployment settings file.
+The public source archive excludes the machine-specific `Overlayer/Local.Build.props`. Copy `Overlayer/Local.Build.props.example` locally if a fixed game path is preferred.
 
-The exact origin and redistribution terms of every file under `Overlayer/CodeEditor/` still need verification. The LibreHardwareMonitor reference also needs a reproducible NuGet restore declaration. See `REVIEW_REQUIRED.md`.
-
-The original upstream README is preserved as `UPSTREAM_README.md`.
+The upstream-facing README content from the supplied source is preserved in `UPSTREAM_README.md`.

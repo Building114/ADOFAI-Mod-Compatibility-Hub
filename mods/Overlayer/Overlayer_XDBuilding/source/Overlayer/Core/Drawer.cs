@@ -1,4 +1,4 @@
-﻿using DG.Tweening;
+using DG.Tweening;
 using HarmonyLib;
 using Overlayer.Models;
 using Overlayer.Tags;
@@ -530,6 +530,11 @@ public static class Drawer {
     public static bool DrawTags(ref string value) {
         var tags = TagManager.tags.Keys.ToList();
         tags.Sort();
+        if(tags.Count == 0) {
+            return false;
+        }
+
+        var previous = value;
         var selected = tags.IndexOf(value);
 
         var tooltip = new Dictionary<string, string>();
@@ -537,9 +542,12 @@ public static class Drawer {
             tooltip[tag] = Main.Lang.Get($"TAG_DESC_{tag.ToUpper()}", TagDesc.GetTagDesc(tag));
         }
 
-        SelectionPopupWithTooltip(ref selected, tags.ToArray(), "", tooltip);
-        value = tags[selected];
-        return selected != tags.IndexOf(value);
+        bool selectionChanged = SelectionPopupWithTooltip(ref selected, tags.ToArray(), "", tooltip);
+        if(selected >= 0 && selected < tags.Count) {
+            value = tags[selected];
+        }
+
+        return selectionChanged || previous != value;
     }
 
     public static bool DrawString(string label, ref string value, bool textArea = false) => DrawString(null, label, ref value, textArea);

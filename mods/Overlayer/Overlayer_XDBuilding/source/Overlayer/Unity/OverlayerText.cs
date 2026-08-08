@@ -1,4 +1,4 @@
-﻿
+
 using Overlayer.Core;
 using Overlayer.Core.TextReplacing;
 using Overlayer.Models;
@@ -29,7 +29,6 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
     private static bool isAlreadyDragging;
     private static int pointingCount = 0;
     private bool isDragging = false;
-    private bool isPointing = false;
     private Vector2 initialObjectPosition;
     private Vector2 initialPointerLocal;
 
@@ -222,7 +221,6 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
         if(!CanDrag) {
             return;
         }
-        isPointing = true;
         pointingCount++;
         if(!isAlreadyDragging) {
             OverlayerProfile.DragObj.transform.position = Text.gameObject.transform.position;
@@ -244,7 +242,6 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
                 OverlayerProfile.DragObj.SetActive(false);
             }
         }
-        isPointing = false;
     }
 
     private void SetFont() {

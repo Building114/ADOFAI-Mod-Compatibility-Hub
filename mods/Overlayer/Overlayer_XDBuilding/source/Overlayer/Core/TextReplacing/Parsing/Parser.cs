@@ -97,6 +97,18 @@ public static class Parser {
             return true;
         }
 
+        int topLevelSeparator = FindTopLevelSeparator(content, config);
+        if(!isFormat &&
+           topLevelSeparator >= 0 &&
+           content[topLevelSeparator] == config.TagOptSeparator &&
+           found.ArgumentCount > 1) {
+            arguments = SplitOptionArguments(
+                content.Substring(topLevelSeparator + 1),
+                config,
+                found.ArgumentCount
+            );
+        }
+
         if(isFormat) {
             if(found.FormattingType == Tag.FormatType.None || arguments.Count == 0 || !IsValidFormat(found.FormattingType, arguments[0])) {
                 parsed = new ParsedString(fullText);
@@ -253,6 +265,70 @@ public static class Parser {
             }
             current.Append(c);
         }
+        result.Add(current.ToString().Trim());
+        return result;
+    }
+
+    private static List<string> SplitOptionArguments(string argText, LexConfig config, int maxArguments) {
+        List<string> result = [];
+        StringBuilder current = new();
+        int braceDepth = 0, parenDepth = 0;
+        char quote = '\0';
+        bool escaping = false;
+
+        for(int i = 0; i < argText.Length; i++) {
+            char c = argText[i];
+            if(escaping) {
+                current.Append(c);
+                escaping = false;
+                continue;
+            }
+            if(c == '\\') {
+                escaping = true;
+                continue;
+            }
+            if(quote != '\0') {
+                if(c == quote) quote = '\0';
+                else current.Append(c);
+                continue;
+            }
+            if(c == '\'' || c == '"') {
+                quote = c;
+                continue;
+            }
+            if(c == config.TagStart) {
+                braceDepth++;
+                current.Append(c);
+                continue;
+            }
+            if(c == config.TagEnd && braceDepth > 0) {
+                braceDepth--;
+                current.Append(c);
+                continue;
+            }
+            if(braceDepth == 0) {
+                if(c == config.TagArgStart) {
+                    parenDepth++;
+                    current.Append(c);
+                    continue;
+                }
+                if(c == config.TagArgEnd && parenDepth > 0) {
+                    parenDepth--;
+                    current.Append(c);
+                    continue;
+                }
+                if(c == config.TagOptSeparator &&
+                   parenDepth == 0 &&
+                   result.Count < maxArguments - 1) {
+                    result.Add(current.ToString().Trim());
+                    current.Clear();
+                    continue;
+                }
+            }
+            current.Append(c);
+        }
+
+        if(escaping) current.Append('\\');
         result.Add(current.ToString().Trim());
         return result;
     }

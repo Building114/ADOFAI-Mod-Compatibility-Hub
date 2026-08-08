@@ -1,4 +1,4 @@
-﻿using DG.Tweening;
+using DG.Tweening;
 using Overlayer.Core;
 using Overlayer.Patches;
 using Overlayer.Tags;
@@ -11,12 +11,9 @@ namespace Overlayer.CodeEditor;
 internal class EasedValueEditor : MonoBehaviour {
     public string codesBefore;
     public string codesAfter;
-    public string matchValue;
     private Rect windowRect;
     private Rect previewWindowRect;
-    private string[] contentLines;
     private bool isInitaialize = false;
-    private bool isAnimating = false;
     private bool isSpawn = false;
     private float testvalue;
 

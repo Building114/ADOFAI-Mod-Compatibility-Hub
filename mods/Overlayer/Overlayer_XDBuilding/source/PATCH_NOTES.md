@@ -1,37 +1,76 @@
-# Overlayer XDBuilding 3.49.5 Patch Notes
+# Overlayer XDBuilding 3.49.6 Patch Notes
 
-## Compatibility
+## Scope
 
-- Adds guarded field, property, and method access across changed game versions.
-- Updates player, planet, floor, judgement, checkpoint, combo, fail, progress, status, BPM, and tile access paths.
-- Adds Unity image conversion, dependency loading, file picker, and main-thread compatibility helpers.
-- Adds fallback behavior when reflected members are unavailable.
+This is an incremental maintenance release from XDBuilding 3.49.5 to 3.49.6.
 
-## Tags and parsing
+Source comparison result:
 
-- Adds a lexer and token model for tag parsing.
-- Supports escaped braces, nested tags, nested parameters, recursive references, and expression format arguments.
-- Adds expression tags including `Expr`, `Calc`, `ExprText`, `IfExpr`, `IfText`, and `Coalesce`.
-- Adds multiplayer judgement and accuracy tags with optional player numbers.
-- Adds player hit statistics and XPerfect integration tags.
+- Added source files: 0
+- Removed source files: 0
+- Changed source files: 22
 
-## JavaScript scripting
+No source files were added or removed between the supplied 3.49.5 and the final 3.49.6 source trees.
 
-- Updates Jint 4.7.1 function creation and .NET interop handling.
-- Reworks script start, stop, reload, registration, callbacks, import, export, and error handling.
-- Adds main-thread dispatch for Unity-facing calls.
-- Adds judgement text, icon, audio, input, Discord, and global variable interfaces.
+## Confirmed 3.49.6 changes
 
-## Profiles and objects
+### Font refresh
 
-- Strengthens profile loading, saving, migration, backup, rename, and deletion.
-- Accepts complete profile JSON, object arrays, and single-object JSON.
-- Improves cleanup of inactive, missing, or damaged objects and profiles.
-- Separates mutable expression values during configuration copies.
+`FontPatch` now also refreshes fonts after `scrHitTextMesh.Show`, while keeping the existing periodic scan as a fallback. This addresses judgement text that appears too briefly or too late for the old scan path.
 
-## Bootstrapper and maintenance
+### Windows file picker
 
-- Adjusts dependency load order and shared System assembly reuse.
-- Loads the main Overlayer assembly from bytes to reduce file locking and load-context conflicts.
-- Stops initialization when required dependencies are missing.
-- Disables the upstream automatic updater for this unofficial build.
+`StandaloneFileBrowserShim` now prefers the native Windows common dialog through `comdlg32.dll`. The PowerShell/Windows Forms implementation remains as a fallback when the native call reports an error.
+
+### Dynamic script tags
+
+Dynamic tag registration/removal/release now notifies existing consumers. Script-tag tooltips are cleaned when tags are released, and the tag picker handles disappearing tags safely.
+
+### Multi-argument tags and Coalesce
+
+Colon-separated arguments are split for tags that actually take multiple arguments, without splitting single-argument expression tags internally.
+
+`Coalesce` no longer eagerly resolves every candidate. It stops at the first valid value as intended.
+
+### Script startup
+
+Automatic script loading is delayed by two Unity frames so UnityModManager has a chance to finish loading mods ordered after Overlayer.
+
+Scripts can optionally include:
+
+```js
+// @order 100
+```
+
+Lower values run first. Scripts without the directive use order `0`.
+
+### Build target and warning cleanup
+
+The main Overlayer project explicitly targets x64 to match `LibreHardwareMonitorLib`'s AMD64 runtime assembly.
+
+A small set of confirmed unused variables and private fields was removed.
+
+## Exact changed files
+
+- `Overlayer.Bootstrapper/Properties/AssemblyInfo.cs`
+- `Overlayer/CodeEditor/CodeEditor.cs`
+- `Overlayer/CodeEditor/ColorRangeEditor.cs`
+- `Overlayer/CodeEditor/EasedValueEditor.cs`
+- `Overlayer/CodeEditor/MovingManEditor.cs`
+- `Overlayer/Core/Drawer.cs`
+- `Overlayer/Core/Scripting/Impl.cs`
+- `Overlayer/Core/Scripting/Scripting.cs`
+- `Overlayer/Core/TagManager.cs`
+- `Overlayer/Core/TextReplacing/Parsing/ParsedTag.cs`
+- `Overlayer/Core/TextReplacing/Parsing/Parser.cs`
+- `Overlayer/Main.cs`
+- `Overlayer/MiscFiles/info.json`
+- `Overlayer/MiscFiles/update.txt`
+- `Overlayer/Overlayer.csproj`
+- `Overlayer/Patches/FontPatch.cs`
+- `Overlayer/Properties/AssemblyInfo.cs`
+- `Overlayer/Unity/OverlayerImage.cs`
+- `Overlayer/Unity/OverlayerText.cs`
+- `Overlayer/Unity/StandaloneFileBrowserShim.cs`
+- `Overlayer/Utils/DeletePopup.cs`
+- `Overlayer/Views/SettingsDrawer.cs`

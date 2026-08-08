@@ -1,4 +1,4 @@
-﻿using Overlayer.Core;
+using Overlayer.Core;
 using Overlayer.Core.TextReplacing;
 using Overlayer.Models;
 using Overlayer.Tags;
@@ -26,7 +26,6 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
     private static bool isAlreadyDragging;
     private static int pointingCount = 0;
     private bool isDragging = false;
-    private bool isPointing = false;
     private Vector2 initialObjectPosition;
     private Vector2 initialPointerLocal;
     private Vector2 scaleforDrag = Vector2.zero;
@@ -175,7 +174,6 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
         if(!CanDrag) {
             return;
         }
-        isPointing = true;
         pointingCount++;
         if(!isAlreadyDragging) {
             OverlayerProfile.DragObj.transform.position = _mainImage.transform.position;
@@ -196,7 +194,6 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
                 OverlayerProfile.DragObj.SetActive(false);
             }
         }
-        isPointing = false;
     }
 
     private void OnEnable() {

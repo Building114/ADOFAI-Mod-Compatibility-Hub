@@ -14,10 +14,10 @@ This project uses third-party libraries as follows:
   - [RapidGUI](https://github.com/fuqunaga/RapidGUI) — MIT License
   - [UnityCodeEditor](https://github.com/joshcamas/UnityCodeEditor/) — Unlicensed (uses MIT-licensed code)
 
-- **Modified and distributed as DLL:**
-  - [Jint](https://github.com/modlist-org/jint) — BSD-2-Clause License
-    - This project uses a [modified version of Jint](https://github.com/modlist-org/jint).
-    - Distributed as a compiled DLL; source modifications are not included in this mod.
+- **NuGet/runtime dependencies:**
+  - [Jint](https://github.com/sebastienros/jint) 4.7.1 — BSD-2-Clause License
+    - This source package references Jint through NuGet.
+    - It does not claim to bundle a modified `modlist-org/jint` DLL.
 
 # 🌐 Translations are welcome!
 

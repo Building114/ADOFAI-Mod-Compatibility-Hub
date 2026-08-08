@@ -1,4 +1,4 @@
-﻿using Overlayer.Core;
+using Overlayer.Core;
 using Overlayer.Tags;
 using Overlayer.Utils;
 using System;
@@ -273,7 +273,6 @@ public class CodeEditor {
         // Render highlighted text
         GUI.Label(GUILayoutUtility.GetLastRect(), cachedHighlightedCode, foreStyle);
 
-        var i = 0;
         var bak = Event.current;
         Event.current = oldEvent;
 
