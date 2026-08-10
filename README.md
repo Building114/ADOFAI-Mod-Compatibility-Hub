@@ -7,6 +7,18 @@
 
 Unofficial ADOFAI mod patch hub maintained by Building114.
 
+---
+###this repository has passed away.
+most of the mods included in this repository already support the latest version of adofai and have resumed updates, which means maintenance for this repository is no longer really needed.
+if there are any adofai mods that are not yet compatible with unity 6, issues can still be submitted in this repository.
+though this repository might be archived at some point in the future.
+
+###此仓库已经飞升。
+本仓库所包含的 mod 大多已都支持最新版 adofai 或恢复更新或已有替代产品，这也意味着本仓库的维护几乎不再被需要。
+如果有未兼容 unity6 的adofai mod，仍然可以提在此仓库的 issue 。
+尽管这个仓库可能在未来的某一天归档
+---
+
 This repository lists temporary compatibility patches for ADOFAI mods.
 Link-only entries point to external repositories or releases. Their source code is not copied here.
 
@@ -27,12 +39,13 @@ Each section starts with the original mod name and a link to the original reposi
 
 ## Overlayer
 
-[Original Repository](https://github.com/modlist-org/Overlayer-Lagacy)
+[Original Repository](https://github.com/modlist-org/Overlayer-Legacy)
 
 Original status: **Archived / read-only since 2026-06-06**
 
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
+| Overlayer 5 | [Open](https://github.com/modlist-org/Overlayer) | Do I really need to explain? | X | X | X | Link only |
 | Overlayer XDBuilding | [Open](mods/Overlayer/Overlayer_XDBuilding/release/Overlayer-XDBuilding-v3.49.6.zip) | Unofficial temporary compatibility patch for ADOFAI 3.3.0. Adds practical fields and improves parsing logic. | 3.49.0 | 3.49.6 | Available | Included |
 | Overlayer XDBuilding (legacy external link) | [Open](https://github.com/Building114/Overlayer-XDBuilding) | Earlier external link entry for the 3.42.0-based temporary compatibility patch maintained by Building114. | 3.42.0 | 3.42.2 | Available | Link only |
 
