@@ -8,15 +8,15 @@
 Unofficial ADOFAI mod patch hub maintained by Building114.
 
 ---
-###this repository has passed away.
-most of the mods included in this repository already support the latest version of adofai and have resumed updates, which means maintenance for this repository is no longer really needed.
-if there are any adofai mods that are not yet compatible with unity 6, issues can still be submitted in this repository.
-though this repository might be archived at some point in the future.
+### this repository has passed away.
+### most of the mods included in this repository already support the latest version of adofai and have resumed updates, which means maintenance for this repository is no longer really needed.
+### if there are any adofai mods that are not yet compatible with unity 6, issues can still be submitted in this repository.
+### though this repository might be archived at some point in the future.
 
-###此仓库已经飞升。
-本仓库所包含的 mod 大多已都支持最新版 adofai 或恢复更新或已有替代产品，这也意味着本仓库的维护几乎不再被需要。
-如果有未兼容 unity6 的adofai mod，仍然可以提在此仓库的 issue 。
-尽管这个仓库可能在未来的某一天归档
+### 此仓库已经飞升。
+### 本仓库所包含的 mod 大多已都支持最新版 adofai 或恢复更新或已有替代产品，这也意味着本仓库的维护几乎不再被需要。
+### 如果有未兼容 unity6 的adofai mod，仍然可以提在此仓库的 issue 。
+### 尽管这个仓库可能在未来的某一天归档
 ---
 
 This repository lists temporary compatibility patches for ADOFAI mods.
