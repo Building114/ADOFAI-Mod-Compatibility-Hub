@@ -15,6 +15,10 @@ public class OverlayerProfile : MonoBehaviour {
     public static Canvas PublicCanvas;
     public static GameObject DragObj;
     public static Image DragImage;
+    private static Texture2D DragOutlineTexture;
+    private static Sprite DragOutlineSprite;
+    public static bool IsDragging;
+    public static int PointingCount;
 
     public void Init(string name) {
         PublicCanvasInit();
@@ -44,7 +48,6 @@ public class OverlayerProfile : MonoBehaviour {
         DragInit();
 
         ObjectManager = new ObjectManager(this);
-        ApplyConfig();
     }
 
     public static void PublicCanvasInit() {
@@ -93,6 +96,8 @@ public class OverlayerProfile : MonoBehaviour {
 
         DragImage.color = new Color(0.0f, 1.0f, 1.0f, 0.8f);
         DragImage.sprite = outline;
+        DragOutlineTexture = outlinetex;
+        DragOutlineSprite = outline;
         DragImage.type = Image.Type.Sliced;
         DragImage.rectTransform.sizeDelta = Vector2.zero;
         DragObj.SetActive(false);
@@ -117,6 +122,16 @@ public class OverlayerProfile : MonoBehaviour {
     }
 
     public static void ReleaseStatics() {
+        IsDragging = false;
+        PointingCount = 0;
+        if(DragOutlineSprite) {
+            Destroy(DragOutlineSprite);
+        }
+        if(DragOutlineTexture) {
+            Destroy(DragOutlineTexture);
+        }
+        DragOutlineSprite = null;
+        DragOutlineTexture = null;
         if(DragObj != null) {
             Destroy(DragObj);
         }

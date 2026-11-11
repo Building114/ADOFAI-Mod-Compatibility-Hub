@@ -2,6 +2,7 @@ using Newtonsoft.Json.Linq;
 using Overlayer.Core.Interfaces;
 using Overlayer.Models;
 using Overlayer.Utils;
+using System;
 using System.IO;
 using System.Xml.Serialization;
 
@@ -37,6 +38,7 @@ public class Settings : IModel, ICopyable<Settings> {
     public bool ShowTrueAutoJudgment = false;
 
     public bool IsFirstEg = true;
+    public string LastSeenUpdateLogHash = "";
     public JToken Serialize() {
         var node = new JObject {
             [nameof(DisableLogo)] = DisableLogo,
@@ -62,7 +64,8 @@ public class Settings : IModel, ICopyable<Settings> {
             [nameof(ChangeFont)] = ChangeFont,
             [nameof(ShowTrueAutoJudgment)] = ShowTrueAutoJudgment,
 
-            [nameof(IsFirstEg)] = IsFirstEg
+            [nameof(IsFirstEg)] = IsFirstEg,
+            [nameof(LastSeenUpdateLogHash)] = LastSeenUpdateLogHash
         };
         return node;
     }
@@ -95,6 +98,7 @@ public class Settings : IModel, ICopyable<Settings> {
         ShowTrueAutoJudgment = node[nameof(ShowTrueAutoJudgment)]?.Value<bool>() ?? defaultSettings.ShowTrueAutoJudgment;
 
         IsFirstEg = node[nameof(IsFirstEg)]?.Value<bool>() ?? defaultSettings.IsFirstEg;
+        LastSeenUpdateLogHash = node[nameof(LastSeenUpdateLogHash)]?.Value<string>() ?? "";
     }
     public Settings Copy() {
         var newSettings = new Settings {
@@ -109,6 +113,7 @@ public class Settings : IModel, ICopyable<Settings> {
             EasedValueEditor = EasedValueEditor,
             AutoUpdate = false,
             AutoUpdateBeta = false,
+            Tooltip = Tooltip,
             AutoPivot = AutoPivot,
             ShowTextNameAsDisplayText = ShowTextNameAsDisplayText,
             UiMode = UiMode,
@@ -120,7 +125,8 @@ public class Settings : IModel, ICopyable<Settings> {
             AdofaiFont = AdofaiFont.Copy(),
             ShowTrueAutoJudgment = ShowTrueAutoJudgment,
 
-            IsFirstEg = IsFirstEg
+            IsFirstEg = IsFirstEg,
+            LastSeenUpdateLogHash = LastSeenUpdateLogHash
         };
         return newSettings;
     }
@@ -128,7 +134,7 @@ public class Settings : IModel, ICopyable<Settings> {
     public void Save() {
         var path = Path.Combine(Main.Mod.Path, "Settings.json");
         var json = Serialize().ToString();
-        File.WriteAllText(path, json);
+        Overlayer.Utils.Extensions.WriteAllTextAtomic(path, json);
     }
 
     public void Load() {
@@ -138,9 +144,17 @@ public class Settings : IModel, ICopyable<Settings> {
 
         var path = Path.Combine(Main.Mod.Path, "Settings.json");
         if(File.Exists(path)) {
-            var json = File.ReadAllText(path);
-            var node = JToken.Parse(json);
-            Deserialize(node);
+            try {
+                var json = File.ReadAllText(path);
+                var node = JToken.Parse(json);
+                Deserialize(node);
+            } catch(Exception ex) {
+                string backup = path + ".corrupt-" + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + ".bak";
+                // Never overwrite unreadable settings unless the original was backed up.
+                File.Copy(path, backup, false);
+                Deserialize(new JObject());
+                Main.Logger?.Log($"Overlayer settings were invalid. Original preserved at '{backup}', defaults loaded: {ex}");
+            }
         }
     }
 

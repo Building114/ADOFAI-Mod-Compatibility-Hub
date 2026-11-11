@@ -362,6 +362,12 @@ public static class Parser {
                 }
             }
         }
+        if(owner.Name is "ColorRange" or "MovingMan" or "EasedValue") {
+            string source = arguments.Count > 0
+                ? arguments[0]
+                : owner.GetterOriginal.GetParameters().FirstOrDefault()?.DefaultValue as string;
+            AddReference(result, tags.FirstOrDefault(tag => tag.Name == source));
+        }
         return result;
     }
 

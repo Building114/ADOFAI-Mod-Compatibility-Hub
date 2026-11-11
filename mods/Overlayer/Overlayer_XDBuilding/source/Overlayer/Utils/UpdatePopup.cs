@@ -19,14 +19,19 @@ internal class UpdatePopup : MonoBehaviour {
     private const float MaxWindowWidthRatio = 0.82f;
     private const float MaxWindowHeightRatio = 0.82f;
     private const float ContentPadding = 40f;
-    private const float ButtonAreaHeight = 70f;
-    private const float NonScrollExtraHeight = 105f;
+    private const float ButtonAreaHeight = 125f;
+    private const float NonScrollExtraHeight = 170f;
     private const float ApproxLineHeight = 20f;
 
     private Rect windowRect;
     private Vector2 scrollPosition;
     private string version = "";
     private string[] contentLines;
+    private string filePath;
+    private string fileFingerprint;
+    private string deletionError;
+    private bool readFailed;
+    private bool isAskingToDelete;
     private bool isInitialized = false;
     private bool isAnimating = false;
     private bool hasCalculatedWindowRect = false;
@@ -36,7 +41,7 @@ internal class UpdatePopup : MonoBehaviour {
     public void Initialize() {
         version = Main.Mod.Version.ToString();
 
-        string filePath = Path.Combine(Main.Mod.Path, "update.txt");
+        filePath = Path.Combine(Main.Mod.Path, "update.txt");
         if(!File.Exists(filePath)) {
             Destroy(gameObject);
             return;
@@ -44,22 +49,17 @@ internal class UpdatePopup : MonoBehaviour {
 
         try {
             contentLines = ReadUpdateLines(filePath);
+            fileFingerprint = Main.GetUpdateLogFingerprint(filePath);
         } catch(Exception ex) {
+            readFailed = true;
             contentLines = new[] {
                 "Failed to read update.txt.",
                 ex.Message
             };
         }
 
-        try {
-            File.Delete(filePath);
-        } catch(Exception ex) {
-            Main.Logger?.Log("Failed to delete update.txt: " + ex.Message);
-        }
-
         if(contentLines == null || contentLines.Length == 0) {
-            Destroy(gameObject);
-            return;
+            contentLines = new[] { "update.txt is empty." };
         }
 
                                                                                          
@@ -125,7 +125,7 @@ internal class UpdatePopup : MonoBehaviour {
         var minAllowedHeight = Mathf.Min(MinWindowHeight, maxAllowedHeight);
         var maxContentWidth = 0f;
 
-        var labelStyle = GUI.skin != null ? GUI.skin.label : null;
+        var labelStyle = GUI.skin != null ? new GUIStyle(GUI.skin.label) { richText = false } : null;
 
         foreach(var line in contentLines) {
             var lineWidth = labelStyle != null
@@ -171,7 +171,8 @@ internal class UpdatePopup : MonoBehaviour {
         GUILayout.Space(10);
 
         var labelStyle = new GUIStyle(GUI.skin.label) {
-            wordWrap = true
+            wordWrap = true,
+            richText = false
         };
 
         var scrollHeight = Mathf.Max(80f, windowRect.height - NonScrollExtraHeight);
@@ -189,10 +190,34 @@ internal class UpdatePopup : MonoBehaviour {
 
         GUILayout.Space(10);
 
+        if(isAskingToDelete) {
+            var promptStyle = new GUIStyle(GUI.skin.label) {
+                wordWrap = true,
+                richText = false,
+                alignment = TextAnchor.MiddleCenter
+            };
+            GUILayout.Label(Main.Lang.Get("UPDATE_LOG_DELETE_PROMPT",
+                "Delete update.txt? If you keep it, you can reopen it from the Overlayer menu."), promptStyle);
+            if(!string.IsNullOrEmpty(deletionError)) {
+                GUILayout.Label(deletionError, promptStyle);
+            }
+        }
+
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
-        if(Drawer.Button($"<size=18>{Main.Lang.Get("OK", "OK!")}</size>", GUILayout.Width(100), GUILayout.Height(40))) {
-            AnimateAndDestroy();
+        if(isAskingToDelete) {
+            if(Drawer.Button(Main.Lang.Get("UPDATE_LOG_DELETE", "Delete file"), GUILayout.Width(140), GUILayout.Height(40))) {
+                FinishReading(true);
+            }
+            if(Drawer.Button(Main.Lang.Get("UPDATE_LOG_KEEP", "Keep file"), GUILayout.Width(140), GUILayout.Height(40))) {
+                FinishReading(false);
+            }
+        } else if(Drawer.Button(Main.Lang.Get("UPDATE_LOG_DONE", "Finished reading"), GUILayout.Width(170), GUILayout.Height(40))) {
+            if(readFailed) {
+                AnimateAndDestroy();
+            } else {
+                isAskingToDelete = true;
+            }
         }
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
@@ -202,6 +227,32 @@ internal class UpdatePopup : MonoBehaviour {
 
                                                                    
                                                                 
+    }
+
+    private void FinishReading(bool deleteFile) {
+        if(isAnimating) {
+            return;
+        }
+
+        if(deleteFile && File.Exists(filePath)) {
+            try {
+                if(Main.GetUpdateLogFingerprint(filePath) != fileFingerprint) {
+                    deletionError = Main.Lang.Get("UPDATE_LOG_CHANGED",
+                        "update.txt has changed since it was opened. Close and reopen the log before deleting it.");
+                    return;
+                }
+
+                File.Delete(filePath);
+            } catch(Exception ex) {
+                Main.Logger?.Log("Failed to delete update.txt: " + ex);
+                deletionError = Main.Lang.Get("UPDATE_LOG_DELETE_FAILED",
+                    "Could not delete update.txt. The file is still kept.") + " " + ex.Message;
+                return;
+            }
+        }
+
+        Main.MarkUpdateLogRead(fileFingerprint);
+        AnimateAndDestroy();
     }
 
     private IEnumerator DestroyCoroutine() {

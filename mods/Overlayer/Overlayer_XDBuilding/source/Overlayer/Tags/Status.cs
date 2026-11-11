@@ -9,7 +9,7 @@ public static class Status {
     public static bool IsAutoEnabled => ADOFAI.RDC?.auto ?? false;
     [Tag]
     [TagDesc("Displays true if the current tile is an autotile, false otherwise")]
-    public static bool IsAutoTile => scrLevelMaker.instance?.listFloors[Tile.CurTile]?.auto ?? false;
+    public static bool IsAutoTile => VersionSafe.GetCurrentFloor()?.auto ?? false;
     [Tag]
     [TagDesc("Displays true if Old Auto is enabled, false if disabled")]
     public static bool IsOldAutoEnabled => ADOFAI.RDC?.useOldAuto ?? false;

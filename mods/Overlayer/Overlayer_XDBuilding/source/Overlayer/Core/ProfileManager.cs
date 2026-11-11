@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using Overlayer.Models;
 using Overlayer.Unity;
+using Overlayer.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -38,8 +39,8 @@ public static class ProfileManager {
                 cfg.Name = Path.GetFileNameWithoutExtension(file);
 
                 if(cfg.MigratedFromLegacyFormat) {
-                    anyMigrated = true;
                     TryBackupLegacyProfile(file);
+                    anyMigrated = true;
                     Main.Logger?.Log($"[ProfileManager] Migrated legacy profile JSON '{file}' to the 3.49 profile format.");
                 }
 
@@ -62,22 +63,14 @@ public static class ProfileManager {
     }
 
     private static void TryBackupLegacyProfile(string file) {
-        try {
-            if(string.IsNullOrWhiteSpace(file) || !File.Exists(file)) {
-                return;
-            }
-
-            string backup = file + ".legacy.bak";
-            if(!File.Exists(backup)) {
-                File.Copy(file, backup, false);
-            }
-        } catch(Exception e) {
-            Main.Logger?.Log("[ProfileManager] Failed to backup legacy profile '" + file + "': " + e);
+        string backup = file + ".legacy.bak";
+        if(!File.Exists(backup)) {
+            File.Copy(file, backup, false);
         }
     }
 
     public static OverlayerProfile Create(ProfileConfig config) {
-        if(config == null || string.IsNullOrWhiteSpace(config.Name) || Exists(config.Name)) {
+        if(config == null || string.IsNullOrWhiteSpace(config.Name) || config.Name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || Exists(config.Name) || File.Exists(Path.Combine(Main.ProfilePath, config.Name + ".json"))) {
             Debug.LogWarning("Profile name is invalid or already exists.");
             return null;
         }
@@ -105,12 +98,19 @@ public static class ProfileManager {
         }
 
         var profileGO = new GameObject(cfg.Name ?? "Profile");
-        var profile = profileGO.AddComponent<OverlayerProfile>();
-        profile.Config = cfg;
-        profile.Init(cfg.Name);
-        profile.ObjectManager.Import(cfg.Objects);
-        profile.ApplyConfig();
-        return profile;
+        OverlayerProfile profile = null;
+        try {
+            profile = profileGO.AddComponent<OverlayerProfile>();
+            profile.Config = cfg;
+            profile.Init(cfg.Name);
+            profile.ObjectManager.Import(cfg.Objects);
+            profile.ApplyConfig();
+            return profile;
+        } catch {
+            profile?.ObjectManager?.Release();
+            UnityEngine.Object.Destroy(profileGO);
+            throw;
+        }
     }
 
     public static OverlayerProfile Get(int index) {
@@ -181,6 +181,7 @@ public static class ProfileManager {
             }
         } catch(Exception e) {
             Main.Logger?.Log("[ProfileManager] Failed to delete profile file: " + e);
+            return;
         }
 
         Profiles?.Remove(profile);
@@ -230,7 +231,7 @@ public static class ProfileManager {
                     Directory.CreateDirectory(dir);
                 }
 
-                File.WriteAllText(filePath, jsonNode.ToString(Newtonsoft.Json.Formatting.Indented));
+                Overlayer.Utils.Extensions.WriteAllTextAtomic(filePath, jsonNode.ToString(Newtonsoft.Json.Formatting.Indented));
             } catch(Exception e) {
                 Main.Logger?.Log("[ProfileManager] Failed to save profile '" + (profile.Config?.Name ?? "<unknown>") + "': " + e);
             }
@@ -239,11 +240,13 @@ public static class ProfileManager {
 
     public static bool Exists(string name) {
         CleanInvalid();
-        return Profiles.Any(p => p?.Config != null && string.Equals(p.Config.Name, name, StringComparison.Ordinal));
+        return Profiles.Any(p => p?.Config != null && string.Equals(p.Config.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 
     public static bool Rename(OverlayerProfile profile, string newName) {
-        if(profile == null || string.IsNullOrWhiteSpace(newName) || Profiles.Any(p => p != profile && string.Equals(p.Config.Name, newName, StringComparison.OrdinalIgnoreCase))) {
+        if(profile == null || string.IsNullOrWhiteSpace(newName) ||
+           newName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+           Profiles.Any(p => p != profile && string.Equals(p.Config.Name, newName, StringComparison.OrdinalIgnoreCase))) {
             return false;
         }
 
@@ -256,7 +259,14 @@ public static class ProfileManager {
             }
 
             string newPath = Path.Combine(Main.ProfilePath, newName + ".json");
-
+            if(string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase)) {
+                profile.Config.Name = newName;
+                profile.gameObject.name = newName;
+                return true;
+            }
+            if(File.Exists(newPath)) {
+                return false;
+            }
             if(File.Exists(oldPath)) {
                 File.Move(oldPath, newPath);
             }

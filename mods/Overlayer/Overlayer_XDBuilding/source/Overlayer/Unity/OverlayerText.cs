@@ -23,19 +23,20 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
     public Replacer PlayingReplacer;
     public Replacer NotPlayingReplacer;
     public TextMeshProUGUI Text;
-    private Material[] _instancedMaterials;
-    private bool _fontChanged = false;
+    private Material _mainMaterial;
+    private TMP_FontAsset _sourceFont;
+    private TMP_FontAsset _localFont;
+    private string _fallbackSignature;
 
-    private static bool isAlreadyDragging;
-    private static int pointingCount = 0;
     private bool isDragging = false;
+    private bool isPointing = false;
     private Vector2 initialObjectPosition;
     private Vector2 initialPointerLocal;
 
     public bool CanDrag => TextConfig.Drag && !TextConfig.Position.IsExpr;
 
     public static Shader sr_msdf;
-    static OverlayerText() => sr_msdf = (Shader)typeof(ShaderUtilities).GetProperty("ShaderRef_MobileSDF", (BindingFlags)15420).GetValue(null);
+    static OverlayerText() => sr_msdf = typeof(ShaderUtilities).GetProperty("ShaderRef_MobileSDF", (BindingFlags)15420)?.GetValue(null) as Shader;
 
     public void Init(OverlayerProfile profile, TextConfig config) {
         if(Initialized) {
@@ -50,23 +51,30 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
         PlayingReplacer = new Replacer(config.PlayingText, TagManager.All.Select(ot => ot.Tag));
         NotPlayingReplacer = new Replacer(config.NotPlayingText, TagManager.NP.Select(ot => ot.Tag));
         TagManager.OnLoadUnload += RefreshTags;
-        DontDestroyOnLoad(gameObject);
-        GameObject mainObject = gameObject;
-        mainObject.transform.SetParent(Parent.ProfileCanvas.transform);
-        mainObject.MakeFlexible();
-        Text = mainObject.AddComponent<TextMeshProUGUI>();
-        Text.enableVertexGradient = true;
-        Text.color = Color.white;
-        Text.enableAutoSizing = false;
-        var rt = Text.rectTransform;
-        rt.anchorMin = Vector2.zero;
-        rt.anchorMax = Vector2.one;
-        config.Init();
-        ApplyConfig();
-        config.OnDragChanged += (state) => Text.raycastTarget = state;
-        Text.raycastTarget = config.Drag;
-        Text.gameObject.SetActive(config.Active);
-        Initialized = true;
+        try {
+            DontDestroyOnLoad(gameObject);
+            GameObject mainObject = gameObject;
+            mainObject.transform.SetParent(Parent.ProfileCanvas.transform);
+            mainObject.MakeFlexible();
+            Text = mainObject.AddComponent<TextMeshProUGUI>();
+            Text.enableVertexGradient = true;
+            Text.color = Color.white;
+            Text.enableAutoSizing = false;
+            var rt = Text.rectTransform;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            config.Init();
+            Initialized = true;
+            ApplyConfig();
+            config.OnDragChanged += (state) => Text.raycastTarget = state;
+            Text.raycastTarget = config.Drag;
+        } catch {
+            TagManager.OnLoadUnload -= RefreshTags;
+            PlayingReplacer?.Dispose();
+            NotPlayingReplacer?.Dispose();
+            TextConfig?.Release();
+            throw;
+        }
     }
 
     public void Update() {
@@ -74,7 +82,15 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
             return;
         }
 
-        Text.text = Main.IsPlaying ? PlayingReplacer?.Replace() ?? "" : NotPlayingReplacer?.Replace() ?? "";
+        string nextText = Main.IsPlaying ? PlayingReplacer?.Replace() ?? "" : NotPlayingReplacer?.Replace() ?? "";
+        bool firstText = string.IsNullOrEmpty(Text.text) && !string.IsNullOrEmpty(nextText);
+        if(Text.text != nextText) {
+            Text.text = nextText;
+        }
+        EnsureMainMaterial();
+        if(firstText) {
+            Text.ForceMeshUpdate(true, true);
+        }
 
         if(TextConfig.LineSpacing.GetExprValue(float.Parse, out var ls)) {
             Text.lineSpacing = ls;
@@ -101,17 +117,8 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
             Text.fontSize = fs;
         }
 
-        if(_fontChanged || _instancedMaterials == null || _instancedMaterials.Length == 0) {
-            Material[] shared = Text.fontSharedMaterials;
-            if(shared != null && shared.Length > 0 && shared[0] is not null) {
-                RefreshMaterials(shared);
-                _fontChanged = false;
-            }
-        }
-
-        if(_instancedMaterials != null) {
-            UpdateMaterialExpressions();
-        }
+        SyncMaterialAtlas();
+        UpdateMaterialExpressions();
 
         if(isDragging && OverlayerProfile.DragObj is not null && OverlayerProfile.DragImage is not null) {
             OverlayerProfile.DragObj.transform.position = Text.gameObject.transform.position;
@@ -122,6 +129,11 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
     }
 
     private void RefreshTags() {
+        if(Initialized && !isActiveAndEnabled) {
+            PlayingReplacer?.Dispose();
+            NotPlayingReplacer?.Dispose();
+            return;
+        }
         PlayingReplacer.UpdateTags(TagManager.All.Select(ot => ot.Tag));
         NotPlayingReplacer.UpdateTags(TagManager.NP.Select(ot => ot.Tag));
         PlayingReplacer.Compile();
@@ -132,6 +144,9 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
         PlayingReplacer.Source = TextConfig.PlayingText;
         NotPlayingReplacer.Source = TextConfig.NotPlayingText;
         RefreshTags();
+        if(Initialized && !isActiveAndEnabled) {
+            TextConfig.SuspendExpressions();
+        }
         TagManager.UpdatePatch();
 
         if(TextConfig.LineSpacing.GetNormalValue(out var ls)) {
@@ -161,7 +176,6 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
         Text.alignment = TextConfig.Alignment;
 
         SetFont();
-        UpdateMaterials();
         if(Text != null) {
             Text.gameObject.SetActive(TextConfig.Active);
         }
@@ -171,12 +185,12 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
     public string GetCurrentText() => Text.text;
 
     public void OnPointerDown(PointerEventData e) {
-        if(!CanDrag || isAlreadyDragging) {
+        if(!CanDrag || OverlayerProfile.IsDragging) {
             return;
         }
 
         isDragging = true;
-        isAlreadyDragging = true;
+        OverlayerProfile.IsDragging = true;
 
         RectTransform parentRect = Text.rectTransform.parent as RectTransform;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
@@ -190,9 +204,13 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
     }
 
     public void OnPointerUp(PointerEventData e) {
-        if(!CanDrag || isDragging) {
-            isDragging = false;
-            isAlreadyDragging = false;
+        if(!isDragging) {
+            return;
+        }
+        isDragging = false;
+        OverlayerProfile.IsDragging = false;
+        if(OverlayerProfile.PointingCount == 0 && OverlayerProfile.DragObj) {
+            OverlayerProfile.DragObj.SetActive(false);
         }
     }
 
@@ -218,11 +236,12 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
     }
 
     public void OnPointerEnter(PointerEventData e) {
-        if(!CanDrag) {
+        if(!CanDrag || isPointing) {
             return;
         }
-        pointingCount++;
-        if(!isAlreadyDragging) {
+        isPointing = true;
+        OverlayerProfile.PointingCount++;
+        if(!OverlayerProfile.IsDragging) {
             OverlayerProfile.DragObj.transform.position = Text.gameObject.transform.position;
             OverlayerProfile.DragObj.transform.rotation = Text.gameObject.transform.rotation;
             OverlayerProfile.DragImage.rectTransform.pivot = Text.rectTransform.pivot;
@@ -232,158 +251,241 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
     }
 
     public void OnPointerExit(PointerEventData e) {
-        if(!CanDrag) {
+        if(!isPointing) {
             return;
         }
-        pointingCount--;
-        if(pointingCount <= 0) {
-            pointingCount = 0;
-            if(!isAlreadyDragging) {
+        isPointing = false;
+        OverlayerProfile.PointingCount = System.Math.Max(0, OverlayerProfile.PointingCount - 1);
+        if(OverlayerProfile.PointingCount == 0) {
+            if(!OverlayerProfile.IsDragging) {
                 OverlayerProfile.DragObj.SetActive(false);
             }
         }
     }
 
+    private TMP_FontAsset BuildFallbackFont(TMP_FontAsset baseFont) {
+        if(!TextConfig.EnableFallbackFonts || TextConfig.FallbackFonts == null) {
+            return null;
+        }
+
+        List<TMP_FontAsset> fallback = new();
+        foreach(var name in TextConfig.FallbackFonts) {
+            if(string.IsNullOrWhiteSpace(name) || !FontManager.TryGetFont(name, out FontData font) ||
+               !font.fontTMP || font.fontTMP == baseFont || fallback.Contains(font.fontTMP)) {
+                continue;
+            }
+            fallback.Add(font.fontTMP);
+        }
+
+        if(fallback.Count == 0) {
+            return null;
+        }
+
+        foreach(var inherited in baseFont.fallbackFontAssetTable ?? new List<TMP_FontAsset>()) {
+            if(inherited && inherited != baseFont && !fallback.Contains(inherited)) {
+                fallback.Add(inherited);
+            }
+        }
+
+        TMP_FontAsset local = Instantiate(baseFont);
+        if(local) {
+            local.fallbackFontAssetTable = fallback;
+        }
+        return local;
+    }
+
     private void SetFont() {
-        if(!FontManager.TryGetFont(TextConfig.Font, out FontData font)) {
+        TMP_FontAsset baseFont = FontManager.GetFontSafe(TextConfig.Font).fontTMP;
+        if(!baseFont || !baseFont.material) {
+            baseFont = TMP_Settings.defaultFontAsset;
+        }
+        if(!baseFont || !baseFont.material) {
+            Main.Logger?.Log("[OverlayerText] No usable default font asset.");
             return;
         }
 
-        TMP_FontAsset targetFont = font.fontTMP;
-        if(targetFont is null) {
+        string fallbackSignature = TextConfig.EnableFallbackFonts
+            ? string.Join("\u001f", TextConfig.FallbackFonts ?? Array.Empty<string>())
+            : "";
+
+        bool changed = _sourceFont != baseFont || _fallbackSignature != fallbackSignature;
+        TMP_FontAsset nextLocal = changed ? BuildFallbackFont(baseFont) : _localFont;
+        TMP_FontAsset selected = nextLocal ? nextLocal : baseFont;
+        TMP_FontAsset oldLocal = _localFont;
+
+        if(changed || !_mainMaterial) {
+            Material source = selected.material ? selected.material : baseFont.material;
+            if(!_mainMaterial) {
+                _mainMaterial = new Material(source);
+            } else {
+                _mainMaterial.shader = source.shader;
+                _mainMaterial.CopyPropertiesFromMaterial(source);
+            }
+            if(sr_msdf) {
+                _mainMaterial.shader = sr_msdf;
+            }
+            _mainMaterial.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            _mainMaterial.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+        }
+
+        if(changed) {
+            _sourceFont = baseFont;
+            _localFont = nextLocal;
+            _fallbackSignature = fallbackSignature;
+        }
+        if(Text.font != selected) {
+            Text.font = selected;
+        }
+        EnsureMainMaterial();
+        UpdateMaterials();
+        UpdateMaterialExpressions();
+
+        if(changed) {
+            Text.ForceMeshUpdate(true, true);
+            if(oldLocal && oldLocal != nextLocal) {
+                Destroy(oldLocal);
+            }
+        }
+    }
+
+    private void EnsureMainMaterial() {
+        if(!Text || !_mainMaterial) {
             return;
         }
-        Text.font = targetFont;
-        Text.fontSharedMaterial = targetFont.material;
-        if(_instancedMaterials != null) {
-            foreach(var m in _instancedMaterials) {
-                if(m) {
-                    Destroy(m);
-                }
-            }
-            _instancedMaterials = null;
+        TMP_FontAsset selected = _localFont ? _localFont : _sourceFont;
+        bool fontChanged = selected && Text.font != selected;
+        if(fontChanged) {
+            Text.font = selected;
         }
-        if(Text.fontSharedMaterials != null && Text.fontSharedMaterials.Length > 0) {
-            RefreshMaterials(Text.fontSharedMaterials);
+        if(Text.fontSharedMaterial != _mainMaterial) {
+            Text.fontSharedMaterial = _mainMaterial;
         }
-        _fontChanged = true;
+        if(fontChanged) {
+            Text.ForceMeshUpdate(true, true);
+        }
+    }
+
+    private void SyncMaterialAtlas() {
+        if(!_mainMaterial || !Text.font || !Text.font.atlasTexture ||
+           !_mainMaterial.HasProperty(ShaderUtilities.ID_MainTex)) {
+            return;
+        }
+
+        if(_mainMaterial.GetTexture(ShaderUtilities.ID_MainTex) != Text.font.atlasTexture) {
+            _mainMaterial.SetTexture(ShaderUtilities.ID_MainTex, Text.font.atlasTexture);
+            Text.SetVerticesDirty();
+            Text.SetMaterialDirty();
+        }
+    }
+
+    private static bool SetColorIfChanged(Material material, int property, Color value) {
+        if(!material.HasProperty(property) || material.GetColor(property) == value) {
+            return false;
+        }
+        material.SetColor(property, value);
+        return true;
+    }
+
+    private static bool SetFloatIfChanged(Material material, int property, float value) {
+        if(!material.HasProperty(property) || Mathf.Approximately(material.GetFloat(property), value)) {
+            return false;
+        }
+        material.SetFloat(property, value);
+        return true;
     }
 
     private void UpdateMaterials() {
-        if(_instancedMaterials == null) {
+        if(!_mainMaterial) {
             return;
         }
 
-        foreach(var mat in _instancedMaterials) {
-            if(!mat) {
-                continue;
-            }
+        bool changed = false;
+        bool paddingChanged = false;
+        Material mat = _mainMaterial;
 
-            if(TextConfig.OutlineColor.GetNormalValue(out var oc)) {
-                mat.SetColor(ShaderUtilities.ID_OutlineColor, oc);
-            }
-            if(TextConfig.OutlineWidth.GetNormalValue(out var ow)) {
-                mat.SetFloat(ShaderUtilities.ID_OutlineWidth, ow);
-            }
-            if(TextConfig.ShadowColor.GetNormalValue(out var sc)) {
-                mat.SetColor(ShaderUtilities.ID_UnderlayColor, sc);
-            }
-            if(TextConfig.ShadowOffset.GetNormalValue(out var so)) {
-                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, so.x);
-                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, so.y);
-            }
-            if(TextConfig.ShadowDilate.GetNormalValue(out var sd)) {
-                mat.SetFloat(ShaderUtilities.ID_UnderlayDilate, 1 - sd);
-            }
-            if(TextConfig.ShadowSoftness.GetNormalValue(out var ss)) {
-                mat.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 1 - ss);
-            }
+        if(TextConfig.OutlineColor.GetNormalValue(out var oc)) {
+            changed |= SetColorIfChanged(mat, ShaderUtilities.ID_OutlineColor, oc);
         }
-        Text.UpdateMeshPadding();
-        Text.SetMaterialDirty();
-    }
-
-    private void RefreshMaterials(Material[] shared) {
-        if(Text == null || shared == null || shared.Length == 0) {
-            _instancedMaterials = null;
-            return;
+        if(TextConfig.OutlineWidth.GetNormalValue(out var ow)) {
+            bool updated = SetFloatIfChanged(mat, ShaderUtilities.ID_OutlineWidth, ow);
+            changed |= updated;
+            paddingChanged |= updated;
+        }
+        if(TextConfig.ShadowColor.GetNormalValue(out var sc)) {
+            changed |= SetColorIfChanged(mat, ShaderUtilities.ID_UnderlayColor, sc);
+        }
+        if(TextConfig.ShadowOffset.GetNormalValue(out var so)) {
+            bool updated = SetFloatIfChanged(mat, ShaderUtilities.ID_UnderlayOffsetX, so.x);
+            updated |= SetFloatIfChanged(mat, ShaderUtilities.ID_UnderlayOffsetY, so.y);
+            changed |= updated;
+            paddingChanged |= updated;
+        }
+        if(TextConfig.ShadowDilate.GetNormalValue(out var sd)) {
+            bool updated = SetFloatIfChanged(mat, ShaderUtilities.ID_UnderlayDilate, 1 - sd);
+            changed |= updated;
+            paddingChanged |= updated;
+        }
+        if(TextConfig.ShadowSoftness.GetNormalValue(out var ss)) {
+            bool updated = SetFloatIfChanged(mat, ShaderUtilities.ID_UnderlaySoftness, 1 - ss);
+            changed |= updated;
+            paddingChanged |= updated;
         }
 
-        List<Material> materials = new();
-
-        foreach(Material source in shared) {
-                                                                                      
-            if(source == null) {
-                continue;
+        if(changed) {
+            if(paddingChanged) {
+                Text.UpdateMeshPadding();
             }
-
-            try {
-                Material mat = new(source);
-
-                if(sr_msdf) {
-                    mat.shader = sr_msdf;
-                }
-
-                mat.EnableKeyword(ShaderUtilities.Keyword_Outline);
-                mat.EnableKeyword(ShaderUtilities.Keyword_Underlay);
-                materials.Add(mat);
-            } catch(Exception e) {
-                Main.Logger?.Log("[OverlayerText] Failed to clone font material: " + e);
+            Text.SetMaterialDirty();
+            if(Text.textInfo != null && Text.textInfo.materialCount > 1) {
+                Text.SetVerticesDirty();
             }
-        }
-
-        if(materials.Count == 0) {
-            _instancedMaterials = null;
-            return;
-        }
-
-        _instancedMaterials = materials.ToArray();
-
-        try {
-            Text.fontSharedMaterials = _instancedMaterials;
-        } catch(Exception e) {
-            Main.Logger?.Log("[OverlayerText] Failed to apply fontSharedMaterials: " + e);
-            _instancedMaterials = null;
         }
     }
 
     private void UpdateMaterialExpressions() {
+        if(!_mainMaterial) {
+            return;
+        }
         bool changed = false;
-        foreach(var mat in _instancedMaterials) {
-            if(mat == null) {
-                continue;
-            }
+        bool paddingChanged = false;
+        Material mat = _mainMaterial;
 
-            if(TextConfig.OutlineColor.GetExprValue(MiscUtils.ParseColor, out var oc)) {
-                mat.SetColor(ShaderUtilities.ID_OutlineColor, oc);
-                changed = true;
-            }
-            if(TextConfig.OutlineWidth.GetExprValue(float.Parse, out var ow)) {
-                mat.SetFloat(ShaderUtilities.ID_OutlineWidth, ow);
-                changed = true;
-            }
-            if(TextConfig.ShadowColor.GetExprValue(MiscUtils.ParseColor, out var sc)) {
-                mat.SetColor(ShaderUtilities.ID_UnderlayColor, sc);
-                changed = true;
-            }
-            if(TextConfig.ShadowOffset.GetExprValue(MiscUtils.ParseVec2, out var so)) {
-                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, so.x);
-                mat.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, so.y);
-                changed = true;
-            }
-            if(TextConfig.ShadowDilate.GetExprValue(float.Parse, out var sd)) {
-                mat.SetFloat(ShaderUtilities.ID_UnderlayDilate, 1 - sd);
-                changed = true;
-            }
-            if(TextConfig.ShadowSoftness.GetExprValue(float.Parse, out var ss)) {
-                mat.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 1 - ss);
-                changed = true;
-            }
+        if(TextConfig.OutlineColor.GetExprValue(MiscUtils.ParseColor, out var oc)) {
+            changed |= SetColorIfChanged(mat, ShaderUtilities.ID_OutlineColor, oc);
+        }
+        if(TextConfig.OutlineWidth.GetExprValue(float.Parse, out var ow)) {
+            bool updated = SetFloatIfChanged(mat, ShaderUtilities.ID_OutlineWidth, ow);
+            changed |= updated;
+            paddingChanged |= updated;
+        }
+        if(TextConfig.ShadowColor.GetExprValue(MiscUtils.ParseColor, out var sc)) {
+            changed |= SetColorIfChanged(mat, ShaderUtilities.ID_UnderlayColor, sc);
+        }
+        if(TextConfig.ShadowOffset.GetExprValue(MiscUtils.ParseVec2, out var so)) {
+            bool updated = SetFloatIfChanged(mat, ShaderUtilities.ID_UnderlayOffsetX, so.x);
+            updated |= SetFloatIfChanged(mat, ShaderUtilities.ID_UnderlayOffsetY, so.y);
+            changed |= updated;
+            paddingChanged |= updated;
+        }
+        if(TextConfig.ShadowDilate.GetExprValue(float.Parse, out var sd)) {
+            bool updated = SetFloatIfChanged(mat, ShaderUtilities.ID_UnderlayDilate, 1 - sd);
+            changed |= updated;
+            paddingChanged |= updated;
+        }
+        if(TextConfig.ShadowSoftness.GetExprValue(float.Parse, out var ss)) {
+            bool updated = SetFloatIfChanged(mat, ShaderUtilities.ID_UnderlaySoftness, 1 - ss);
+            changed |= updated;
+            paddingChanged |= updated;
         }
 
         if(changed) {
-            Text.UpdateMeshPadding();
+            if(paddingChanged) {
+                Text.UpdateMeshPadding();
+            }
             Text.SetMaterialDirty();
+            if(Text.textInfo != null && Text.textInfo.materialCount > 1) {
+                Text.SetVerticesDirty();
+            }
         }
     }
     private void OnEnable() {
@@ -391,6 +493,8 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
             return;
         }
 
+        TextConfig?.ResumeExpressions();
+        EnsureMainMaterial();
         RefreshTags();
         if(TagManager.Initialized) {
             TagManager.UpdatePatch();
@@ -402,6 +506,18 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
             return;
         }
 
+        if(isDragging) {
+            isDragging = false;
+            OverlayerProfile.IsDragging = false;
+        }
+        if(isPointing) {
+            isPointing = false;
+            OverlayerProfile.PointingCount = System.Math.Max(0, OverlayerProfile.PointingCount - 1);
+        }
+        if(!OverlayerProfile.IsDragging && OverlayerProfile.PointingCount == 0 && OverlayerProfile.DragObj) {
+            OverlayerProfile.DragObj.SetActive(false);
+        }
+        TextConfig?.SuspendExpressions();
         PlayingReplacer?.Dispose();
         NotPlayingReplacer?.Dispose();
         if(TagManager.Initialized) {
@@ -414,12 +530,11 @@ public class OverlayerText : OverlayerObject, IPointerDownHandler, IPointerUpHan
         PlayingReplacer?.Dispose();
         NotPlayingReplacer?.Dispose();
         TextConfig?.Release();
-        if(_instancedMaterials != null) {
-            foreach(var m in _instancedMaterials) {
-                if(m) {
-                    Destroy(m);
-                }
-            }
+        if(_localFont) {
+            Destroy(_localFont);
+        }
+        if(_mainMaterial) {
+            Destroy(_mainMaterial);
         }
     }
 }

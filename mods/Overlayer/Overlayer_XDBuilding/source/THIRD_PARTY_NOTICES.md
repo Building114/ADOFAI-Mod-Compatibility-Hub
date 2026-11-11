@@ -1,5 +1,7 @@
 # Third Party Notices
 
+> 翻译部分由 AI 提供，可能不准确。 / Translated portions were provided by AI and may be inaccurate.
+
 This project is based on Overlayer and keeps the upstream third-party notices.
 
 ## RapidGUI
@@ -23,17 +25,11 @@ Jint is referenced through NuGet as `Jint` 4.7.1.
 License:
 - BSD-2-Clause License
 
-Notice:
-- This repository does not claim ownership of Jint.
-- This source package does not claim to bundle a modified `modlist-org/jint` DLL.
-- If a future binary release includes a modified Jint DLL, that release should clearly state where the corresponding source or upstream fork can be found.
+Jint is restored through NuGet; this source package does not include a modified Jint DLL.
 
 ## JipperResourcePack reference
 
-Earlier XDB-related notes mentioned JipperResourcePack as a public reference for changed ADOFAI field names.
-
-No JipperResourcePack source code is bundled in this repository unless explicitly stated elsewhere.
-If code is copied from that project in the future, its license must be checked and included here.
+JipperResourcePack was referenced when checking changed ADOFAI field names. Its source code is not included in this package. Any future reuse must follow its license.
 
 ## NuGet dependencies
 
@@ -63,7 +59,6 @@ Known dependencies include:
 - System.Threading.Tasks.Extensions 4.6.3
 - Vostok.Sys.Metrics.PerfCounters 0.0.8
 
-These packages are not committed into this repository.
-They should be restored through NuGet when building the project.
+These packages are restored through NuGet during building.
 
-For binary releases, included dependency DLLs should keep their original license notices where required.
+Binary releases must retain applicable third-party license notices.

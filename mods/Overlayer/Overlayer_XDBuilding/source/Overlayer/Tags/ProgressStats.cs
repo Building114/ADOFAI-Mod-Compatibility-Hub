@@ -6,9 +6,23 @@ using Overlayer.Utils;
 namespace Overlayer.Tags;
 
 public static class ProgressStats {
+    private static int progressFrame = -1;
+    private static double progressValue;
+
     [Tag(ProcessingFlags = ValueProcessing.RoundNumber)]
     [TagDesc("Current progress")]
-    public static double Progress => VersionSafe.GetPercentComplete() * 100;
+    public static double Progress {
+        get {
+            // Progress can be referenced hundreds of times by a single text object.
+            // Its reflection-backed game getter only needs one read per frame.
+            int frame = UnityEngine.Time.frameCount;
+            if(progressFrame != frame) {
+                progressFrame = frame;
+                progressValue = VersionSafe.GetPercentComplete() * 100;
+            }
+            return progressValue;
+        }
+    }
     [Tag(ProcessingFlags = ValueProcessing.RoundNumber)]
     [TagDesc("Current Actual Progress based on time")]
     public static double ActualProgress() {

@@ -49,7 +49,9 @@ public class ReplaceableText : IDisposable {
             string raw = args != null && args.Count > i
                 ? args[i]
                 : parameters.Length > i ? parameters[i].DefaultValue?.ToString() ?? string.Empty : string.Empty;
-            resolved[i] = ParsedTag.ResolveArgument(raw);
+            resolved[i] = ParsedTag.ShouldResolveArgument(tag.Name, i)
+                ? ParsedTag.ResolveArgument(raw)
+                : raw;
         }
         return resolved;
     }

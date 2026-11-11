@@ -775,26 +775,36 @@ public static class Drawer {
 
     public static void DrawSelectFont(System.Action<string> onFontSelected) {
         if(Button(Icon_OpenFolder, GUILayout.Width(40))) {
+            int session = Main.SessionGeneration;
+            string title = Main.Lang.Get("SELECT_FONT_FILE", "Select Font File");
+            string modPath = Main.Mod.Path.TrimEnd('\\', '/');
             Task.Run(() => {
-                var extensions = new[] {
-                    new ExtensionFilter("Font Files", "ttf", "otf"),
-                    new ExtensionFilter("All Files", "*")
-                };
-                string baseDir = Path.Combine(Main.Mod.Path, "Overlayer");
-                string[] paths = StandaloneFileBrowser.OpenFilePanel(
-                    Main.Lang.Get("SELECT_FONT_FILE", "Select Font File"),
-                    baseDir,
-                    extensions,
-                    false
-                );
-                if(paths.Length > 0) {
-                    string path = paths[0];
-                    if(path.StartsWith(Main.Mod.Path)) {
-                        path = path.Replace(Main.Mod.Path, "{ModDir}")
-                                   .Replace("\\", "/");
+                try {
+                    var extensions = new[] {
+                        new ExtensionFilter("Font Files", "ttf", "otf"),
+                        new ExtensionFilter("All Files", "*")
+                    };
+                    string baseDir = Path.Combine(modPath, "Overlayer");
+                    string[] paths = StandaloneFileBrowser.OpenFilePanel(
+                        title,
+                        baseDir,
+                        extensions,
+                        false
+                    );
+                    if(paths != null && paths.Length > 0) {
+                        string path = paths[0];
+                        if((path.StartsWith(modPath, StringComparison.OrdinalIgnoreCase) && path.Length > modPath.Length && (path[modPath.Length] == '\\' || path[modPath.Length] == '/'))) {
+                            path = "{ModDir}" + path.Substring(modPath.Length).Replace("\\", "/");
+                        }
+                        string finalPath = path;
+                        Main.MainThreadDispatcher.Enqueue(() => {
+                            if(session == Main.SessionGeneration && ProfileManager.Initialized) {
+                                onFontSelected?.Invoke(finalPath);
+                            }
+                        });
                     }
-                    string finalPath = path;
-                    Main.MainThreadDispatcher.Enqueue(() => onFontSelected?.Invoke(finalPath));
+                } catch(Exception e) {
+                    Main.Logger?.Log($"Failed to select font: {e}");
                 }
             });
         }

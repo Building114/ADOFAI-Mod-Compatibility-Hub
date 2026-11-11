@@ -1,8 +1,9 @@
-using Overlayer.Core;
+﻿using Overlayer.Core;
 using Overlayer.Tags;
 using Overlayer.Utils;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -20,59 +21,127 @@ public class CodeEditor {
         cursor = "#D4D4D4"
     });
 
-    public static Regex color = new("<<b></b>color=(.*?)>", RegexOptions.Compiled);
+    public static Regex color = new(@"<color=(#[0-9a-fA-F]{3,8})>", RegexOptions.Compiled);
 
-    public static void Initialize() {
-        instance.highlighter = str => {
-            str = str.Replace("<", "<<b></b>");
+    private sealed class TagSpan {
+        public int Open;
+        public int Close;
+        public string Body;
+        public string Name;
+    }
 
-            var colorHighlighted = new List<string>();
-            foreach(Match m in color.Matches(str)) {
-                if(!colorHighlighted.Contains(m.Groups[1].Value) && ColorUtility.TryParseHtmlString(m.Groups[1].Value, out _)) {
-                    str = str.Replace("<<b></b>color=" + m.Groups[1].Value + ">",
-                        "<<b></b>color=<color=" + m.Groups[1].Value + ">" + m.Groups[1].Value + "</color>>");
-                    colorHighlighted.Add(m.Groups[1].Value);
-                }
-            }
+    private static string GetTagName(string body) {
+        int separator = body.IndexOfAny(new[] { ':', ';', '(' });
+        return (separator < 0 ? body : body.Substring(0, separator)).Trim();
+    }
 
-            var highlighted = new List<string>();
-
-            foreach(Match match in tagRegex.Matches(str)) {
-                if(highlighted.Contains(match.Groups[1].Value)) {
+    private static List<TagSpan> FindTags(string source) {
+        List<TagSpan> result = [];
+        List<int> openings = [];
+        char quote = '\0';
+        bool escaped = false;
+        for(int i = 0; i < source.Length; i++) {
+            char c = source[i];
+            if(escaped) { escaped = false; continue; }
+            if(c == '\\') { escaped = true; continue; }
+            if(openings.Count > 0) {
+                if(quote != '\0') {
+                    if(c == quote) quote = '\0';
                     continue;
                 }
-
-                var fullTag = match.Groups[1].Value;
-                var splitChar = fullTag.Contains(':') ? ':' : (fullTag.Contains(';') ? ';' : '\0');
-                var name = splitChar != '\0' ? fullTag.Split(splitChar)[0] : fullTag;
-
-                if(TagManager.tags.ContainsKey(name)) {
-                    if(splitChar == ';') {
-                        str = str.Replace("{" + fullTag + "}", "<color=blue>{" + fullTag + "}</color>");
-                    } else if((Main.Settings.MovingManEditor && name == nameof(Effect.MovingMan)) ||
-                              (Main.Settings.ColorRangeEditor && name == nameof(Effect.ColorRange)) ||
-                              (Main.Settings.EasedValueEditor && name == nameof(Effect.EasedValue))) {
-                        str = str.Replace("{" + fullTag + "}", "<color=orange>{" + fullTag + "}</color>");
-                    } else if(name.EndsWith("Hex")) {
-                        try {
-                            var val = (string)TagManager.tags[name].Tag.Getter.Invoke(null,
-                                new object[] { "-1", Overlayer.Utils.Extensions.DefaultTrimStr });
-                            str = str.Replace("{" + fullTag + "}", "<color=#" + val + ">{" + fullTag + "}</color>");
-                        } catch {
-                            str = str.Replace("{" + fullTag + "}", "<color=lightblue>{" + fullTag + "}</color>");
-                        }
-                    } else {
-                        str = str.Replace("{" + fullTag + "}", "<color=lightblue>{" + fullTag + "}</color>");
-                    }
-                } else {
-                    str = str.Replace("{" + fullTag + "}", "<color=red>{" + fullTag + "}</color>");
-                }
-
-                highlighted.Add(fullTag);
+                if(c == '\'' || c == '"') { quote = c; continue; }
             }
+            if(c == '{') {
+                if(openings.Count == 0 && i + 1 < source.Length && source[i + 1] == '{') {
+                    i++;
+                    continue;
+                }
+                openings.Add(i);
+            } else if(c == '}' && openings.Count > 0) {
+                int start = openings[openings.Count - 1];
+                openings.RemoveAt(openings.Count - 1);
+                string body = source.Substring(start + 1, i - start - 1);
+                result.Add(new TagSpan { Open = start, Close = i, Body = body, Name = GetTagName(body) });
+            }
+        }
+        return result;
+    }
 
-            return str;
-        };
+    private static bool IsEditableTag(string body, string name) =>
+        body == name || (body.StartsWith(name + "(", StringComparison.Ordinal) && body.EndsWith(")", StringComparison.Ordinal));
+
+    internal static bool TryGetEditorArguments(string tag, string name, out string[] arguments) {
+        arguments = Array.Empty<string>();
+        tag = tag?.Trim();
+        if(tag == name) return true;
+        if(tag == null || !tag.StartsWith(name + "(", StringComparison.Ordinal) || !tag.EndsWith(")", StringComparison.Ordinal)) return false;
+
+        string contents = tag.Substring(name.Length + 1, tag.Length - name.Length - 2);
+        if(contents.Length == 0) return true;
+
+        List<string> parsed = [];
+        StringBuilder current = new();
+        int nestedTags = 0, nestedParens = 0;
+        char quote = '\0';
+        bool escaped = false;
+        foreach(char c in contents) {
+            if(escaped) { current.Append(c); escaped = false; continue; }
+            if(c == '\\') { current.Append(c); escaped = true; continue; }
+            if(quote != '\0') {
+                current.Append(c);
+                if(c == quote) quote = '\0';
+                continue;
+            }
+            if(c == '\'' || c == '"') { quote = c; current.Append(c); continue; }
+            if(c == '{') nestedTags++;
+            else if(c == '}') { if(--nestedTags < 0) return false; }
+            else if(nestedTags == 0 && c == '(') nestedParens++;
+            else if(nestedTags == 0 && c == ')') { if(--nestedParens < 0) return false; }
+            if(c == ',' && nestedTags == 0 && nestedParens == 0) {
+                parsed.Add(current.ToString().Trim());
+                current.Clear();
+                continue;
+            }
+            current.Append(c);
+        }
+        if(escaped || quote != '\0' || nestedTags != 0 || nestedParens != 0) return false;
+        parsed.Add(current.ToString().Trim());
+        arguments = parsed.ToArray();
+        return true;
+    }
+
+    private static string HighlightTags(string source) {
+        source ??= string.Empty;
+        Dictionary<int, string> opens = [];
+        Dictionary<int, string> closes = [];
+        foreach(TagSpan span in FindTags(source)) {
+            string colorName = TagManager.tags != null && TagManager.tags.ContainsKey(span.Name)
+                ? (span.Body.Substring(span.Name.Length).TrimStart().StartsWith(";", StringComparison.Ordinal) ? "blue" :
+                    ((span.Name == nameof(Effect.ColorRange) && Main.Settings.ColorRangeEditor) ||
+                     (span.Name == nameof(Effect.MovingMan) && Main.Settings.MovingManEditor) ||
+                     (span.Name == nameof(Effect.EasedValue) && Main.Settings.EasedValueEditor)) ? "orange" : "lightblue")
+                : "red";
+            opens[span.Open] = "<color=" + colorName + ">";
+            closes[span.Close] = "</color>";
+        }
+        foreach(Match match in color.Matches(source)) {
+            Group code = match.Groups[1];
+            if(code.Success && ColorUtility.TryParseHtmlString(code.Value, out _)) {
+                opens[code.Index] = "<color=" + code.Value + ">";
+                closes[code.Index + code.Length - 1] = "</color>";
+            }
+        }
+        StringBuilder output = new(source.Length * 2);
+        for(int i = 0; i < source.Length; i++) {
+            if(opens.TryGetValue(i, out string prefix)) output.Append(prefix);
+            output.Append(source[i] == '<' ? "<<b></b>" : source[i].ToString());
+            if(closes.TryGetValue(i, out string suffix)) output.Append(suffix);
+        }
+        return output.ToString();
+    }
+
+    public static void Initialize() {
+        instance.highlighter = HighlightTags;
     }
 
     public string controlName { get; set; }
@@ -94,7 +163,6 @@ public class CodeEditor {
     private EasedValueEditor easedValueEditor;
     private int editingHash;
 
-    private static Regex tagRegex = new(@"{(.*?)}", RegexOptions.Compiled);
 
     public bool isFocused => GUI.GetNameOfFocusedControl() == controlName;
 
@@ -109,6 +177,7 @@ public class CodeEditor {
     internal Dictionary<string, UndoRedoManager> undoRedoManagers = [];
 
     public string Draw(string code, GUIStyle style, string id, params GUILayoutOption[] options) {
+        code ??= string.Empty;
         if(!undoRedoManagers.ContainsKey(id)) {
             undoRedoManagers[id] = new UndoRedoManager();
             undoRedoManagers[id].SaveState(code);
@@ -117,19 +186,19 @@ public class CodeEditor {
         controlName = id;
         var oldEvent = new Event(Event.current);
         if(movingManEditor) {
-            if(editingHash == code.GetHashCode()) {
+            if(movingManEditor.HasChanges && editingHash == code.GetHashCode()) {
                 code = movingManEditor.codesBefore + nameof(Effect.MovingMan) + "(" + movingManEditor.targetTag + "," +
-                       movingManEditor.startSize + "," + movingManEditor.endSize + "," +
-                       movingManEditor.defaultSize + "," + movingManEditor.speed + "," +
+                       movingManEditor.startSize.ToString(CultureInfo.InvariantCulture) + "," + movingManEditor.endSize.ToString(CultureInfo.InvariantCulture) + "," +
+                       movingManEditor.defaultSize.ToString(CultureInfo.InvariantCulture) + "," + movingManEditor.speed.ToString(CultureInfo.InvariantCulture) + "," +
                        movingManEditor.invert + "," + movingManEditor.ease + ")" + movingManEditor.codesAfter;
                 editingHash = code.GetHashCode();
             }
         }
 
         if(colorRangeEditor) {
-            if(editingHash == code.GetHashCode()) {
+            if(colorRangeEditor.HasChanges && editingHash == code.GetHashCode()) {
                 code = colorRangeEditor.codesBefore + nameof(Effect.ColorRange) + "(" + colorRangeEditor.targetTag + "," +
-                       colorRangeEditor.valueMin + "," + colorRangeEditor.valueMax + "," +
+                       colorRangeEditor.valueMin.ToString(CultureInfo.InvariantCulture) + "," + colorRangeEditor.valueMax.ToString(CultureInfo.InvariantCulture) + "," +
                        ColorUtility.ToHtmlStringRGBA(colorRangeEditor.colorMin) + "," +
                        ColorUtility.ToHtmlStringRGBA(colorRangeEditor.colorMax) + "," +
                        colorRangeEditor.ease + "," + colorRangeEditor.maxLength +
@@ -139,9 +208,9 @@ public class CodeEditor {
         }
 
         if(easedValueEditor) {
-            if(editingHash == code.GetHashCode()) {
+            if(easedValueEditor.HasChanges && editingHash == code.GetHashCode()) {
                 code = easedValueEditor.codesBefore + nameof(Effect.EasedValue) + "(" + easedValueEditor.targetTag + "," +
-                       easedValueEditor.digits + "," + easedValueEditor.speed + "," +
+                       easedValueEditor.digits + "," + easedValueEditor.speed.ToString(CultureInfo.InvariantCulture) + "," +
                        easedValueEditor.ease + ")" + easedValueEditor.codesAfter;
                 editingHash = code.GetHashCode();
             }
@@ -155,8 +224,11 @@ public class CodeEditor {
         if(Drawer.Button(Main.Lang.Get("INSERT", "Insert"))) {
             TextEditor editor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
             var sb = new StringBuilder(code);
-            sb.Insert(editor.selectIndex, "{" + selectedtag + "}");
+            int cursor = editor == null ? code.Length : Math.Max(0, Math.Min(code.Length, editor.selectIndex));
+            sb.Insert(cursor, "{" + selectedtag + "}");
             code = sb.ToString();
+            undoRedoManagers[id].SaveState(code);
+            onValueChange?.Invoke();
         }
 
         GUILayout.FlexibleSpace();
@@ -278,10 +350,10 @@ public class CodeEditor {
 
         if(!movingManEditor && !colorRangeEditor && !easedValueEditor) {
             // Get Tags
-            foreach(Match match in tagRegex.Matches(code)) {
-                var tag = match.Groups[1].Value;
-                var start = match.Groups[1].Index;
-                var end = start + match.Groups[1].Length;
+            foreach(TagSpan match in FindTags(code)) {
+                var tag = match.Body;
+                var start = match.Open + 1;
+                var end = match.Close;
                 var codesBefore = code.Substring(0, start);
                 var codesAfter = code.Substring(end, code.Length - end);
                 var lines = codesBefore.Split('\n');
@@ -315,15 +387,15 @@ public class CodeEditor {
                 rect.x += x;
                 rect.y += y;
 
-                rect.width = style.CalcSize(new GUIContent(match.Groups[1].Value)).x;
+                rect.width = style.CalcSize(new GUIContent(tag)).x;
 
                 rect.height = height;
 
-                var mvm = match.Groups[1].Value.StartsWith(nameof(Effect.MovingMan));
+                var mvm = match.Name == nameof(Effect.MovingMan) && IsEditableTag(tag, match.Name);
 
-                var cr = match.Groups[1].Value.StartsWith(nameof(Effect.ColorRange));
+                var cr = match.Name == nameof(Effect.ColorRange) && IsEditableTag(tag, match.Name);
 
-                var ev = match.Groups[1].Value.StartsWith(nameof(Effect.EasedValue));
+                var ev = match.Name == nameof(Effect.EasedValue) && IsEditableTag(tag, match.Name);
 
                 var special = mvm || cr || ev;
 
@@ -340,30 +412,39 @@ public class CodeEditor {
                 }
 
                 if(rect.Contains(Event.current.mousePosition)) {
-                    var pars = match.Groups[1].Value.Split('(')[0]
-                                     .Split([':', ';'], 2)[0];
-                    Main.tooltip = TagManager.tags.ContainsKey(pars)
+                    var pars = match.Name;
+                    Main.tooltip = TagManager.tags != null && TagManager.tags.ContainsKey(pars)
                                    ? Main.Lang.Get($"TAG_DESC_{pars.ToUpper()}", TagDesc.GetTagDesc(pars))
                                    : Main.Lang.Get("NOT_EXIST_TAG", "This tag does not exist");
                 }
 
                 if(special) {
                     if(GUI.Button(rect, "")) {
+                        bool opened = false;
                         if(cr) {
-                            colorRangeEditor = new GameObject().AddComponent<ColorRangeEditor>();
-                            Object.DontDestroyOnLoad(colorRangeEditor);
-                            colorRangeEditor.Initialize(match.Groups[1].Value, codesBefore, codesAfter);
+                            var editor = new GameObject("Overlayer.ColorRangeEditor").AddComponent<ColorRangeEditor>();
+                            if(editor.Initialize(tag, codesBefore, codesAfter)) {
+                                colorRangeEditor = editor;
+                                Object.DontDestroyOnLoad(editor.gameObject);
+                                opened = true;
+                            } else Object.Destroy(editor.gameObject);
                         } else if(mvm) {
-                            movingManEditor = new GameObject().AddComponent<MovingManEditor>();
-                            Object.DontDestroyOnLoad(movingManEditor);
-                            movingManEditor.Initialize(match.Groups[1].Value, codesBefore, codesAfter);
+                            var editor = new GameObject("Overlayer.MovingManEditor").AddComponent<MovingManEditor>();
+                            if(editor.Initialize(tag, codesBefore, codesAfter)) {
+                                movingManEditor = editor;
+                                Object.DontDestroyOnLoad(editor.gameObject);
+                                opened = true;
+                            } else Object.Destroy(editor.gameObject);
                         } else if(ev) {
-                            easedValueEditor = new GameObject().AddComponent<EasedValueEditor>();
-                            Object.DontDestroyOnLoad(easedValueEditor);
-                            easedValueEditor.Initialize(match.Groups[1].Value, codesBefore, codesAfter);
+                            var editor = new GameObject("Overlayer.EasedValueEditor").AddComponent<EasedValueEditor>();
+                            if(editor.Initialize(tag, codesBefore, codesAfter)) {
+                                easedValueEditor = editor;
+                                Object.DontDestroyOnLoad(editor.gameObject);
+                                opened = true;
+                            } else Object.Destroy(editor.gameObject);
                         }
-
-                        editingHash = code.GetHashCode();
+                        if(opened) editingHash = code.GetHashCode();
+                        else Main.tooltip = "Invalid tag parameters. Edit this tag as text.";
                     }
                 }
             }

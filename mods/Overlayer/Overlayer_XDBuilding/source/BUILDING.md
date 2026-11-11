@@ -1,4 +1,6 @@
-# Building Overlayer XDBuilding 3.49.6
+# Building Overlayer XDBuilding 3.49.7
+
+> 翻译部分由 AI 提供，可能不准确。 / Translated portions were provided by AI and may be inaccurate.
 
 ## Requirements
 
@@ -31,7 +33,7 @@ to:
 Overlayer\Local.Build.props
 ```
 
-and edit the local path. `Local.Build.props` is machine-specific and is intentionally excluded from the public source package.
+and edit the local path. The example enables automatic deployment after a successful build. `Local.Build.props` is machine-specific and is intentionally excluded from the public source package.
 
 ## Build
 
@@ -47,11 +49,13 @@ You can pass the game directory explicitly:
 msbuild Overlayer.sln /restore /p:Configuration=Release /p:GameDir="C:\Path\To\A Dance of Fire and Ice"
 ```
 
-Optional local deployment:
+Automatic deployment (also enabled by the copied `Local.Build.props.example`):
 
 ```bat
 msbuild Overlayer.sln /restore /p:Configuration=Release /p:DeployToGame=true
 ```
+
+Build without deployment by passing `/p:DeployToGame=false`. Deploy copies the two DLLs, dependency DLLs, languages and metadata to `Mods\Overlayer`. It does not delete existing files from `lib`. Close the game first and back up the existing Mod folder before the first deploy. Build artifacts remain in `bin` and `obj` (ignored by Git).
 
 ## Known restore limitation
 
@@ -59,6 +63,3 @@ msbuild Overlayer.sln /restore /p:Configuration=Release /p:DeployToGame=true
 
 Therefore a completely clean machine may still need `LibreHardwareMonitorLib` 0.9.6 present in the expected NuGet cache path before the project builds.
 
-## Release check
-
-The player archive used for this 3.49.6 release reports version `3.49.6` in `info.json` and is the same tested archive supplied to this packaging step.

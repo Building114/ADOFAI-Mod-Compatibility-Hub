@@ -4,6 +4,8 @@ using Overlayer.Patches;
 using Overlayer.Tags;
 using Overlayer.Utils;
 using RapidGUI;
+using System;
+using System.Globalization;
 using UnityEngine;
 
 namespace Overlayer.CodeEditor;
@@ -26,30 +28,42 @@ internal class ColorRangeEditor : MonoBehaviour {
     public int maxLength = -1;
 
     private NeoDrawer neoDrawer;
+    public bool HasChanges { get; private set; }
 
-    public void Initialize(string tag, string codesBefore, string codesAfter) {
-        if(tag.Contains("(")) {
-            var arr = tag.Split('(')[1].Split(')')[0].Split(',');
+    public bool Initialize(string tag, string codesBefore, string codesAfter) {
+        if(!CodeEditor.TryGetEditorArguments(tag, nameof(Effect.ColorRange), out string[] arr)) return false;
+        if(arr.Length > 7 || (arr.Length != 0 && arr.Length < 5)) return false;
+        if(arr.Length > 0) {
+            if(string.IsNullOrWhiteSpace(arr[0]) || arr[0].Contains("{") ||
+               TagManager.tags == null || !TagManager.tags.ContainsKey(arr[0])) return false;
+            if(!double.TryParse(arr[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double min) ||
+               !double.TryParse(arr[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double max) ||
+               double.IsNaN(min) || double.IsInfinity(min) || double.IsNaN(max) || double.IsInfinity(max)) return false;
+            if(!ColorUtility.TryParseHtmlString(arr[3].StartsWith("#") ? arr[3] : "#" + arr[3], out Color first) ||
+               !ColorUtility.TryParseHtmlString(arr[4].StartsWith("#") ? arr[4] : "#" + arr[4], out Color second)) return false;
+            Ease parsedEase = ease;
+            if(arr.Length > 5 && (!Enum.TryParse(arr[5], true, out parsedEase) || !Enum.IsDefined(typeof(Ease), parsedEase))) return false;
+            int parsedLength = maxLength;
+            if(arr.Length > 6 && !int.TryParse(arr[6], NumberStyles.Integer, CultureInfo.InvariantCulture, out parsedLength)) return false;
             targetTag = arr[0];
-            valueMin = double.Parse(arr[1]);
-            valueMax = double.Parse(arr[2]);
-            ColorUtility.TryParseHtmlString("#" + arr[3], out colorMin);
-            ColorUtility.TryParseHtmlString("#" + arr[4], out colorMax);
-            ease = EnumHelper<Ease>.Parse(arr[5]);
-            if(arr.Length > 6) {
-                maxLength = int.Parse(arr[6]);
-            }
+            valueMin = min;
+            valueMax = max;
+            colorMin = first;
+            colorMax = second;
+            ease = parsedEase;
+            maxLength = parsedLength;
         }
-
         testvalue = (float)valueMax;
         windowRect.width = 400;
         isInitaialize = true;
         this.codesBefore = codesBefore;
         this.codesAfter = codesAfter;
         BlockUMMClosing.Block = true;
-
         neoDrawer = new NeoDrawer();
+        return true;
     }
+
+    public void OnDestroy() => BlockUMMClosing.Block = false;
 
     public void OnGUI() {
         if(isInitaialize) {
@@ -76,19 +90,30 @@ internal class ColorRangeEditor : MonoBehaviour {
     }
 
     private void PreviewWindow(int windowID) {
-        TagManager.testerValue = testvalue.ToString();
         GUI.BringWindowToFront(windowID);
+        if(double.IsNaN(valueMin) || double.IsInfinity(valueMin) ||
+           double.IsNaN(valueMax) || double.IsInfinity(valueMax) ||
+           valueMin >= valueMax || valueMin < -float.MaxValue || valueMax > float.MaxValue ||
+           (float)valueMin >= (float)valueMax) {
+            GUILayout.Label("Invalid range");
+            return;
+        }
+        testvalue = Mathf.Clamp(testvalue, (float)valueMin, (float)valueMax);
+        TagManager.testerValue = testvalue.ToString(CultureInfo.InvariantCulture);
         var col = Effect.ColorRange("INTERNAL_TESTER_TAG_1234512345_" + targetTag, valueMin, valueMax,
-            ColorUtility.ToHtmlStringRGBA(colorMin), ColorUtility.ToHtmlStringRGBA(colorMax), ease,
-            maxLength);
-        col = col.Replace(".", "F").Replace("(", "F").Replace(")", "F");
+            ColorUtility.ToHtmlStringRGBA(colorMin), ColorUtility.ToHtmlStringRGBA(colorMax), ease, maxLength);
         neoDrawer.DrawSingleWithSlider("Value", ref testvalue, (float)valueMin, (float)valueMax, 100, "Pre");
-        GUILayout.Label("<size=40><color=#" + col +
-                       ">Test</color></size>");
+        if(col.Length == 8 || col.Length == 6) GUILayout.Label("<size=40><color=#" + col + ">Test</color></size>");
+        else GUILayout.Label("Invalid color output");
     }
 
     private void DrawWindow(int windowID) {
         neoDrawer.FieldResetId();
+        string oldTarget = targetTag;
+        double oldMin = valueMin, oldMax = valueMax;
+        Color oldColorMin = colorMin, oldColorMax = colorMax;
+        Ease oldEase = ease;
+        int oldLength = maxLength;
 
         GUI.BringWindowToFront(windowID);
         GUILayout.BeginVertical();
@@ -114,6 +139,8 @@ internal class ColorRangeEditor : MonoBehaviour {
         neoDrawer.DrawInt32("maxLength", ref maxLength);
 
         neoDrawer.UpdateFocused();
+        if(oldTarget != targetTag || oldMin != valueMin || oldMax != valueMax ||
+           oldColorMin != colorMin || oldColorMax != colorMax || oldEase != ease || oldLength != maxLength) HasChanges = true;
 
         if(Drawer.Button(Main.Lang.Get("DONE", "Done"))) {
             neoDrawer = null;

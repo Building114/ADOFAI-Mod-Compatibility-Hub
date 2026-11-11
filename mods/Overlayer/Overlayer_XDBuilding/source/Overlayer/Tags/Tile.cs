@@ -1,4 +1,5 @@
 using Overlayer.Tags.Attributes;
+using System;
 using Overlayer.Utils;
 
 namespace Overlayer.Tags;
@@ -32,14 +33,16 @@ public static class Tile {
             return;
         }
 
-        StartProgress = VersionSafe.GetPercentComplete(controller) * 100;
-        StartTile = tile;
+        TotalTile = ADOBase.lm.listFloors.Count;
+        StartTile = Math.Max(0, Math.Min(tile, TotalTile - 1)) + 1;
+        StartProgress = (double)StartTile / TotalTile * 100;
+        CurTile = StartTile;
+        LeftTile = TotalTile - CurTile;
     }
 
     public static void Start_Init(scrController controller) {
-        if(VersionSafe.IsGameWorld(controller)) {
-            StartProgress = VersionSafe.GetPercentComplete(controller) * 100;
-            StartTile = VersionSafe.GetCurrentSeqID(controller) + 1;
+        if(VersionSafe.IsGameWorld(controller) && StartTile == 0) {
+            SetStartValues(controller, VersionSafe.GetCurrentSeqID(controller));
         }
         IsStarted = true;
     }

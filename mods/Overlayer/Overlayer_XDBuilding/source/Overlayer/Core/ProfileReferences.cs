@@ -8,7 +8,7 @@ namespace Overlayer.Core;
 
 public static class ProfileReferences {
 
-    public static JArray GetReferences(OverlayerProfile profile) {
+    public static JArray GetJustReferences(OverlayerProfile profile) {
         var justRefs = new List<Reference>();
 
         foreach(var obj in profile.ObjectManager.Objects) {
@@ -21,11 +21,16 @@ public static class ProfileReferences {
             }
         }
 
-        var unique = justRefs
+        return ModelUtils.WrapList(justRefs);
+    }
+
+    public static JArray GetReferences(OverlayerProfile profile) => ResolveReferences(GetJustReferences(profile));
+
+    public static JArray ResolveReferences(JArray referencePaths) {
+        var unique = ModelUtils.UnwrapList<Reference>(referencePaths)
             .Where(r => r != null)
             .GroupBy(r => (r.ReferenceType, r.Name))
-            .Select(g => g.First())
-            .ToList();
+            .Select(g => g.First());
 
         var resolved = unique
             .Select(r => Reference.GetReference(r.Name, r.ReferenceType))

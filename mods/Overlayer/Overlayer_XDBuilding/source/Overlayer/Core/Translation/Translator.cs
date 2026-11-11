@@ -48,6 +48,7 @@ public class Translator {
     // Dictionaries to hold translations.
     private Dictionary<string, Dictionary<string, string>> translations = [];
     private Dictionary<string, Dictionary<string, string[]>> translationsArr = [];
+    private int loadGeneration;
 
     /// <summary>
     /// Constant representing the fallback language code.
@@ -114,7 +115,7 @@ public class Translator {
     /// Retrieves the log messages generated during translation loading.
     /// </summary>
     /// <returns>An array of log messages.</returns>
-    public string[] Logs => logStacks.ToArray();
+    public string[] Logs => logStacks?.ToArray() ?? Array.Empty<string>();
 
     /// <summary>
     /// Determines if the default language should be used.
@@ -166,6 +167,8 @@ public class Translator {
         }
 
         IsLoading = true;
+        int generation = ++loadGeneration;
+        FailState = TranslationFailState.Success;
 
         // Initialize logging
         InitLog();
@@ -232,6 +235,9 @@ public class Translator {
                 continue;
             } finally {
                 reader.Close();
+            }
+            if(generation != loadGeneration) {
+                return;
             }
 
             // Parse the JSON content.
@@ -523,6 +529,9 @@ public class Translator {
     /// Releases resources used by the Translator.
     /// </summary>
     public void Release() {
+        loadGeneration++;
+        IsLoading = false;
+        FailState = TranslationFailState.Success;
         translations.Clear();
         translationsArr.Clear();
         logStacks?.Clear();

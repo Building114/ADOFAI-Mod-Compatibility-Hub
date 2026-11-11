@@ -9,7 +9,6 @@ using UnityEngine;
 namespace Overlayer.Models;
 
 public class TextConfig : ObjectConfig, ICopyable<TextConfig> {
-    public TextConfig() => TagManager.OnLoadUnload += ExprApplyConfig;
     public delegate void DragChangeHandler(bool state);
     public event DragChangeHandler OnDragChanged;
     private bool _drag;
@@ -127,6 +126,8 @@ public class TextConfig : ObjectConfig, ICopyable<TextConfig> {
     }
 
     public void Init() {
+        TagManager.OnLoadUnload -= ExprApplyConfig;
+        TagManager.OnLoadUnload += ExprApplyConfig;
         if(FontSize.HasExpr) { FontSize.Init(); }
         if(OutlineWidth.HasExpr) { OutlineWidth.Init(); }
         if(LineSpacing.HasExpr) { LineSpacing.Init(); }
@@ -160,8 +161,33 @@ public class TextConfig : ObjectConfig, ICopyable<TextConfig> {
         if(Rotation.IsExpr) { Rotation.ApplyConfig(); }
     }
 
+    public void SuspendExpressions() {
+        TagManager.OnLoadUnload -= ExprApplyConfig;
+        if(FontSize.IsExpr) { FontSize.Suspend(); }
+        if(OutlineWidth.IsExpr) { OutlineWidth.Suspend(); }
+        if(LineSpacing.IsExpr) { LineSpacing.Suspend(); }
+        if(LineSpacingAdj.IsExpr) { LineSpacingAdj.Suspend(); }
+        if(ShadowDilate.IsExpr) { ShadowDilate.Suspend(); }
+        if(ShadowSoftness.IsExpr) { ShadowSoftness.Suspend(); }
+        if(TextColor.IsExpr) { TextColor.Suspend(); }
+        if(OutlineColor.IsExpr) { OutlineColor.Suspend(); }
+        if(ShadowColor.IsExpr) { ShadowColor.Suspend(); }
+        if(Scale.IsExpr) { Scale.Suspend(); }
+        if(Position.IsExpr) { Position.Suspend(); }
+        if(Pivot.IsExpr) { Pivot.Suspend(); }
+        if(ShadowOffset.IsExpr) { ShadowOffset.Suspend(); }
+        if(Rotation.IsExpr) { Rotation.Suspend(); }
+    }
+
+    public void ResumeExpressions() {
+        TagManager.OnLoadUnload -= ExprApplyConfig;
+        TagManager.OnLoadUnload += ExprApplyConfig;
+        ExprApplyConfig();
+    }
+
     public void Release() {
         TagManager.OnLoadUnload -= ExprApplyConfig;
+        OnDragChanged = null;
         if(FontSize.IsExpr) { FontSize.Dispose(); }
         if(OutlineWidth.IsExpr) { OutlineWidth.Dispose(); }
         if(LineSpacing.IsExpr) { LineSpacing.Dispose(); }

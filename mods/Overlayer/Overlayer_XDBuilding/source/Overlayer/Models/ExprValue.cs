@@ -25,8 +25,6 @@ public class ExprValue<T> : ICopyable<ExprValue<T>> {
     public ExprValue<T> Copy() {
         return new ExprValue<T>(DefaultValue) {
             Value = Value,
-            PlayingReplacer = PlayingReplacer?.Copy(),
-            NotPlayingReplacer = NotPlayingReplacer?.Copy(),
             Playing = Playing,
             NotPlaying = NotPlaying,
             IsExpr = IsExpr,
@@ -51,7 +49,7 @@ public class ExprValue<T> : ICopyable<ExprValue<T>> {
     }
 
     public JToken Serialize(Func<T, JToken> serializer) {
-        if(IsExpr) {
+        if(IsExpr || HasExpr) {
             JObject obj = new() {
                 [nameof(Playing)] = Playing,
                 [nameof(NotPlaying)] = NotPlaying
@@ -63,6 +61,9 @@ public class ExprValue<T> : ICopyable<ExprValue<T>> {
     }
 
     public bool Deserialize(JToken node, Func<JToken, T> parser) {
+        if(IsExpr) {
+            Dispose();
+        }
         if(node == null) {
             Value = DefaultValue;
             HasExpr = false;
@@ -82,14 +83,16 @@ public class ExprValue<T> : ICopyable<ExprValue<T>> {
     }
 
     public void Init() {
-        if(IsExpr) {
+        if(IsExpr && PlayingReplacer != null && NotPlayingReplacer != null) {
+            ApplyConfig();
             return;
         }
 
         PlayingReplacer = new Replacer(Playing, TagManager.All.Select(ot => ot.Tag));
         NotPlayingReplacer = new Replacer(NotPlaying, TagManager.NP.Select(ot => ot.Tag));
-        ApplyConfig();
         IsExpr = true;
+        HasExpr = true;
+        ApplyConfig();
     }
 
     public T Update(Func<string, T> parser) {
@@ -119,14 +122,21 @@ public class ExprValue<T> : ICopyable<ExprValue<T>> {
         TagManager.UpdatePatch();
     }
 
+    public void Suspend() {
+        if(IsExpr) {
+            PlayingReplacer?.Dispose();
+            NotPlayingReplacer?.Dispose();
+        }
+    }
+
     public void Dispose() {
         if(!IsExpr) {
             return;
         }
 
-        PlayingReplacer?.Dispose();
-        NotPlayingReplacer?.Dispose();
+        Suspend();
         IsExpr = false;
+        HasExpr = false;
     }
 
     public bool GetNormalValue(out T value) {

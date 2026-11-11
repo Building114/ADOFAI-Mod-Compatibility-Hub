@@ -1,26 +1,27 @@
-﻿using Overlayer.Tags.Attributes;
+using Overlayer.Tags.Attributes;
+using Overlayer.Utils;
 
 namespace Overlayer.Tags;
 
 public static class AccuracyStats {
     [Tag(ProcessingFlags = ValueProcessing.RoundNumber)]
-    [TagDesc("Accuracy(when perfect: 100+0.01%)")]
-    public static double Accuracy;
+    [TagDesc("Official Accuracy")]
+    public static double Accuracy => VersionSafe.GetPercentAcc() * 100.0;
     [Tag(ProcessingFlags = ValueProcessing.RoundNumber)]
-    [TagDesc("XAccuracy(when pure perfect: 100)")]
-    public static double XAccuracy;
+    [TagDesc("Official XAccuracy")]
+    public static double XAccuracy => VersionSafe.GetPercentXAcc() * 100.0;
     [Tag(ProcessingFlags = ValueProcessing.RoundNumber)]
-    [TagDesc("Absolute Max XAccuracy(Excluding checkpoints)")]
-    public static double AbsXAccuracy;
+    [TagDesc("Unavailable: XAccuracy without checkpoint penalties returns NaN")]
+    public static double AbsXAccuracy => double.NaN;
     [Tag(ProcessingFlags = ValueProcessing.RoundNumber)]
-    [TagDesc("The highest achievable Accuracy in the current tile")]
-    public static double MaxAccuracy;
+    [TagDesc("Unavailable: highest achievable Accuracy returns NaN")]
+    public static double MaxAccuracy => double.NaN;
     [Tag(ProcessingFlags = ValueProcessing.RoundNumber)]
-    [TagDesc("The highest achievable XAccuracy in the current tile")]
-    public static double MaxXAccuracy;
+    [TagDesc("Unavailable: maximum XAccuracy including checkpoint penalties returns NaN")]
+    public static double MaxXAccuracy => double.NaN;
     [Tag(ProcessingFlags = ValueProcessing.RoundNumber)]
-    [TagDesc("The highest achievable Absolute Max XAccuracy in the current tile(Excluding checkpoints)")]
-    public static double AbsMaxXAccuracy;
+    [TagDesc("Official maximum possible XAccuracy without checkpoint penalty")]
+    public static double AbsMaxXAccuracy => VersionSafe.GetMaxPossibleXAcc() * 100.0;
 
-    public static void Reset() => Accuracy = XAccuracy = MaxAccuracy = AbsXAccuracy = MaxXAccuracy = AbsMaxXAccuracy = double.NaN;
+    public static void Reset() { }
 }

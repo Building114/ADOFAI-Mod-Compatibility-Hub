@@ -57,12 +57,10 @@
     <Error Text="GameDir is not set. Set ADOFAI_GAME_DIR, pass /p:GameDir=..., or create Local.Build.props from Local.Build.props.example." />
   </Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>if /I "$(DeployToGame)"=="true" (
-if not exist "$(ModDir)" mkdir "$(ModDir)"
-copy /Y "$(TargetPath)" "$(ModDir)\Overlayer.Bootstrapper.dll"
-) else (
-  echo DeployToGame is false; skipping copy to local ADOFAI Mods folder.
-)</PostBuildEvent>
-  </PropertyGroup>
+  <Target Name="DeployOverlayerBootstrapper" AfterTargets="Build" Condition="'$(DeployToGame)' == 'true'">
+    <Error Condition="!Exists('$(GameDir)\A Dance of Fire and Ice.exe')" Text="GameDir is not a valid ADOFAI installation: $(GameDir)" />
+    <Error Condition="!Exists('$(ManagedDir)\Assembly-CSharp.dll')" Text="Managed assemblies not found in $(ManagedDir)" />
+    <MakeDir Directories="$(ModDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(ModDir)\Overlayer.Bootstrapper.dll" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

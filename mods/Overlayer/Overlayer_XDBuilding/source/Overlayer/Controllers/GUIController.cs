@@ -99,6 +99,5 @@ public class GUIController {
         drawables = [];
         depth = 0;
         onSkipCallbacks = new Stack<Action>();
-        GC.Collect(GC.MaxGeneration, GCCollectionMode.Optimized, false);
     }
 }

@@ -18,7 +18,7 @@ public class P_scnGame : PatchBase<P_scnGame> {
         nameof(Bpm.TileBpmWithoutPitch), nameof(Bpm.CurBpmWithoutPitch), nameof(Bpm.RecKPSWithoutPitch)
     ])]
     public static class Bpm__Play {
-        public static void Postfix(scrController __instance) => Bpm.Init(__instance);
+        public static void Postfix() => Bpm.Init(scrController.instance);
     }
 
     [LazyPatch("Tags.P_scnGame.Level__Play", "scnGame", "Play", Triggers =
@@ -49,13 +49,15 @@ public class P_scnGame : PatchBase<P_scnGame> {
     [
         nameof(CheckPointStats.TotalCheckPoints), nameof(CheckPointStats.CurCheckPoint),
         nameof(Tile.StartTile), nameof(Tile.StartProgress),
+        nameof(Tile.CurTile), nameof(Tile.TotalTile), nameof(Tile.LeftTile),
 
         // Dependency
         nameof(AccuracyStats.MaxXAccuracy), nameof(AccuracyStats.AbsMaxXAccuracy),
         nameof(Status.FileTileAttempts), nameof(Status.IsAutoTile)
     ])]
     public static class Play {
-        public static void Postfix(int seqID = 0) {
+        public static void Postfix(bool __result, int seqID = 0) {
+            if(!__result) return;
             CheckPointStats.InterCheckPoints_Update();
             Tile.SetStartValues(scrController.instance, seqID);
         }

@@ -84,6 +84,23 @@ public static class Extensions {
         }
         return false;
     }
+    public static void WriteAllTextAtomic(string path, string content) {
+        string tempPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try {
+            File.WriteAllText(tempPath, content);
+            if(File.Exists(path)) {
+                File.Replace(tempPath, path, null);
+            } else {
+                File.Move(tempPath, path);
+            }
+        } finally {
+            try {
+                if(File.Exists(tempPath)) {
+                    File.Delete(tempPath);
+                }
+            } catch { }
+        }
+    }
     public static byte[] Compress(this byte[] data) {
         using(MemoryStream output = new()) {
             using(DeflateStream dstream = new(output, CompressionLevel.Optimal)) {

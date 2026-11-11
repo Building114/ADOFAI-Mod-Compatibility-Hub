@@ -17,58 +17,19 @@ public static class Scores {
     public static int Score;
 
     public static void SetScores(HitMargin l, HitMargin n, HitMargin s, HitMargin c) {
-        switch(c) {
-            case HitMargin.VeryEarly:
-            case HitMargin.VeryLate:
-                Score += 91;
-                break;
-            case HitMargin.EarlyPerfect:
-            case HitMargin.LatePerfect:
-                Score += 150;
-                break;
-            case HitMargin.Perfect:
-                Score += 300;
-                break;
-        }
-        switch(l) {
-            case HitMargin.VeryEarly:
-            case HitMargin.VeryLate:
-                LScore += 91;
-                break;
-            case HitMargin.EarlyPerfect:
-            case HitMargin.LatePerfect:
-                LScore += 150;
-                break;
-            case HitMargin.Perfect:
-                LScore += 300;
-                break;
-        }
-        switch(n) {
-            case HitMargin.VeryEarly:
-            case HitMargin.VeryLate:
-                NScore += 91;
-                break;
-            case HitMargin.EarlyPerfect:
-            case HitMargin.LatePerfect:
-                NScore += 150;
-                break;
-            case HitMargin.Perfect:
-                NScore += 300;
-                break;
-        }
-        switch(s) {
-            case HitMargin.VeryEarly:
-            case HitMargin.VeryLate:
-                SScore += 91;
-                break;
-            case HitMargin.EarlyPerfect:
-            case HitMargin.LatePerfect:
-                SScore += 150;
-                break;
-            case HitMargin.Perfect:
-                SScore += 300;
-                break;
-        }
+        LScore += ScoreFor(l);
+        NScore += ScoreFor(n);
+        SScore += ScoreFor(s);
+        Score += ScoreFor(c);
+    }
+
+    private static int ScoreFor(HitMargin margin) {
+        if(margin.IsPerfect()) return 300;
+        return margin switch {
+            HitMargin.EarlyPerfect or HitMargin.LatePerfect => 150,
+            HitMargin.VeryEarly or HitMargin.VeryLate => 91,
+            _ => 0,
+        };
     }
 
     public static void Reset() => LScore = NScore = SScore = Score = 0;

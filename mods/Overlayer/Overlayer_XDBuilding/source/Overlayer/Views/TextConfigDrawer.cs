@@ -64,6 +64,9 @@ public class TextConfigDrawer : ModelDrawable<TextConfig> {
         GUILayout.Space(4);
         GUILayout.Label(Main.Lang.Get("FONT", "Font"));
         Drawer.DrawSelectFont(font => {
+            if(!text) {
+                return;
+            }
             model.Font = font;
             text.ApplyConfig();
         });
@@ -91,8 +94,12 @@ public class TextConfigDrawer : ModelDrawable<TextConfig> {
                 Drawer.BeginTab();
                 for(int i = 0; i < model.FallbackFonts.Length; i++) {
                     GUILayout.BeginHorizontal();
+                    int index = i;
                     Drawer.DrawSelectFont(font => {
-                        model.FallbackFonts[i] = font;
+                        if(!text || model.FallbackFonts == null || index >= model.FallbackFonts.Length) {
+                            return;
+                        }
+                        model.FallbackFonts[index] = font;
                         text.ApplyConfig();
                     });
                     changed |= Drawer.DrawOnlyString(ref model.FallbackFonts[i]);
@@ -169,25 +176,35 @@ public class TextConfigDrawer : ModelDrawable<TextConfig> {
         GUILayout.BeginHorizontal();
         GUI.color = new Color(1f, 0.8f, 1f);
         if(Drawer.Button(Drawer.Icon_Up, GUILayout.Width(46))) {
-            Task.Run(() => {
-                string target = StandaloneFileBrowser.SaveFilePanel(
-                    Main.Lang.Get("EXPORT_TEXT_CONFIG", "Export Text Config"),
-                    Persistence.GetLastUsedFolder(),
-                    $"{model.Name}.json", "json"
-                );
-                if(!string.IsNullOrWhiteSpace(target)) {
-                    JObject node = model.Serialize() as JObject;
-                    node["Type"] = "Text";
-                    if(Main.Settings.IncludeReferences) {
-                        node["References"] = TextConfigImporter.GetReferences(model);
+            try {
+                JObject node = model.Serialize() as JObject;
+                node["Type"] = "Text";
+                var referencePaths = Main.Settings.IncludeReferences ? TextConfigImporter.GetJustReferences(model) : null;
+                string title = Main.Lang.Get("EXPORT_TEXT_CONFIG", "Export Text Config");
+                string saveFolder = Persistence.GetLastUsedFolder();
+                string fileName = $"{model.Name}.json";
+                Task.Run(() => {
+                    try {
+                        string target = StandaloneFileBrowser.SaveFilePanel(title, saveFolder, fileName, "json");
+                        if(!string.IsNullOrWhiteSpace(target)) {
+                            if(referencePaths != null) {
+                                node["References"] = ProfileReferences.ResolveReferences(referencePaths);
+                            }
+                            Overlayer.Utils.Extensions.WriteAllTextAtomic(target, JsonConvert.SerializeObject(node, Formatting.Indented));
+                        }
+                    } catch(Exception e) {
+                        Main.Logger?.Log($"Failed to export text config '{fileName}': {e}");
                     }
-                    File.WriteAllText(target, JsonConvert.SerializeObject(node, Formatting.Indented));
-                }
-            });
+                });
+            } catch(Exception e) {
+                Main.Logger?.Log($"Failed to prepare text config export: {e}");
+            }
         }
         GUI.color = new Color(1f, 0.8f, 0.8f);
         if(Drawer.Button(Drawer.Icon_X, GUILayout.Width(46))) {
             text.Parent.ObjectManager.Destroy(text);
+            GUI.color = old;
+            GUILayout.EndHorizontal();
             Main.GUI.Pop();
             return;
         }

@@ -51,9 +51,9 @@ public static class ExpressionTags
     public static string ExprText(string expression, string format = "0.###")
     {
         double value = EvaluateNumber(expression);
-        return string.IsNullOrWhiteSpace(format)
-            ? value.ToString(CultureInfo.InvariantCulture)
-            : value.ToString(format, CultureInfo.InvariantCulture);
+        if(string.IsNullOrWhiteSpace(format)) return value.ToString(CultureInfo.InvariantCulture);
+        try { return value.ToString(format, CultureInfo.InvariantCulture); }
+        catch(FormatException) { return value.ToString(CultureInfo.InvariantCulture); }
     }
 
     [Tag]

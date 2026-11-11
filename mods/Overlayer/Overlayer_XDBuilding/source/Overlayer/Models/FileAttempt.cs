@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using Overlayer.Core.Interfaces;
+using Overlayer.Utils;
 using System.Collections.Generic;
 using System.IO;
 
@@ -81,7 +82,7 @@ public class FileAttempt : IModel, ICopyable<FileAttempt> {
         }
 
         var json = Serialize().ToString(Newtonsoft.Json.Formatting.None);
-        File.WriteAllText(path, json);
+        Overlayer.Utils.Extensions.WriteAllTextAtomic(path, json);
         return true;
     }
 

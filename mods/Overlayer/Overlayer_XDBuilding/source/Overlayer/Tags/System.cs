@@ -106,6 +106,7 @@ public static class System {
 
     private static long lastGCAllocatedMemory;
     private static Thread updateThread;
+    private static readonly AutoResetEvent updateWake = new(false);
     private static Computer computer;
     private static volatile bool running;
     private static bool inited;
@@ -140,6 +141,7 @@ public static class System {
             computer.Open();
         }
 
+        updateWake.Reset();
         running = true;
         updateThread = new Thread(() => {
             while(running) {
@@ -245,7 +247,7 @@ public static class System {
                     GpuSharedMemoryUsageGBytes = sUsed / 1024f;
                 }
 
-                Thread.Sleep(Main.Settings.SystemTagUpdateRate);
+                updateWake.WaitOne(Math.Max(10, Main.Settings.SystemTagUpdateRate));
             }
         });
 
@@ -259,8 +261,17 @@ public static class System {
         }
 
         running = false;
+        updateWake.Set();
         updateThread?.Join();
         updateThread = null;
+        if(computer != null) {
+            try {
+                computer.Close();
+            } catch(Exception e) {
+                Main.Logger?.Log("[System] Failed to close hardware monitor: " + e);
+            }
+            computer = null;
+        }
         inited = false;
     }
 

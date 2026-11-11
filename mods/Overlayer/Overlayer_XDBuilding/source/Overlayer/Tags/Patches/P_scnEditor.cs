@@ -16,7 +16,7 @@ public class P_scnEditor : PatchBase<P_scnEditor> {
         nameof(CheckPointStats.CurCheckPoint)
     ])]
     public static class CheckPoint__Play {
-        public static void Postfix() => CheckPointStats.TotalCheckPoients_Update();
+        public static void Postfix() => CheckPointStats.InterCheckPoints_Update();
     }
 
     [LazyPatch("Tags.P_scnEditor.Tile__ResetScene", "scnEditor", "ResetScene", Triggers =
@@ -24,6 +24,6 @@ public class P_scnEditor : PatchBase<P_scnEditor> {
         nameof(Tile.IsStarted)
     ])]
     public static class Tile__ResetScene {
-        public static void Postfix(scrController __instance) => Tile.IsStarted = false;
+        public static void Postfix() => Tile.IsStarted = false;
     }
 }

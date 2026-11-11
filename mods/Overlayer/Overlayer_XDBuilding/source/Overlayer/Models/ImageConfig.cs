@@ -8,7 +8,6 @@ using UnityEngine;
 namespace Overlayer.Models;
 
 public class ImageConfig : ObjectConfig, ICopyable<ImageConfig> {
-    public ImageConfig() => TagManager.OnLoadUnload += ExprApplyConfig;
     public delegate void DragChangeHandler(bool state);
     public event DragChangeHandler OnDragChanged;
     private bool _drag;
@@ -82,6 +81,8 @@ public class ImageConfig : ObjectConfig, ICopyable<ImageConfig> {
     }
 
     public void Init() {
+        TagManager.OnLoadUnload -= ExprApplyConfig;
+        TagManager.OnLoadUnload += ExprApplyConfig;
         if(Color.HasExpr) { Color.Init(); }
         if(Scale.HasExpr) { Scale.Init(); }
         if(Position.HasExpr) { Position.Init(); }
@@ -97,8 +98,24 @@ public class ImageConfig : ObjectConfig, ICopyable<ImageConfig> {
         if(Rotation.IsExpr) { Rotation.ApplyConfig(); }
     }
 
+    public void SuspendExpressions() {
+        TagManager.OnLoadUnload -= ExprApplyConfig;
+        if(Color.IsExpr) { Color.Suspend(); }
+        if(Scale.IsExpr) { Scale.Suspend(); }
+        if(Position.IsExpr) { Position.Suspend(); }
+        if(Pivot.IsExpr) { Pivot.Suspend(); }
+        if(Rotation.IsExpr) { Rotation.Suspend(); }
+    }
+
+    public void ResumeExpressions() {
+        TagManager.OnLoadUnload -= ExprApplyConfig;
+        TagManager.OnLoadUnload += ExprApplyConfig;
+        ExprApplyConfig();
+    }
+
     public void Release() {
         TagManager.OnLoadUnload -= ExprApplyConfig;
+        OnDragChanged = null;
         if(Color.IsExpr) { Color.Dispose(); }
         if(Scale.IsExpr) { Scale.Dispose(); }
         if(Position.IsExpr) { Position.Dispose(); }

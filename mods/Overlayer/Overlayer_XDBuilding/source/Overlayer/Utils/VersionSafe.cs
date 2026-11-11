@@ -65,12 +65,29 @@ public static class VersionSafe
 
     public static object GetPlayerByIndex(int index)
     {
+        if (index < 0)
+        {
+            return null;
+        }
+
         object playerManager = GetStaticMemberValue("scrPlayerManager", "instance");
         object players = FirstMemberValue(playerManager, "players", "listPlayers", "playerList");
 
-        if (players is IList list && index >= 0 && index < list.Count)
+        if (players is IList list)
         {
-            return list[index];
+            return index < list.Count ? list[index] : null;
+        }
+
+        if (players is IEnumerable items)
+        {
+            int current = 0;
+            foreach (object player in items)
+            {
+                if (current++ == index)
+                {
+                    return player;
+                }
+            }
         }
 
         return null;
@@ -162,39 +179,134 @@ public static class VersionSafe
             GetStaticMemberValue("scrMistakesManager", "marginTrackers") ??
             FirstMemberValue(GetMistakesManager(), "marginTrackers");
 
+        bool invokedAny = false;
+        object manager = GetMistakesManager();
         if (trackersObject is IEnumerable trackers)
         {
-            bool invokedAny = false;
             foreach (object tracker in trackers)
             {
-                InvokeNoArg(tracker, "CalculatePercentAcc");
-                invokedAny = true;
-            }
+                bool invoked = TryInvokeCalculatePercentAcc(tracker, tracker);
+                if (!invoked)
+                {
+                    invoked = TryInvokeCalculatePercentAcc(manager, tracker);
+                }
 
-            if (invokedAny)
-            {
-                return;
+                invokedAny |= invoked;
             }
         }
 
-        InvokeNoArg(GetMistakesManager(), "CalculatePercentAcc");
+        if (!invokedAny)
+        {
+            TryInvokeCalculatePercentAcc(manager, null);
+        }
+    }
+
+    private static bool TryInvokeCalculatePercentAcc(object target, object tracker)
+    {
+        if (target == null)
+        {
+            return false;
+        }
+
+        Type type = target as Type ?? target.GetType();
+        object instance = target is Type ? null : target;
+
+        foreach (MethodInfo method in type.GetMethods(Any))
+        {
+            if (!string.Equals(method.Name, "CalculatePercentAcc", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            ParameterInfo[] parameters = method.GetParameters();
+            object[] arguments;
+
+            if (parameters.Length == 0)
+            {
+                arguments = null;
+            }
+            else if (parameters.Length == 1 && tracker != null &&
+                     parameters[0].ParameterType.IsInstanceOfType(tracker))
+            {
+                arguments = new[] { tracker };
+            }
+            else if (parameters.Length > 0 && Array.TrueForAll(parameters, parameter => parameter.IsOptional))
+            {
+                arguments = Array.ConvertAll(parameters, parameter => parameter.DefaultValue);
+            }
+            else
+            {
+                continue;
+            }
+
+            try
+            {
+                method.Invoke(method.IsStatic ? null : instance, arguments);
+                return true;
+            }
+            catch
+            {
+            }
+        }
+
+        return false;
     }
 
     public static float GetPercentAcc()
     {
+        object value = FirstMemberValue(GetMistakesManager(), "percentAcc");
+        return TryToFloat(value, out float result) ? result : GetPercentAcc(0);
+    }
+
+    public static float GetPercentAcc(int playerIndex)
+    {
+        object value = FirstMemberValue(GetMarginTracker(playerIndex), "percentAcc");
+        if (TryToFloat(value, out float result))
+        {
+            return result;
+        }
+
+        if (playerIndex != 0 || GetMarginTracker(playerIndex) != null)
+        {
+            return float.NaN;
+        }
+
         object playerManager = GetStaticMemberValue("scrPlayerManager", "instance");
         object newManager = FirstMemberValue(playerManager, "mistakesManager");
-        object value = FirstMemberValue(newManager, "percentAcc") ?? FirstMemberValue(GetMistakesManager(), "percentAcc");
+        value = FirstMemberValue(newManager, "percentAcc") ?? FirstMemberValue(GetMistakesManager(), "percentAcc");
 
-        return TryToFloat(value, out float result) ? result : float.NaN;
+        return TryToFloat(value, out result) ? result : float.NaN;
     }
 
     public static float GetPercentXAcc()
     {
+        object value = FirstMemberValue(GetMistakesManager(), "percentXAcc");
+        return TryToFloat(value, out float result) ? result : GetPercentXAcc(0);
+    }
+
+    public static float GetPercentXAcc(int playerIndex)
+    {
+        object value = FirstMemberValue(GetMarginTracker(playerIndex), "percentXAcc");
+        if (TryToFloat(value, out float result))
+        {
+            return result;
+        }
+
+        if (playerIndex != 0 || GetMarginTracker(playerIndex) != null)
+        {
+            return float.NaN;
+        }
+
         object playerManager = GetStaticMemberValue("scrPlayerManager", "instance");
         object newManager = FirstMemberValue(playerManager, "mistakesManager");
-        object value = FirstMemberValue(newManager, "percentXAcc") ?? FirstMemberValue(GetMistakesManager(), "percentXAcc");
+        value = FirstMemberValue(newManager, "percentXAcc") ?? FirstMemberValue(GetMistakesManager(), "percentXAcc");
 
+        return TryToFloat(value, out result) ? result : float.NaN;
+    }
+
+    public static float GetMaxPossibleXAcc(int playerIndex = 0)
+    {
+        object value = FirstMemberValue(GetMarginTracker(playerIndex), "maxPossibleXAcc");
         return TryToFloat(value, out float result) ? result : float.NaN;
     }
 
@@ -205,35 +317,64 @@ public static class VersionSafe
 
     public static int[] GetHitMarginsCount(int playerIndex)
     {
-        object trackersObject =
-            GetStaticMemberValue("scrMistakesManager", "marginTrackers") ??
-            FirstMemberValue(GetMistakesManager(), "marginTrackers");
-
-        if (trackersObject is IList list && playerIndex >= 0 && playerIndex < list.Count)
+        object counts = FirstMemberValue(GetMarginTracker(playerIndex), "hitMarginsCount");
+        if (counts is int[] result)
         {
-            object counts = FirstMemberValue(list[playerIndex], "hitMarginsCount");
-            if (counts is int[] result)
-            {
-                return result;
-            }
+            return result;
         }
 
-        if (trackersObject is IEnumerable trackers)
+        if (counts is IList list)
         {
-            foreach (object tracker in trackers)
+            int[] values = new int[list.Count];
+            for (int i = 0; i < list.Count; i++)
             {
-                object counts = FirstMemberValue(tracker, "hitMarginsCount");
-
-                if (counts is int[] result)
-                {
-                    return result;
-                }
+                values[i] = TryToInt(list[i], out int count) ? count : 0;
             }
+
+            return values;
         }
 
-        object oldCounts = GetStaticMemberValue("scrMistakesManager", "hitMarginsCount");
+        if (playerIndex == 0 && GetMarginTracker(playerIndex) == null)
+        {
+            object oldCounts = GetStaticMemberValue("scrMistakesManager", "hitMarginsCount");
+            return oldCounts as int[] ?? Array.Empty<int>();
+        }
 
-        return oldCounts as int[] ?? Array.Empty<int>();
+        return Array.Empty<int>();
+    }
+
+    public static object GetNativeTrackerValue(int playerIndex, string memberName) {
+        return FirstMemberValue(GetMarginTracker(playerIndex), memberName);
+    }
+
+    public static int GetNativeTrackerInt(int playerIndex, string memberName) {
+        return TryToInt(GetNativeTrackerValue(playerIndex, memberName), out int result) ? result : -1;
+    }
+
+    public static string GetNativeLastMargin(int playerIndex, bool checkpoint = false) {
+        object value = GetNativeTrackerValue(playerIndex, checkpoint ? "lastCheckpointHitMargin" : "lastAddedHitMargin");
+        return value?.ToString() ?? string.Empty;
+    }
+
+    public static float GetNativePercentComplete(int playerIndex) {
+        object value = GetNativeTrackerValue(playerIndex, "percentComplete");
+        return TryToFloat(value, out float result) ? result : float.NaN;
+    }
+
+    public static bool GetNativeIsAllPurePerfect(int playerIndex) {
+        object tracker = GetMarginTracker(playerIndex);
+        if(tracker == null) return false;
+        try {
+            MethodInfo method = tracker.GetType().GetMethod("IsAllPurePerfect", Any, null, Type.EmptyTypes, null);
+            return method != null && method.Invoke(tracker, null) is bool result && result;
+        } catch {
+            return false;
+        }
+    }
+
+    public static int GetNativeRecordedMarginsTotal(int playerIndex) {
+        object hitMargins = GetNativeTrackerValue(playerIndex, "hitMargins");
+        return hitMargins is ICollection collection ? collection.Count : -1;
     }
 
     public static int GetHitMarginsCountAt(int index)
@@ -255,31 +396,26 @@ public static class VersionSafe
 
     public static int GetHitMarginsTotal(int playerIndex)
     {
-        object tracker = GetMarginTracker(playerIndex);
-        object trackerMargins = FirstMemberValue(tracker, "hitMargins");
-        if (trackerMargins is ICollection trackerCollection)
+        int nativeTotal = GetNativeTrackerInt(playerIndex, "playerHitMarginCount");
+        if (nativeTotal >= 0)
         {
-            return trackerCollection.Count;
-        }
-
-        object manager = GetMistakesManager();
-
-        object newMargins = FirstMemberValue(manager, "hitMargins");
-        if (newMargins is ICollection newCollection)
-        {
-            return newCollection.Count;
-        }
-
-        object oldMargins = GetStaticMemberValue("scrMistakesManager", "hitMargins");
-        if (oldMargins is ICollection oldCollection)
-        {
-            return oldCollection.Count;
+            return Math.Max(0, nativeTotal
+                - GetHitCount(HitMargin.FailMiss, playerIndex)
+                - GetHitCount(HitMargin.FailOverload, playerIndex)
+                - GetHitCount(HitMargin.FailedFloor, playerIndex));
         }
 
         int total = 0;
-        foreach (int count in GetHitMarginsCount(playerIndex))
+        foreach (HitMargin margin in HitMarginHelper.PlayerHitMarginTypes)
         {
-            total += Math.Max(0, count);
+            if (margin == HitMargin.FailMiss ||
+                margin == HitMargin.FailOverload ||
+                margin == HitMargin.FailedFloor)
+            {
+                continue;
+            }
+
+            total += Math.Max(0, GetHitCount(margin, playerIndex));
         }
 
         return total;
@@ -288,6 +424,29 @@ public static class VersionSafe
     public static int GetHitCount(HitMargin margin)
     {
         return GetHitCount(margin, 0);
+    }
+
+    public static int GetHitCount(string marginName, int playerIndex = 0)
+    {
+        if (string.IsNullOrWhiteSpace(marginName))
+        {
+            return 0;
+        }
+
+        try
+        {
+            object parsed = Enum.Parse(typeof(HitMargin), marginName, true);
+            if (!Enum.IsDefined(typeof(HitMargin), parsed))
+            {
+                return 0;
+            }
+
+            return GetHitCount((HitMargin)parsed, playerIndex);
+        }
+        catch
+        {
+            return 0;
+        }
     }
 
     public static int GetHitCount(HitMargin margin, int playerIndex)
@@ -299,10 +458,13 @@ public static class VersionSafe
             return trackerCount;
         }
 
-        int managerCount = InvokeGetHits(GetMistakesManager(), margin);
-        if (managerCount >= 0)
+        if (playerIndex == 0 && tracker == null)
         {
-            return managerCount;
+            int managerCount = InvokeGetHits(GetMistakesManager(), margin);
+            if (managerCount >= 0)
+            {
+                return managerCount;
+            }
         }
 
         return GetHitMarginsCountAt((int)margin, playerIndex);
@@ -310,20 +472,29 @@ public static class VersionSafe
 
     private static object GetMarginTracker(int playerIndex)
     {
+        if (playerIndex < 0)
+        {
+            return null;
+        }
+
         object trackersObject =
             GetStaticMemberValue("scrMistakesManager", "marginTrackers") ??
             FirstMemberValue(GetMistakesManager(), "marginTrackers");
 
-        if (trackersObject is IList list && playerIndex >= 0 && playerIndex < list.Count)
+        if (trackersObject is IList list)
         {
-            return list[playerIndex];
+            return playerIndex < list.Count ? list[playerIndex] : null;
         }
 
         if (trackersObject is IEnumerable trackers)
         {
+            int index = 0;
             foreach (object tracker in trackers)
             {
-                return tracker;
+                if (index++ == playerIndex)
+                {
+                    return tracker;
+                }
             }
         }
 
@@ -379,6 +550,26 @@ public static class VersionSafe
             return staticCount;
         }
 
+        object players = FirstMemberValue(inst, "players", "listPlayers", "playerList");
+        if (players is ICollection collection && collection.Count > 0)
+        {
+            return collection.Count;
+        }
+
+        if (players is IEnumerable items)
+        {
+            int count = 0;
+            foreach (object player in items)
+            {
+                count++;
+            }
+
+            if (count > 0)
+            {
+                return count;
+            }
+        }
+
         return 1;
     }
 
@@ -419,7 +610,9 @@ public static class VersionSafe
     public static float GetPercentComplete(scrController controller = null)
     {
         controller ??= scrController.instance;
-        object value = FirstMemberValue(controller, "percentComplete") ??
+        object value = FirstMemberValue(GetMistakesManager(controller), "percentComplete") ??
+                       GetNativeTrackerValue(0, "percentComplete") ??
+                       FirstMemberValue(controller, "percentComplete") ??
                        FirstMemberValue(GetPlayerOne(controller), "percentComplete");
 
         return TryToFloat(value, out float result) ? result : 0f;

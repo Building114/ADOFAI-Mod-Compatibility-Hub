@@ -9,7 +9,7 @@ public class P_scrPressToStart : PatchBase<P_scrPressToStart> {
         nameof(Bpm.TileBpmWithoutPitch), nameof(Bpm.CurBpmWithoutPitch), nameof(Bpm.RecKPSWithoutPitch)
     ])]
     public static class Bpm__ShowText {
-        public static void Postfix(scrController __instance) => Bpm.Init(__instance);
+        public static void Postfix() => Bpm.Init(scrController.instance);
     }
 
     [LazyPatch("Tags.P_scrPressToStart.Level__ShowText", "scrPressToStart", "ShowText", Triggers =

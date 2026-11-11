@@ -63,7 +63,9 @@ internal static class LazyPatchManager {
         if(trigger != null) {
             if(PatchedTriggers.Remove(trigger)) {
                 foreach(var patch in patches = Patches.Values.SelectMany(list => list).Where(p => p.attr.Triggers.Contains(trigger)).ToList()) {
-                    patch.Unpatch();
+                    if(!patch.attr.Triggers.Any(PatchedTriggers.Contains)) {
+                        patch.Unpatch();
+                    }
                 }
             }
         } else {

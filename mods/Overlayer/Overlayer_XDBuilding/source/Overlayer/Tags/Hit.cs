@@ -185,37 +185,61 @@ public static class Hit {
     public static int CT => CTE + CTL;
     [Tag]
     [TagDesc("Official Too Early")]
-    public static int OTE => VersionSafe.GetHitMarginsCountAt(0);
+    public static int OTE => VersionSafe.GetHitCount("TooEarly");
     [Tag]
     [TagDesc("Official Very Early")]
-    public static int OVE => VersionSafe.GetHitMarginsCountAt(1);
+    public static int OVE => VersionSafe.GetHitCount("VeryEarly");
     [Tag]
     [TagDesc("Official Early Perfect")]
-    public static int OEP => VersionSafe.GetHitMarginsCountAt(2);
+    public static int OEP => VersionSafe.GetHitCount("EarlyPerfect");
     [Tag]
-    [TagDesc("Official Perfect")]
-    public static int OP => VersionSafe.GetHitMarginsCountAt(3) + VersionSafe.GetHitMarginsCountAt(10);
+    [TagDesc("Official manual perfect total, including PerfectMinus, XPerfect and PerfectPlus")]
+    public static int OPP => VersionSafe.GetHitCount("Perfect") +
+        VersionSafe.GetHitCount("PerfectMinus") +
+        VersionSafe.GetHitCount("XPerfect") +
+        VersionSafe.GetHitCount("PerfectPlus");
+    [Tag]
+    [TagDesc("Official PerfectMinus count")]
+    public static int OPM => VersionSafe.GetHitCount("PerfectMinus");
+    [Tag]
+    [TagDesc("Official XPerfect count, excluding Auto")]
+    public static int OXP => VersionSafe.GetHitCount("XPerfect");
+    [Tag]
+    [TagDesc("Official PerfectPlus count")]
+    public static int OPPPlus => VersionSafe.GetHitCount("PerfectPlus");
+    [Tag]
+    [TagDesc("Official XPerfect total, including Auto")]
+    public static int OXPerfect => OXP + OA;
+    [Tag]
+    [TagDesc("Official pure XPerfect count, excluding Auto")]
+    public static int OPureXPerfect => OXP;
+    [Tag]
+    [TagDesc("Official inner perfects: PerfectMinus + PerfectPlus")]
+    public static int OInnerPerfect => OPM + OPPPlus;
+    [Tag]
+    [TagDesc("Official outer perfects: EarlyPerfect + LatePerfect")]
+    public static int OOuterPerfect => OEP + OLP;
+    [Tag]
+    [TagDesc("Official Perfect, including Auto")]
+    public static int OP => OPP + OA;
     [Tag]
     [TagDesc("Official Late Perfect")]
-    public static int OLP => VersionSafe.GetHitMarginsCountAt(4);
+    public static int OLP => VersionSafe.GetHitCount("LatePerfect");
     [Tag]
-    [TagDesc("Normal Very Late")]
-    public static int OVL => VersionSafe.GetHitMarginsCountAt(5);
+    [TagDesc("Official Very Late")]
+    public static int OVL => VersionSafe.GetHitCount("VeryLate");
     [Tag]
     [TagDesc("Official Too Late")]
-    public static int OTL => VersionSafe.GetHitMarginsCountAt(6);
+    public static int OTL => VersionSafe.GetHitCount("TooLate");
     [Tag]
     [TagDesc("Official Perfect (Only Auto)")]
-    public static int OA => VersionSafe.GetHitMarginsCountAt(10);
+    public static int OA => VersionSafe.GetHitCount("Auto");
     [Tag]
-    [TagDesc("Official Perfect (Only Player)")]
-    public static int OPP => VersionSafe.GetHitMarginsCountAt(3);
+    [TagDesc("Fast judgment in Official, including PerfectMinus")]
+    public static int OFast => OTE + OVE + OEP + OPM;
     [Tag]
-    [TagDesc("Fast judgment in Official")]
-    public static int OFast => OTE + OVE + OEP;
-    [Tag]
-    [TagDesc("Slow judgment in Official")]
-    public static int OSlow => OTL + OVL + OLP;
+    [TagDesc("Slow judgment in Official, including PerfectPlus")]
+    public static int OSlow => OPPPlus + OLP + OVL + OTL;
     [Tag]
     [TagDesc("Official Early Perfect + Official Late Perfect")]
     public static int OELP => OEP + OLP;
@@ -228,10 +252,10 @@ public static class Hit {
 
     [Tag]
     [TagDesc("Number of Misses")]
-    public static int MissCount => VersionSafe.GetHitCount(HitMargin.FailMiss);
+    public static int MissCount => VersionSafe.GetHitCount("FailMiss");
     [Tag]
     [TagDesc("Number of Overloads")]
-    public static int Overloads => VersionSafe.GetHitCount(HitMargin.FailOverload);
+    public static int Overloads => VersionSafe.GetHitCount("FailOverload");
     [Tag]
     [TagDesc("MissCount + Overloads")]
     public static int Fail => MissCount + Overloads;
@@ -254,7 +278,7 @@ public static class Hit {
                 hitMargin = HitMargin.FailMiss;
             }
             if(VersionSafe.IsMidspinInfiniteMargin(ctrl) || (RDC.auto && !RDC.useOldAuto)) {
-                hitMargin = HitMargin.Perfect;
+                hitMargin = HitMargin.Auto;
             }
         }
     }
@@ -300,7 +324,12 @@ public static class Hit {
                         break;
                 }
                 break;
-            case HitMargin.Perfect:
+            case HitMargin.PerfectMinus:
+            case HitMargin.XPerfect:
+            case HitMargin.PerfectPlus:
+            case HitMargin.Auto:
+            case HitMargin.Midspin:
+            case HitMargin.Multipress:
                 switch(diff) {
                     case global::Difficulty.Lenient:
                         LP++;
@@ -366,7 +395,12 @@ public static class Hit {
             case HitMargin.EarlyPerfect:
                 CEP++;
                 break;
-            case HitMargin.Perfect:
+            case HitMargin.PerfectMinus:
+            case HitMargin.XPerfect:
+            case HitMargin.PerfectPlus:
+            case HitMargin.Auto:
+            case HitMargin.Midspin:
+            case HitMargin.Multipress:
                 CP++;
                 break;
             case HitMargin.LatePerfect:
@@ -382,59 +416,21 @@ public static class Hit {
     }
 
     public static double GetAdjustedAngleBoundaryInDeg(Difficulty diff, HitMarginGeneral marginType, double bpmTimesSpeed, double conductorPitch, double marginMult = 1.0) {
-        float num = 0.065f;
-        switch(diff) {
-            case global::Difficulty.Lenient:
-                num = 0.091f;
-                break;
-            case global::Difficulty.Normal:
-                num = 0.065f;
-                break;
-            case global::Difficulty.Strict:
-                num = 0.04f;
-                break;
-        }
-        bool isMobile = ADOBase.isMobile;
-        num = isMobile ? 0.09f : (num / GCS.currentSpeedTrial);
-        float num2 = isMobile ? 0.07f : (0.03f / GCS.currentSpeedTrial);
-        float a = isMobile ? 0.05f : (0.02f / GCS.currentSpeedTrial);
-        num = Mathf.Max(num, 0.025f);
-        num2 = Mathf.Max(num2, 0.025f);
-        double num3 = (double)Mathf.Max(a, 0.025f);
-        double val = scrMisc.TimeToAngleInRad((double)num, bpmTimesSpeed, conductorPitch, false) * 57.295780181884766;
-        double val2 = scrMisc.TimeToAngleInRad((double)num2, bpmTimesSpeed, conductorPitch, false) * 57.295780181884766;
-        double val3 = scrMisc.TimeToAngleInRad(num3, bpmTimesSpeed, conductorPitch, false) * 57.295780181884766;
-        double result = Math.Max(GCS.HITMARGIN_COUNTED * marginMult, val);
-        double result2 = Math.Max(45.0 * marginMult, val2);
-        double result3 = Math.Max(30.0 * marginMult, val3);
+        var boundaries = scrMisc.GetAdjustedAngleBoundaryInDeg(diff, bpmTimesSpeed, conductorPitch, marginMult);
         return marginType switch {
-            HitMarginGeneral.Counted => result,
-            HitMarginGeneral.Perfect => result2,
-            HitMarginGeneral.Pure => result3,
-            _ => result,
+            HitMarginGeneral.Counted => boundaries.Counted,
+            HitMarginGeneral.Perfect => boundaries.Perfect,
+            HitMarginGeneral.Pure => boundaries.Pure,
+            _ => boundaries.Counted,
         };
     }
 
     public static HitMargin GetHitMargin(Difficulty diff, float hitangle, float refangle, bool isCW, float bpmTimesSpeed, float conductorPitch, double marginScale) {
-        float angleDeg = 57.29578f * (hitangle - refangle) * (isCW ? 1 : -1);
-
-        double countedDeg = GetAdjustedAngleBoundaryInDeg(diff, HitMarginGeneral.Counted, bpmTimesSpeed, conductorPitch, marginScale);
-        double perfectDeg = GetAdjustedAngleBoundaryInDeg(diff, HitMarginGeneral.Perfect, bpmTimesSpeed, conductorPitch, marginScale);
-        double pureDeg = GetAdjustedAngleBoundaryInDeg(diff, HitMarginGeneral.Pure, bpmTimesSpeed, conductorPitch, marginScale);
-
-        return angleDeg < -countedDeg
-            ? HitMargin.TooEarly
-            : angleDeg < -perfectDeg
-            ? HitMargin.VeryEarly
-            : angleDeg < -pureDeg
-            ? HitMargin.EarlyPerfect
-            : angleDeg <= pureDeg
-            ? HitMargin.Perfect
-            : angleDeg <= perfectDeg ? HitMargin.LatePerfect : angleDeg <= countedDeg ? HitMargin.VeryLate : HitMargin.TooLate;
+        return scrMisc.GetHitMarginInDeg(diff, hitangle, refangle, isCW, bpmTimesSpeed, conductorPitch, marginScale);
     }
 
     public static void Reset() {
-        Lenient = Normal = Strict = Current = HitMargin.Perfect;
+        Lenient = Normal = Strict = Current = HitMargin.XPerfect;
         LTE = LVE = LEP = LP = LLP = LVL = LTL = 0;
         NTE = NVE = NEP = NP = NLP = NVL = NTL = 0;
         STE = SVE = SEP = SP = SLP = SVL = STL = 0;
@@ -457,7 +453,7 @@ public static class Hit {
                 HitMargin.TooEarly => LTE,
                 HitMargin.VeryEarly => LVE,
                 HitMargin.EarlyPerfect => LEP,
-                HitMargin.Perfect => LP,
+                HitMargin.PerfectMinus or HitMargin.XPerfect or HitMargin.PerfectPlus or HitMargin.Auto or HitMargin.Midspin or HitMargin.Multipress => LP,
                 HitMargin.LatePerfect => LLP,
                 HitMargin.VeryLate => LVL,
                 HitMargin.TooLate => LTL,
@@ -467,7 +463,7 @@ public static class Hit {
                 HitMargin.TooEarly => NTE,
                 HitMargin.VeryEarly => NVE,
                 HitMargin.EarlyPerfect => NEP,
-                HitMargin.Perfect => NP,
+                HitMargin.PerfectMinus or HitMargin.XPerfect or HitMargin.PerfectPlus or HitMargin.Auto or HitMargin.Midspin or HitMargin.Multipress => NP,
                 HitMargin.LatePerfect => NLP,
                 HitMargin.VeryLate => NVL,
                 HitMargin.TooLate => NTL,
@@ -477,7 +473,7 @@ public static class Hit {
                 HitMargin.TooEarly => STE,
                 HitMargin.VeryEarly => SVE,
                 HitMargin.EarlyPerfect => SEP,
-                HitMargin.Perfect => SP,
+                HitMargin.PerfectMinus or HitMargin.XPerfect or HitMargin.PerfectPlus or HitMargin.Auto or HitMargin.Midspin or HitMargin.Multipress => SP,
                 HitMargin.LatePerfect => SLP,
                 HitMargin.VeryLate => SVL,
                 HitMargin.TooLate => STL,

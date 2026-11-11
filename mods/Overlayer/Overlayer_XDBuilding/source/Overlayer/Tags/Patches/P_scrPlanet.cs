@@ -43,35 +43,6 @@ public class P_scrPlanet : PatchBase<P_scrPlanet> {
         public static void Postfix(scrFloor floor) => Tile.Angle_Update(floor);
     }
 
-    [LazyPatch("Tags.P_scrPlanet.HitTiming__SwitchChosen", "scrPlanet", "SwitchChosen", Triggers = new string[] {
-        nameof(HitTiming.Timing), nameof(HitTiming.TimingAvg),
-    })]
-    public static class HitTiming__SwitchChosen {
-        public static void Prefix(scrPlanet __instance)
-        {
-            if (Main.IsPlaying)
-            {
-                HitTiming.Timing =
-                    (__instance.angle - __instance.targetExitAngle)
-                    * (VersionSafe.IsClockwise(scrController.instance) ? 1.0 : -1.0)
-                    * 60000.0
-                    / (
-                        Math.PI *
-                        __instance.conductor.bpm *
-                        VersionSafe.GetPlanetSpeed(scrController.instance) *
-                        __instance.conductor.song.pitch
-                    );
-
-                HitTiming.Timings.Add(HitTiming.Timing);
-                HitTiming.TimingAvg = HitTiming.Timings.Average();
-            }
-            else
-            {
-                HitTiming.Timing = 0;
-            }
-        }
-    }
-
     [LazyPatch("Tags.P_scrPlanet.Tile__SwitchChosen", "scrPlanet", "SwitchChosen", Triggers = new string[] {
         nameof(Tile.CurTile), nameof(Tile.LeftTile), nameof(Tile.TotalTile),
 

@@ -2,8 +2,9 @@
 using Overlayer.Core.Interfaces;
 using Overlayer.Utils;
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
 
 namespace Overlayer.Core;
 
@@ -18,28 +19,69 @@ public class Reference : IModel, ICopyable<Reference> {
     public string Name;
     public byte[] Raw;
 
-    static Dictionary<string, Reference> refCache = [];
-
     public static Reference GetReference(string path, Type referenceType) {
-        var target = path.Replace("{ModDir}", Main.Mod.Path);
-        if(refCache.TryGetValue(target, out var reference)) {
-            return reference;
+        if(string.IsNullOrWhiteSpace(path)) {
+            return null;
         }
+        string target = path.Replace("{ModDir}", Main.Mod.Path);
+        try {
+            if(!File.Exists(target)) {
+                return null;
+            }
 
-        var @ref = new Reference {
-            From = target,
-            Name = Path.GetFileName(target),
-            ReferenceType = referenceType
-        };
-        if(File.Exists(target)) {
-            @ref.Raw = File.ReadAllBytes(target).Compress();
-            refCache[target] = @ref;
-            return @ref;
+            return new Reference {
+                From = path,
+                Name = Path.GetFileName(target),
+                ReferenceType = referenceType,
+                Raw = File.ReadAllBytes(target).Compress()
+            };
+        } catch(Exception e) {
+            Main.Logger?.Log("[Reference] Failed to read file '" + target + "': " + e.Message);
+            return null;
         }
-        return null;
     }
 
-    public static void Flush() => refCache.Clear();
+    public static bool MatchesPath(string path, Reference reference, bool allowNameFallback) {
+        if(string.IsNullOrWhiteSpace(path) || reference == null) {
+            return false;
+        }
+        if(!string.IsNullOrWhiteSpace(reference.From) &&
+           string.Equals(path.Replace('\\', '/'), reference.From.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase)) {
+            return true;
+        }
+        return allowNameFallback && string.Equals(
+            Path.GetFileName(path.Replace("{ModDir}", Main.Mod.Path)),
+            reference.Name, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static string StoreEmbedded(string directory, string name, byte[] data) {
+        string target = Path.Combine(directory, name);
+        if(File.Exists(target) && !File.ReadAllBytes(target).SequenceEqual(data)) {
+            string hash;
+            using(var sha = SHA256.Create()) {
+                hash = BitConverter.ToString(sha.ComputeHash(data)).Replace("-", "").Substring(0, 16);
+            }
+            target = Path.Combine(directory, Path.GetFileNameWithoutExtension(name) + "_" + hash + Path.GetExtension(name));
+            if(File.Exists(target) && !File.ReadAllBytes(target).SequenceEqual(data)) {
+                throw new IOException("Embedded reference filename collision: " + name);
+            }
+        }
+        if(!File.Exists(target)) {
+            Directory.CreateDirectory(directory);
+            string temporary = target + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try {
+                File.WriteAllBytes(temporary, data);
+                File.Move(temporary, target);
+            } finally {
+                if(File.Exists(temporary)) {
+                    File.Delete(temporary);
+                }
+            }
+        }
+        return target;
+    }
+
+    public static void Flush() { }
 
     public JToken Serialize() {
         var node = new JObject {

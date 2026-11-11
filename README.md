@@ -22,7 +22,7 @@ Unofficial ADOFAI mod patch hub maintained by Building114.
 This repository lists temporary compatibility patches for ADOFAI mods.
 Link-only entries point to external repositories or releases. Their source code is not copied here.
 
-Current index: **5 original mod(s)**, **3 included patch(es)**, **3 link-only patch(es)**.
+Current index: **5 original mod(s)**, **3 included patch(es)**, **4 link-only patch(es)**.
 
 ## Important Notice
 
@@ -46,7 +46,7 @@ Original status: **Archived / read-only since 2026-06-06**
 | New Name | Link | Description | Base Version | Patch Version | Status | Included Here |
 |---|---|---|---:|---:|---|---|
 | Overlayer 5 | [Open](https://github.com/modlist-org/Overlayer) | Do I really need to explain? | X | X | X | Link only |
-| Overlayer XDBuilding | [Open](mods/Overlayer/Overlayer_XDBuilding/release/Overlayer-XDBuilding-v3.49.6.zip) | Unofficial temporary compatibility patch for ADOFAI 3.3.0. Adds practical fields and improves parsing logic. | 3.49.0 | 3.49.6 | Available | Included |
+| Overlayer XDBuilding | [Open](mods/Overlayer/Overlayer_XDBuilding/release/Overlayer-XDBuilding-v3.49.7.zip) | ADOFAI 3.4.0 compatibility patch with native judgement data, legacy Tag fixes, animation Tags and an in-game guide. | 3.49.0 | 3.49.7 | Available | Included |
 | Overlayer XDBuilding (legacy external link) | [Open](https://github.com/Building114/Overlayer-XDBuilding) | Earlier external link entry for the 3.42.0-based temporary compatibility patch maintained by Building114. | 3.42.0 | 3.42.2 | Available | Link only |
 
 ## KeyViewer

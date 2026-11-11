@@ -10,12 +10,17 @@ namespace Overlayer.Core;
 
 public static class TagManager {
     public static bool Initialized { get; private set; }
+    // Invalidate per-frame nested-argument results on tag registration changes.
+    public static int Generation { get; private set; }
     public static int Count => tags.Count;
     internal static Dictionary<string, OverlayerTag> tags;
     public static IEnumerable<OverlayerTag> All => tags.Values;
     public static IEnumerable<OverlayerTag> NP => tags.Values.Where(ot => ot.NotPlaying);
     public static event Action OnLoadUnload = delegate { };
-    public static void NotifyChanged() => OnLoadUnload?.Invoke();
+    public static void NotifyChanged() {
+        Generation++;
+        OnLoadUnload?.Invoke();
+    }
 
     internal static string testerValue;
 
@@ -85,6 +90,7 @@ public static class TagManager {
         }
 
         tags = [];
+        Generation++;
         Initialized = true;
     }
     public static void Release() {
@@ -93,6 +99,7 @@ public static class TagManager {
         }
 
         tags = null;
+        Generation++;
         Initialized = false;
     }
 }

@@ -10,6 +10,7 @@ public static class TagResetter {
         Tags.FrameRate.Reset();
         Hex.Reset();
         Hit.Reset();
+        Overlayer.Tags.Patches.P_scrMisc.ResetObservations();
         HitTiming.Reset();
         Song.Reset();
         Scores.Reset();

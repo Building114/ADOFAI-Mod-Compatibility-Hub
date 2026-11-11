@@ -18,14 +18,14 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
     public ImageConfig ImageConfig { get; private set; }
 
     public List<Sprite> Images = [];
+    public List<ImageManager.ImageLoadState> ImageStates = [];
     private Image _mainImage;
 
     public Replacer PlayingReplacer;
     public Replacer NotPlayingReplacer;
 
-    private static bool isAlreadyDragging;
-    private static int pointingCount = 0;
     private bool isDragging = false;
+    private bool isPointing = false;
     private Vector2 initialObjectPosition;
     private Vector2 initialPointerLocal;
     private Vector2 scaleforDrag = Vector2.zero;
@@ -39,7 +39,6 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
 
         Parent = profile;
         ImageConfig = config;
-
         DontDestroyOnLoad(gameObject);
         GameObject mainObject = gameObject;
         mainObject.transform.SetParent(Parent.ProfileCanvas.transform);
@@ -48,20 +47,28 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
         _mainImage = mainObject.AddComponent<Image>();
         _mainImage.raycastTarget = ImageConfig.Drag;
 
-        config.OnDragChanged += (state) => _mainImage.raycastTarget = state;
-
         PlayingReplacer = new Replacer(ImageConfig.PlayingCommand, TagManager.All.Select(t => t.Tag));
         NotPlayingReplacer = new Replacer(ImageConfig.NotPlayingCommand, TagManager.NP.Select(t => t.Tag));
-        PlayingReplacer.Compile();
-        NotPlayingReplacer.Compile();
+        TagManager.OnLoadUnload += RefreshTags;
+        try {
+            PlayingReplacer.Compile();
+            NotPlayingReplacer.Compile();
 
-        config.Init();
-        ApplyConfig();
-        _mainImage.raycastTarget = ImageConfig.Drag;
-        _mainImage.rectTransform.anchorMin = Vector2.zero;
-        _mainImage.rectTransform.anchorMax = Vector2.one;
-        ApplyImages();
-        Initialized = true;
+            config.Init();
+            Initialized = true;
+            ApplyConfig();
+            _mainImage.raycastTarget = ImageConfig.Drag;
+            _mainImage.rectTransform.anchorMin = Vector2.zero;
+            _mainImage.rectTransform.anchorMax = Vector2.one;
+            ApplyImages();
+            config.OnDragChanged += (state) => _mainImage.raycastTarget = state;
+        } catch {
+            TagManager.OnLoadUnload -= RefreshTags;
+            PlayingReplacer?.Dispose();
+            NotPlayingReplacer?.Dispose();
+            ImageConfig?.Release();
+            throw;
+        }
     }
 
     public void Update() {
@@ -99,6 +106,11 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
         }
     }
     private void RefreshTags() {
+        if(Initialized && !isActiveAndEnabled) {
+            PlayingReplacer?.Dispose();
+            NotPlayingReplacer?.Dispose();
+            return;
+        }
         PlayingReplacer.UpdateTags(TagManager.All.Select(ot => ot.Tag));
         NotPlayingReplacer.UpdateTags(TagManager.NP.Select(ot => ot.Tag));
         PlayingReplacer.Compile();
@@ -107,10 +119,10 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
     public override void ApplyConfig() {
         PlayingReplacer.Source = ImageConfig.PlayingCommand;
         NotPlayingReplacer.Source = ImageConfig.NotPlayingCommand;
-        PlayingReplacer.UpdateTags(TagManager.All.Select(ot => ot.Tag));
-        NotPlayingReplacer.UpdateTags(TagManager.NP.Select(ot => ot.Tag));
-        PlayingReplacer.Compile();
-        NotPlayingReplacer.Compile();
+        RefreshTags();
+        if(Initialized && !isActiveAndEnabled) {
+            ImageConfig.SuspendExpressions();
+        }
         TagManager.UpdatePatch();
         if(ImageConfig.Color.GetNormalValue(out var color)) {
             _mainImage.color = color;
@@ -131,30 +143,41 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
         _mainImage.gameObject.SetActive(ImageConfig.Active);
     }
 
-    public void ApplyImages() {
+    public void ApplyImages(bool reload = false) {
+        if(reload) {
+            foreach(var path in ImageConfig.Images) {
+                ImageManager.Invalidate(path);
+            }
+        }
         Images.Clear();
+        ImageStates.Clear();
         _mainImage.sprite = ImageManager.DefaultSprite;
-        for(int i = 0; i < ImageConfig.Images.Count; i++) {
-            string imagePath = ImageConfig.Images[i];
-            Images.Add(ImageManager.GetSpriteSafe(imagePath));
+        foreach(var path in ImageConfig.Images) {
+            ImageManager.TryGetSprite(path, out Sprite sprite, out var state);
+            Images.Add(sprite);
+            ImageStates.Add(state);
         }
     }
 
     public void OnPointerDown(PointerEventData e) {
-        if(!CanDrag || isAlreadyDragging) {
+        if(!CanDrag || OverlayerProfile.IsDragging) {
             return;
         }
         isDragging = true;
-        isAlreadyDragging = true;
+        OverlayerProfile.IsDragging = true;
         RectTransform parentRect = _mainImage.rectTransform.parent as RectTransform;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, e.position, e.pressEventCamera, out initialPointerLocal);
         initialObjectPosition = _mainImage.rectTransform.anchoredPosition;
     }
 
     public void OnPointerUp(PointerEventData e) {
-        if(!CanDrag || isDragging) {
-            isDragging = false;
-            isAlreadyDragging = false;
+        if(!isDragging) {
+            return;
+        }
+        isDragging = false;
+        OverlayerProfile.IsDragging = false;
+        if(OverlayerProfile.PointingCount == 0 && OverlayerProfile.DragObj) {
+            OverlayerProfile.DragObj.SetActive(false);
         }
     }
 
@@ -171,11 +194,12 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
     }
 
     public void OnPointerEnter(PointerEventData e) {
-        if(!CanDrag) {
+        if(!CanDrag || isPointing) {
             return;
         }
-        pointingCount++;
-        if(!isAlreadyDragging) {
+        isPointing = true;
+        OverlayerProfile.PointingCount++;
+        if(!OverlayerProfile.IsDragging) {
             OverlayerProfile.DragObj.transform.position = _mainImage.transform.position;
             OverlayerProfile.DragObj.transform.rotation = _mainImage.transform.rotation;
             OverlayerProfile.DragImage.rectTransform.pivot = _mainImage.rectTransform.pivot;
@@ -184,13 +208,13 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
         OverlayerProfile.DragObj.SetActive(true);
     }
     public void OnPointerExit(PointerEventData e) {
-        if(!CanDrag) {
+        if(!isPointing) {
             return;
         }
-        pointingCount--;
-        if(pointingCount <= 0) {
-            pointingCount = 0;
-            if(!isAlreadyDragging && OverlayerProfile.DragObj != null) {
+        isPointing = false;
+        OverlayerProfile.PointingCount = System.Math.Max(0, OverlayerProfile.PointingCount - 1);
+        if(OverlayerProfile.PointingCount == 0) {
+            if(!OverlayerProfile.IsDragging && OverlayerProfile.DragObj != null) {
                 OverlayerProfile.DragObj.SetActive(false);
             }
         }
@@ -201,6 +225,7 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
             return;
         }
 
+        ImageConfig?.ResumeExpressions();
         RefreshTags();
         if(TagManager.Initialized) {
             TagManager.UpdatePatch();
@@ -212,6 +237,18 @@ public class OverlayerImage : OverlayerObject, IPointerDownHandler, IPointerUpHa
             return;
         }
 
+        if(isDragging) {
+            isDragging = false;
+            OverlayerProfile.IsDragging = false;
+        }
+        if(isPointing) {
+            isPointing = false;
+            OverlayerProfile.PointingCount = System.Math.Max(0, OverlayerProfile.PointingCount - 1);
+        }
+        if(!OverlayerProfile.IsDragging && OverlayerProfile.PointingCount == 0 && OverlayerProfile.DragObj) {
+            OverlayerProfile.DragObj.SetActive(false);
+        }
+        ImageConfig?.SuspendExpressions();
         PlayingReplacer?.Dispose();
         NotPlayingReplacer?.Dispose();
         if(TagManager.Initialized) {

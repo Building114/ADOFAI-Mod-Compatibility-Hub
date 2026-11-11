@@ -1,6 +1,48 @@
-# Overlayer XDBuilding 3.49.6 Patch Notes
+# Overlayer XDBuilding Patch Notes
 
-## Scope
+> 翻译部分由 AI 提供，可能不准确。 / Translated portions were provided by AI and may be inaccurate.
+
+## 3.49.7
+
+Continued maintenance based on XDBuilding 3.49.6, targeting ADOFAI 3.4.0.
+
+### Main changes
+
+- Accuracy, XAccuracy, XPerfect, XScore and newer judgement fields now prefer official game data.
+- Fix some legacy Tags returning incorrect values, `NaN`, or becoming unavailable after game field changes.
+- Keep legacy Tag names, while fields without an official equivalent still return `NaN` or `false`.
+- Fix `StartProgress` sometimes reading the previous run's ending progress, and keep start-tile and progress initialization consistent.
+- Fix `PlayerTotalHits` counting special records such as Midspin, Auto and Multipress as ordinary player hits.
+- Make `MarginCombo:Perfect` use the game's official Perfect classification.
+- Fix `SpecialPlayMark` reporting PP or FC before a valid hit has occurred.
+- Fix checkpoint lists sometimes retaining state after editor play or level changes.
+
+### Tags and editor
+
+- Add `Wave`, `PingPong` and `ColorPulse` as time-based animation Tags.
+- Let `ColorRange` accept direct numbers and nested numeric Tags, including `Wave` and `Calc`.
+- Support nested braces in the code editor's Tag scan so highlighting and click detection match runtime parsing more closely.
+- Make the `ColorRange`, `MovingMan` and `EasedValue` editors more robust.
+- Fix several `Rainbow` edge cases.
+- Fix `ExprText` potentially throwing on invalid numeric formats.
+- Fix integer and floating-point parameter parsing for invalid input and very long decimal values.
+- Fix `MaxTileBpm` scene-null handling and BPM edge cases.
+- Fix interrupted `EasedValue` animations jumping on progress rewind; cache repeated per-frame tag evaluation and color parsing to reduce heavy progress-bar stutter.
+- Add `PlayerPlanetColor(player, planet)` (1-based, RGBA hex), usable as a nested color argument in `ColorRange` and `ColorPulse` with `Wave`.
+
+### Text, scripting and resources
+
+- Adjust OverlayerText font and material binding to reduce state conflicts.
+- Keep global ChangeFont from overwriting font settings on Overlayer's own text objects.
+- Fix selected script import, reload, dynamic Tag refresh and lifecycle issues.
+- Fix selected Profile import/export, settings backup and resource cleanup issues.
+- Keep `update.txt` until the player explicitly chooses to delete it after reading. Remember the last viewed log content in `Settings.json`, so keeping the log does not cause repeated automatic popups. Kept logs can be reopened from the menu.
+- Improve the in-game guide hierarchy: numbered bold lesson headings, separate paragraphs, distinct example blocks and TMP category titles. Set the standalone TMP preview default font size to 100, remove the bottom-of-page TMP tip, and shorten the collapse label to 收起.
+- Expand **Rich Text & Tags** into a 37-tag reference and 15 Overlayer rules. Each lesson has a 200-character temporary experiment with a separate TextMeshPro render-target preview. Only one experiment runs at a time. Scripts and non-allowlisted Tags are not evaluated, and the input is never saved. Nested example code is kept on one line. The guide closes and clears its transient draft when the mod menu is hidden.
+
+## 3.49.6
+
+### Scope
 
 This is an incremental maintenance release from XDBuilding 3.49.5 to 3.49.6.
 
@@ -12,7 +54,7 @@ Source comparison result:
 
 No source files were added or removed between the supplied 3.49.5 and the final 3.49.6 source trees.
 
-## Confirmed 3.49.6 changes
+### Confirmed 3.49.6 changes
 
 ### Font refresh
 
@@ -50,7 +92,7 @@ The main Overlayer project explicitly targets x64 to match `LibreHardwareMonitor
 
 A small set of confirmed unused variables and private fields was removed.
 
-## Exact changed files
+### Exact changed files
 
 - `Overlayer.Bootstrapper/Properties/AssemblyInfo.cs`
 - `Overlayer/CodeEditor/CodeEditor.cs`

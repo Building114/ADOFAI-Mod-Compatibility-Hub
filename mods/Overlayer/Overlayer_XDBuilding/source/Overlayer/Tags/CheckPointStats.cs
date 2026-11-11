@@ -28,7 +28,7 @@ public static class CheckPointStats {
     }
 
     public static int GetCheckPointIndex(scrFloor floor) {
-        if(floor == null) {
+        if(floor == null || AllCheckPoints == null) {
             return 0;
         }
         int i = 0;
@@ -41,5 +41,8 @@ public static class CheckPointStats {
         return i;
     }
 
-    public static void Reset() => CurCheckPoint = TotalCheckPoints = 0;
+    public static void Reset() {
+        CurCheckPoint = TotalCheckPoints = 0;
+        AllCheckPoints = null;
+    }
 }

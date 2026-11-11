@@ -7,16 +7,16 @@ namespace Overlayer.Tags.Patches;
 public class P_scrConductor : PatchBase<P_scrConductor> {
     [LazyPatch("Tags.P_scrConductor.Song__Update", "scrConductor", "Update", Triggers =
     [
-        nameof(Song.CurMinute), nameof(Song.CurSecond),nameof(Song.CurMilliSecond),
-        nameof(Song.TotalMinute), nameof(Song.TotalSecond),nameof(Song.TotalMilliSecond)
+        nameof(Song.CurDay), nameof(Song.CurHour), nameof(Song.CurMinute), nameof(Song.CurSecond),nameof(Song.CurMilliSecond),
+        nameof(Song.TotalDay), nameof(Song.TotalHour), nameof(Song.TotalMinute), nameof(Song.TotalSecond),nameof(Song.TotalMilliSecond)
     ])]
     public static class Song__Update {
         public static void Postfix(scrConductor __instance) {
-            if(scrController.instance.paused || !__instance.isGameWorld) {
+            if(!__instance.isGameWorld || scrController.instance == null || scrController.instance.paused) {
                 return;
             }
             AudioSource song = __instance.song;
-            if(!song.clip) {
+            if(song == null || song.clip == null) {
                 return;
             }
             TimeSpan nowt = TimeSpan.FromSeconds(song.time);

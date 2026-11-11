@@ -1,17 +1,32 @@
 # Overlayer XDBuilding
 
-Overlayer XDBuilding is an unofficial temporary compatibility patch for the legacy Overlayer 3.x source line.
+> 翻译部分由 AI 提供，可能不准确。 / Translated portions were provided by AI and may be inaccurate.
+
+Overlayer XDBuilding is a community-maintained compatibility patch for the Overlayer 3.x source line.
 
 - Original mod: Overlayer
-- Original repository: https://github.com/modlist-org/Overlayer-Lagacy
+- Original repository: [https://github.com/modlist-org/Overlayer-Legacy](https://github.com/modlist-org/Overlayer-Legacy)
 - Base version: 3.49.0
-- Patch version: 3.49.6
-- Previous patch version: 3.49.5
-- Target compatibility recorded by this patch: ADOFAI through 3.3.0
+- Patch version: 3.49.7
+- Previous patch version: 3.49.6
+- Target ADOFAI version: 3.4.0
 - Patch maintainer: Building114
 - Overlayer-derived source license: GNU GPL v3.0
 
-This is not an official release from modlist.org, c3nb, or the original Overlayer maintainers. Original authorship, notices, and license terms remain in effect.
+Original author credits, notices, and license terms remain in effect.
+
+## 3.49.7
+
+- Target ADOFAI 3.4.0 and prefer official game data for Accuracy, XAccuracy, XPerfect, XScore and newer judgement fields.
+- Fix legacy Tag compatibility, start-progress state, player-hit totals, Perfect grouping and checkpoint state.
+- Add `Wave`, `PingPong` and `ColorPulse`, improve `ColorRange`, and support nested-brace Tag scanning in the editor.
+- Add `PlayerPlanetColor(player, planet)` for live player-planet colors and fix interrupted `EasedValue` animation while reducing repeat parsing for complex progress bars.
+- Make the `ColorRange`, `MovingMan` and `EasedValue` editors more robust.
+- Improve OverlayerText font/material binding and keep global ChangeFont from overwriting per-text font settings.
+- Fix selected script lifecycle, Profile/resource, numeric parsing and BPM edge cases.
+- Keep legacy Tag names where practical. Fields without an official equivalent still return `NaN` or `false`.
+- Ask whether to delete `update.txt` only after the player finishes reading; kept logs remain available through an **Update Log** menu button.
+- Expand the bottom-menu **Rich Text & Tags** guide with a 37-tag TextMeshPro reference, 15 Overlayer rules, and one inline experiment for every lesson. The experiment uses a separate offscreen TMP renderer (up to 200 input characters, no disk persistence), keeps nested examples on one line, and limits preview Tag evaluation to a small built-in subset. Closing the mod menu also closes the guide and clears its draft.
 
 ## 3.49.6
 

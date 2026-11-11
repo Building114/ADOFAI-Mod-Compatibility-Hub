@@ -779,6 +779,7 @@
     <Compile Include="Models\ModelUtils.cs" />
     <Compile Include="CodeEditor\MovingManEditor.cs" />
     <Compile Include="Utils\UpdatePopup.cs" />
+    <Compile Include="Utils\RichTextGuidePopup.cs" />
     <Compile Include="Utils\StringConverter.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Olly\Olly.cs" />
@@ -790,6 +791,8 @@
     <Compile Include="Unity\StandaloneFileBrowserShim.cs" />
     <Compile Include="Utils\VersionSafe.cs" />
     <Compile Include="Tags\PlayerHitStats.cs" />
+    <Compile Include="Tags\PlayerNativeStats.cs" />
+    <Compile Include="Tags\PlanetColors.cs" />
     <Compile Include="Tags\XPerfectTags.cs" />
     <Compile Include="Tags\ExpressionTags.cs" />
     <Compile Include="Tags\TUF.cs" />
@@ -929,24 +932,17 @@
     <Error Text="GameDir is not set. Set ADOFAI_GAME_DIR, pass /p:GameDir=..., or create Local.Build.props from Local.Build.props.example." />
   </Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>
-    if /I "$(DeployToGame)"=="true" (
-      if not exist "$(ModDir)" mkdir "$(ModDir)"
-      if not exist "$(ModDir)\lang" mkdir "$(ModDir)\lang"
-      if not exist "$(ModDir)\lib" mkdir "$(ModDir)\lib"
-      copy /Y "$(TargetPath)" "$(ModDir)\Overlayer.dll"
-      xcopy /Y /I /S /E "$(ProjectDir)MiscFiles\lang\*" "$(ModDir)\lang\"
-      xcopy /Y /I "$(ProjectDir)MiscFiles\info.json" "$(ModDir)\"
-      xcopy /Y /I "$(ProjectDir)MiscFiles\update.txt" "$(ModDir)\"
-      xcopy /Y /I "$(ProjectDir)MiscFiles\ov3_logo.png" "$(ModDir)\"
-      del /Q "$(ModDir)\lib\*.dll" 2&gt;nul
-      for %%F in ("$(TargetDir)*.dll") do (
-        if /I not "%%~nxF"=="Overlayer.dll" copy /Y "%%~fF" "$(ModDir)\lib\"
-      )
-    ) else (
-      echo DeployToGame is false; skipping copy to local ADOFAI Mods folder.
-    )
-    </PostBuildEvent>
-  </PropertyGroup>
+  <Target Name="DeployOverlayerXDBuilding" AfterTargets="Build" Condition="'$(DeployToGame)' == 'true'">
+    <Error Condition="!Exists('$(GameDir)\A Dance of Fire and Ice.exe')" Text="GameDir is not a valid ADOFAI installation: $(GameDir)" />
+    <Error Condition="!Exists('$(ManagedDir)\Assembly-CSharp.dll')" Text="Managed assemblies not found in $(ManagedDir)" />
+    <ItemGroup>
+      <DeployOverlayerLib Include="$(TargetDir)*.dll" Exclude="$(TargetPath)" />
+      <DeployOverlayerLang Include="$(ProjectDir)MiscFiles\lang\*.json" />
+    </ItemGroup>
+    <MakeDir Directories="$(ModDir);$(ModDir)\lib;$(ModDir)\lang" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(ModDir)\Overlayer.dll" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DeployOverlayerLib)" DestinationFolder="$(ModDir)\lib\" SkipUnchangedFiles="true" Condition="'@(DeployOverlayerLib)' != ''" />
+    <Copy SourceFiles="@(DeployOverlayerLang)" DestinationFolder="$(ModDir)\lang\" SkipUnchangedFiles="true" Condition="'@(DeployOverlayerLang)' != ''" />
+    <Copy SourceFiles="$(ProjectDir)MiscFiles\info.json;$(ProjectDir)MiscFiles\update.txt;$(ProjectDir)MiscFiles\ov3_logo.png" DestinationFolder="$(ModDir)\" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

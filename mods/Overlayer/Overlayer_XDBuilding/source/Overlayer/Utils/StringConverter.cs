@@ -1,246 +1,43 @@
 ﻿using System;
 using System.Reflection;
+using System.Globalization;
 
 namespace Overlayer.Utils;
 
 public static class StringConverter {
-    public static unsafe sbyte ToInt8(string s) {
-        if(s == null || s.Length == 0) {
-            return 0;
-        }
-
-        sbyte result = 0;
-        bool unary = s[0] == 45;
-        fixed(char* v = s) {
-            char* c = v;
-            if(unary) {
-                c++;
-            }
-
-            while(*c != '\0') {
-                result = (sbyte)((10 * result) + (*c - 48));
-                c++;
-            }
-        }
-        return unary ? (sbyte)-result : result;
-    }
+    public static sbyte ToInt8(string s) =>
+        sbyte.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out sbyte value) ? value : (sbyte)0;
     public static string FromInt8(sbyte s) => s.ToString();
-    public static unsafe short ToInt16(string s) {
-        if(s == null || s.Length == 0) {
-            return 0;
-        }
-
-        short result = 0;
-        bool unary = s[0] == 45;
-        fixed(char* v = s) {
-            char* c = v;
-            if(unary) {
-                c++;
-            }
-
-            while(*c != '\0') {
-                result = (short)((10 * result) + (*c - 48));
-                c++;
-            }
-        }
-        return unary ? (short)-result : result;
-    }
+    public static short ToInt16(string s) =>
+        short.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out short value) ? value : (short)0;
     public static string FromInt16(short s) => s.ToString();
-    public static unsafe int ToInt32(string s) {
-        if(s == null || s.Length == 0) {
-            return 0;
-        }
-
-        int result = 0;
-        bool unary = s[0] == 45;
-        fixed(char* v = s) {
-            char* c = v;
-            if(unary) {
-                c++;
-            }
-
-            while(*c != '\0') {
-                result = (10 * result) + (*c - 48);
-                c++;
-            }
-        }
-        return unary ? -result : result;
-    }
+    public static int ToInt32(string s) =>
+        int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value) ? value : (int)0;
     public static string FromInt32(int s) => s.ToString();
-    public static unsafe long ToInt64(string s) {
-        if(s == null || s.Length == 0) {
-            return 0;
-        }
-
-        long result = 0;
-        bool unary = s[0] == 45;
-        fixed(char* v = s) {
-            char* c = v;
-            if(unary) {
-                c++;
-            }
-
-            while(*c != '\0') {
-                result = (10 * result) + (*c - 48);
-                c++;
-            }
-        }
-        return unary ? -result : result;
-    }
+    public static long ToInt64(string s) =>
+        long.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out long value) ? value : (long)0;
     public static string FromInt64(long s) => s.ToString();
-    public static unsafe byte ToUInt8(string s) {
-        if(s == null || s.Length == 0) {
-            return 0;
-        }
-
-        byte result = 0;
-        fixed(char* v = s) {
-            char* c = v;
-            while(*c != '\0') {
-                result = (byte)((10 * result) + (*c - 48));
-                c++;
-            }
-        }
-        return result;
-    }
+    public static byte ToUInt8(string s) =>
+        byte.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out byte value) ? value : (byte)0;
     public static string FromUInt8(byte s) => s.ToString();
-    public static unsafe ushort ToUInt16(string s) {
-        if(s == null || s.Length == 0) {
-            return 0;
-        }
-
-        ushort result = 0;
-        fixed(char* v = s) {
-            char* c = v;
-            while(*c != '\0') {
-                result = (ushort)((10 * result) + (*c - 48));
-                c++;
-            }
-        }
-        return result;
-    }
+    public static ushort ToUInt16(string s) =>
+        ushort.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out ushort value) ? value : (ushort)0;
     public static string FromUInt16(ushort s) => s.ToString();
-    public static unsafe uint ToUInt32(string s) {
-        if(s == null || s.Length == 0) {
-            return 0;
-        }
-
-        uint result = 0;
-        fixed(char* v = s) {
-            char* c = v;
-            while(*c != '\0') {
-                result = (uint)((10 * result) + (*c - 48));
-                c++;
-            }
-        }
-        return result;
-    }
+    public static uint ToUInt32(string s) =>
+        uint.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out uint value) ? value : (uint)0;
     public static string FromUInt32(uint s) => s.ToString();
-    public static unsafe ulong ToUInt64(string s) {
-        if(s == null || s.Length == 0) {
-            return 0;
-        }
-
-        ulong result = 0;
-        fixed(char* v = s) {
-            char* c = v;
-            while(*c != '\0') {
-                result = (10 * result) + (*c - 48ul);
-                c++;
-            }
-        }
-        return result;
-    }
+    public static ulong ToUInt64(string s) =>
+        ulong.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong value) ? value : (ulong)0;
     public static string FromUInt64(ulong s) => s.ToString();
-    public static unsafe double ToDouble(string s) {
-        if(s == null || s.Length == 0) {
-            return 0;
-        }
-
-        double result = 0;
-        bool isDot = false;
-        int dCount = 1;
-        bool unary = s[0] == 45;
-        fixed(char* v = s) {
-            char* c = v;
-            if(unary) {
-                c++;
-            }
-
-            while(*c != '\0') {
-                if(*c == '.') {
-                    isDot = true;
-                    goto Continue;
-                }
-                if(!isDot) {
-                    result = (10 * result) + (*c - 48);
-                } else {
-                    result += (*c - 48) / dPow[dCount++];
-                }
-
-Continue:
-                c++;
-            }
-        }
-        return unary ? -result : result;
-    }
-    public static string FromDouble(double s) => s.ToString();
-    public static unsafe float ToFloat(string s) {
-        if(s == null || s.Length == 0) {
-            return 0;
-        }
-
-        float result = 0;
-        bool isDot = false;
-        int dCount = 1;
-        bool unary = s[0] == 45;
-        fixed(char* v = s) {
-            char* c = v;
-            if(unary) {
-                c++;
-            }
-
-            while(*c != '\0') {
-                if(*c == '.') {
-                    isDot = true;
-                    goto Continue;
-                }
-                if(!isDot) {
-                    result = (10 * result) + (*c - 48);
-                } else {
-                    result += (*c - 48) / fPow[dCount++];
-                }
-
-Continue:
-                c++;
-            }
-        }
-        return unary ? -result : result;
-    }
-    public static string FromFloat(float s) => s.ToString();
-    private static readonly double[] dPow = GetDoublePow();
-    private static double[] GetDoublePow() {
-        var max = 309;
-        var exps = new double[max];
-        for(var i = 0; i < max; i++) {
-            exps[i] = Math.Pow(10, i);
-        }
-
-        return exps;
-    }
-    private static readonly float[] fPow = GetFloatPow();
-    private static float[] GetFloatPow() {
-        var max = 39;
-        var exps = new float[max];
-        for(var i = 0; i < max; i++) {
-            exps[i] = (float)Math.Pow(10, i);
-        }
-
-        return exps;
-    }
+    public static double ToDouble(string s) =>
+        double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double value) ? value : 0;
+    public static string FromDouble(double s) => s.ToString(CultureInfo.InvariantCulture);
+    public static float ToFloat(string s) =>
+        float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) ? value : 0;
+    public static string FromFloat(float s) => s.ToString(CultureInfo.InvariantCulture);
     public static T ToEnum<T>(string s) where T : Enum => EnumHelper<T>.Parse(s);
     public static string FromEnum<T>(T e) where T : Enum => e.ToString();
-    public static bool ToBoolean(string s) => s.Equals("true", StringComparison.OrdinalIgnoreCase);
+    public static bool ToBoolean(string s) => string.Equals(s, "true", StringComparison.OrdinalIgnoreCase);
     public static string FromBoolean(bool b) => b.ToString();
     public static MethodInfo GetToConverter(Type numType) {
         if(numType == typeof(sbyte)) {

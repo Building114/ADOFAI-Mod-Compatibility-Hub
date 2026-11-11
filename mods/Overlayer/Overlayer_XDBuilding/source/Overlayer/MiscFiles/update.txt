@@ -1,3 +1,43 @@
+[3.49.7]
+
+基于XDBuilding 3.49.6继续维护，目标ADOFAI3.4.0
+
+【界面与说明】
+- 教程里的标题、说明和示例现在分开显示，TMP预览默认字号调整为100
+- 现在保留update.txt是可选的，防止有人随便关了之后不知道更新了啥
+- 准备了一些教程，虽然估计根本没人看。它和刚刚的日志的按钮放在最下面那块
+- 教程里的实验区不会执行脚本和复杂Tag，效果也可能跟正式的文字对象不完全一样。真正用之前还是得确认一下。
+  还有就是实验室的标题部分有AI参与（因为我憋不出来）。这下小伙可惨了
+
+【主要调整】
+- Accuracy XAccuracy XPerfect XScore和新版判定字段改为优先读取游戏官方数据
+- 修复部分旧Tag在新版字段变化后返回错误 NaN或失效的问题
+- 保留旧Tag名，但没有官方等价值的字段仍返回NaN或False
+- 修复StartProgress可能读取上一次游玩结束进度的问题，并统一开局格和进度初始化
+- 修复PlayerTotalHits把Midspin、Auto、Multipress等特殊记录算作普通玩家击键的问题
+- MarginCombo改用游戏官方Perfect分类
+- 修复SpecialPlayMark在尚未产生有效击键时可能提前显示PP或FC的问题
+- 修复检查点列表在编辑器播放或切换关卡后可能残留旧状态的问题
+
+【标签与编辑器】
+- 旧分类判定统计加入重复回调保护，同一条原生判定不会被重复计入；{OV}等官方计数仍直接读取游戏数据
+- 新增Wave、PingPong和ColorPulse三个时间动效Tag
+- ColorRange支持直接数字和嵌套数值Tag，可与Wave Calc等组合
+- 代码编辑器的Tag扫描支持嵌套花括号，高亮和点击识别与运行时解析保持一致
+- ColorRange MovingMan和EasedValue的编辑器更加强壮💪
+- 修复Rainbow的一些问题
+- 修复ExprText使用非法数字格式时可能抛出异常
+- 修复整数 浮点参数解析对非法输入和超长小数处理不正确的问题
+- 修复MaxTileBpm等场景空值和BPM边界
+- 修复EasedValue在进度回退时动画被打断可能突跳的问题，减少重复Tag解析和颜色计算以优化复杂进度条性能
+- 新增PlayerPlanetColor(玩家,球体)，可嵌套到ColorRange、ColorPulse并与Wave组合实现球体颜色渐变
+
+【文字、脚本与资源】 
+- 调整OverlayerText的字体和材质绑定流程，减少状态冲突
+- 全局ChangeFont不再覆盖Overlayer自身文字对象的字体设置
+- 修复部分脚本导入重载动态Tag刷新和生命周期问题
+- 修复部分配置导入导出 设置备份和资源释放问题
+
 [3.49.6]
 
 基于XDBuilding 3.49.5继续维护

@@ -1,4 +1,5 @@
-using HarmonyLib;
+﻿using HarmonyLib;
+using Jint;
 using Newtonsoft.Json.Linq;
 using Overlayer.Core.Patches;
 using Overlayer.Core.Scripting.JSNet.API;
@@ -33,8 +34,10 @@ public static class Scripting {
 
     static string SandboxJSCode = string.Empty;
     static string SandboxResult = "...";
+    static int scriptGeneration;
 
     public static void Initalize() {
+        scriptGeneration++;
         Main.Logger.Log("[Scripting] Full API closeout v8.3 active. Tile icon compatibility, audio verification guards, and 66 active APIs enabled.");
         JSApi = new Api();
         JSApi.RegisterType(typeof(Impl));
@@ -42,16 +45,21 @@ public static class Scripting {
             JSApi.Methods.Add((new ApiAttribute(tag.Name), tag.Tag.GetterOriginal));
         }
 
-        OverlayerText.OnApplyConfig += text => {
-            if(!PatchesLocked && TagManager.HasReference(typeof(Expression))) {
-                LazyPatchManager.PatchAll().ForEach(lp => lp.Locked = true);
-                PatchesLocked = true;
-            }
-        };
+        OverlayerText.OnApplyConfig += HandleApplyConfig;
 
     }
 
+    private static void HandleApplyConfig(OverlayerText text) {
+        if(!PatchesLocked && TagManager.HasReference(typeof(Expression))) {
+            LazyPatchManager.PatchAll().ForEach(lp => lp.Locked = true);
+            PatchesLocked = true;
+        }
+    }
+
     public static void Release() {
+        scriptGeneration++;
+        OverlayerText.OnApplyConfig -= HandleApplyConfig;
+        PatchesLocked = false;
         Impl.Release();
         JSApi = null;
     }
@@ -101,9 +109,12 @@ public static class Scripting {
     }
 
     public static IEnumerator RunScriptsAfterStartup() {
+        int generation = scriptGeneration;
         yield return null;
         yield return null;
-        RunScriptsNonBlocking();
+        if(generation == scriptGeneration && JSApi != null) {
+            RunScriptsNonBlocking();
+        }
     }
 
     private static int GetScriptOrder(string path) {
@@ -138,6 +149,10 @@ public static class Scripting {
     }
 
     public static async Task RunScripts() {
+        int generation = scriptGeneration;
+        if(JSApi == null) {
+            return;
+        }
         if(ScriptsRunning) {
             Main.Logger.Log("Scripts Already Running! Aborting..");
             return;
@@ -159,6 +174,7 @@ public static class Scripting {
         File.WriteAllText(Path.Combine(ScriptProxyPath, "Unity.js"), GenerateJSProxy("Square3ang & Kkitut", unityTypes.Select(t => (t.Name, t)), null, new Version(1, 0, 0)));
         Main.Logger.Log("Preparing Executing Scripts..");
         Impl.Reload();
+        if(generation != scriptGeneration || JSApi == null) return;
         string[] scripts = Directory
             .GetFiles(ScriptPath, "*.js")
             .OrderBy(GetScriptOrder)
@@ -166,6 +182,7 @@ public static class Scripting {
             .ToArray();
 
         foreach(string script in scripts) {
+            if(generation != scriptGeneration || JSApi == null) break;
             var nameWithoutExt = Path.GetFileNameWithoutExtension(script);
 
                                                                                   
@@ -207,10 +224,7 @@ public static class Scripting {
             try {
                 code = File.ReadAllText(script);
             }
-            catch(Exception e) when(
-                e is FileNotFoundException ||
-                e is DirectoryNotFoundException
-            ) {
+            catch(Exception e) when(e is IOException || e is UnauthorizedAccessException) {
                 Main.Logger.Log(
                     $"Skipped Script \"{Path.GetFileName(script)}\": " +
                     $"{e.GetType().Name}: {e.Message}"
@@ -228,11 +242,11 @@ public static class Scripting {
                                                                                          
                                                                                          
                                                             
-            StaticCoroutine.Queue(
-                StaticCoroutine.SyncRunner(
-                    ProfileManager.Refresh
-                )
-            );
+            if(generation == scriptGeneration && JSApi != null) {
+                StaticCoroutine.Queue(
+                    StaticCoroutine.SyncRunner(ProfileManager.Refresh)
+                );
+            }
 
             ScriptsRunning = false;
         }
@@ -243,6 +257,9 @@ public static class Scripting {
     ) {
         string name = Path.GetFileName(path);
         bool succeeded;
+        string previousScript = CurrentExecutingScript;
+        string previousPath = CurrentExecutingScriptPath;
+        bool marked = Impl.MarkScriptExecuting(path);
 
         try {
             CurrentExecutingScript = script;
@@ -273,10 +290,24 @@ public static class Scripting {
             succeeded = false;
         }
         finally {
-            EndScript();
+            CurrentExecutingScript = previousScript;
+            CurrentExecutingScriptPath = previousPath;
+            if(marked) Impl.UnmarkScriptExecuting(path);
         }
 
         return Task.FromResult(succeeded);
+    }
+    internal static void ExecuteImportedScript(Engine engine, string path, string code) {
+        string previousScript = CurrentExecutingScript;
+        string previousPath = CurrentExecutingScriptPath;
+        try {
+            CurrentExecutingScript = code;
+            CurrentExecutingScriptPath = path;
+            engine.Execute(JSUtils.RemoveImports(code));
+        } finally {
+            CurrentExecutingScript = previousScript;
+            CurrentExecutingScriptPath = previousPath;
+        }
     }
 
     public static async void RunScriptsNonBlocking() => await RunScripts();
@@ -341,12 +372,12 @@ public static class Scripting {
             if(proxyTypes != null) {
                 var split = proxyTypes.Split(':');
                 if(split.Length > 1) {
-                    var types = split[1].TrimStart();
-                    foreach(var clrType in types.Split('*').Select(typeString => {
+                    var types = split[1].Trim();
+                    foreach(var typeString in types.Split('*').Where(s => !string.IsNullOrWhiteSpace(s))) {
                         var typeNameSplit = typeString.Split('&');
-                        return (typeNameSplit[1], (MemberInfo)MiscUtils.TypeByName(typeNameSplit[0]));
-                    })) {
-                        yield return clrType;
+                        if(typeNameSplit.Length != 2) continue;
+                        var type = MiscUtils.TypeByName(typeNameSplit[0]);
+                        if(type != null) yield return (typeNameSplit[1], (MemberInfo)type);
                     }
                 }
             }
@@ -417,6 +448,8 @@ public static class Scripting {
                 .Union(t.NotPlayingReplacer.References)
                 .Select(ResolveScriptTag)
                 .Where(tg => tg != null))
+            .GroupBy(st => st.Path ?? st.Script)
+            .Select(group => group.First())
             .Select(st => {
                 var scriptNode = new JObject {
                     ["Name"] = st.Path != null ? Path.GetFileName(st.Path) : $"{Guid.NewGuid()}.js",
@@ -444,9 +477,35 @@ public static class Scripting {
             .Select(tc => profile.ObjectManager.Create(TextConfigImporter.Import(tc)))
             .ToList();
 
-        foreach(var script in node["Scripts"]) {
-            JSApi.PrepareInterpreter().Execute((string)script["Script"], (string)script["Name"]);
-            File.WriteAllText(Path.Combine(ScriptPath, (string)script["Name"]), (string)script["Script"]);
+        HashSet<string> importedScripts = new(StringComparer.OrdinalIgnoreCase);
+        foreach(var script in node["Scripts"] ?? new JArray()) {
+            string name = (string)script["Name"];
+            string code = (string)script["Script"];
+            if(string.IsNullOrWhiteSpace(name) || code == null ||
+                name.IndexOfAny(['/', '\\', ':']) >= 0 ||
+                name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+                !name.EndsWith(".js", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("Impl.js", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("CImpl.js", StringComparison.OrdinalIgnoreCase)) {
+                Main.Logger.Log("[Scripting] Skipped invalid imported script name.");
+                continue;
+            }
+            if(!importedScripts.Add(name)) {
+                Main.Logger.Log($"[Scripting] Skipped duplicate imported script '{name}'.");
+                continue;
+            }
+
+            Directory.CreateDirectory(ScriptPath);
+            string path = Path.Combine(ScriptPath, name);
+            if(File.Exists(path)) {
+                if(File.ReadAllText(path) != code) {
+                    Main.Logger.Log($"[Scripting] Skipped imported script '{name}': local file differs.");
+                    continue;
+                }
+            } else {
+                File.WriteAllText(path, code);
+            }
+            RunScript(path, code).GetAwaiter().GetResult();
         }
 
         profile.ObjectManager.Refresh();

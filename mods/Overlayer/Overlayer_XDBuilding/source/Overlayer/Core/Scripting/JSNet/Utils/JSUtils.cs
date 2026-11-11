@@ -19,11 +19,14 @@ public static class JSUtils {
         using(StringReader stringReader = new(code)) {
             string text = null;
             while((text = stringReader.ReadLine()) != null) {
-                if(!text.StartsWith("import")) {
-                    stringBuilder.AppendLine(text);
-                } else {
-                    stringBuilder.AppendLine();
-                }
+                string trimmed = text.TrimStart();
+                bool isImport = trimmed.StartsWith("import ", StringComparison.Ordinal) ||
+                    trimmed.StartsWith("import\t", StringComparison.Ordinal) ||
+                    trimmed.StartsWith("import{", StringComparison.Ordinal) ||
+                    trimmed.StartsWith("import*", StringComparison.Ordinal) ||
+                    trimmed.StartsWith("import\"", StringComparison.Ordinal) ||
+                    trimmed.StartsWith("import'", StringComparison.Ordinal);
+                stringBuilder.AppendLine(isImport ? string.Empty : text);
             }
         }
         return stringBuilder.ToString();
@@ -63,6 +66,9 @@ public static class JSUtils {
             iLGenerator.Emit(OpCodes.Ldloc, local);
             iLGenerator.Emit(OpCodes.Ldc_I4, arg);
             iLGenerator.Emit(OpCodes.Ldarg, arg);
+            if(parameterInfo.ParameterType.IsValueType) {
+                iLGenerator.Emit(OpCodes.Box, parameterInfo.ParameterType);
+            }
             iLGenerator.Emit(OpCodes.Stelem_Ref);
         }
         iLGenerator.Emit(OpCodes.Ldsfld, field);
@@ -119,7 +125,7 @@ public static class JSUtils {
         int i;
         for(i = 0; i < n.Length; i++) {
             int num = Array.FindIndex(p, (ParameterInfo pa) => pa.Name == n[i]);
-            if(num > 0) {
+            if(num >= 0) {
                 list.Add(new CustomParameter(ObjectIfPrivate(p[num].ParameterType), p[num].Name));
                 continue;
             }
@@ -132,7 +138,7 @@ public static class JSUtils {
                     list.Add(new CustomParameter(typeof(MethodBase), text));
                     continue;
                 case "__args":
-                    list.Add(new CustomParameter(typeof(MethodBase), text));
+                    list.Add(new CustomParameter(typeof(object[]), text));
                     continue;
                 case "__result":
                     list.Add(new CustomParameter((m is MethodInfo methodInfo) ? methodInfo.ReturnType : typeof(object), text));
@@ -147,19 +153,18 @@ public static class JSUtils {
                     list.Add(new CustomParameter(typeof(ILGenerator), text));
                     continue;
             }
-            if(text.StartsWith("__")) {
-                if(!int.TryParse(text.Substring(0, 2), out var result)) {
+            if(text.StartsWith("___")) {
+                string name = text.Substring(3);
+                FieldInfo field = declaringType?.GetField(name, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                if(field == null) {
                     return null;
                 }
-                if(result < 0 || result >= p.Length) {
+                list.Add(new CustomParameter(ObjectIfPrivate(field.FieldType), text));
+            } else if(text.StartsWith("__")) {
+                if(!int.TryParse(text.Substring(2), out var result) || result < 0 || result >= p.Length) {
                     return null;
                 }
-                list.Add(new CustomParameter(p[result].ParameterType, text));
-            } else if(text.StartsWith("___")) {
-                string name = text.Substring(0, 3);
-                if(declaringType.GetField(name, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.GetField | BindingFlags.SetField | BindingFlags.GetProperty | BindingFlags.SetProperty) == null) {
-                    return null;
-                }
+                list.Add(new CustomParameter(ObjectIfPrivate(p[result].ParameterType), text));
             } else if(selector != null) {
                 list.Add(selector(text));
             }

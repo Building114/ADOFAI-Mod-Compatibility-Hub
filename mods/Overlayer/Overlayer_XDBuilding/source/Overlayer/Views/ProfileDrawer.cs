@@ -32,8 +32,11 @@ public class ProfileDrawer : ModelDrawable<ProfileConfig> {
             TagManager.UpdatePatch();
         }
         GUILayout.BeginHorizontal();
+        string oldName = Path.GetFileNameWithoutExtension(model.Path) ?? model.Name;
         if(NeoDrawer.StaticInstance.DrawPath(Drawer.Icon_Pencil, Main.Lang.Get("NAME", "Name"), ref model.Name, Main.ProfilePath, "json")) {
-            ProfileManager.Rename(profile, model.Name);
+            if(!ProfileManager.Rename(profile, model.Name)) {
+                model.Name = oldName;
+            }
         }
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
@@ -52,12 +55,14 @@ public class ProfileDrawer : ModelDrawable<ProfileConfig> {
 
         GUI.color = new Color(1f, 1f, 0.8f);
         if(Drawer.Button(Drawer.Icon_Down, GUILayout.Width(60))) {
+            int session = Main.SessionGeneration;
+            string title = Main.Lang.Get("SELECT_OBJECT", "Select Object");
+            string filterName = Main.Lang.Get("OVERLAYER_OBJECT_JSON", "Overlayer Object JSON");
+            string basePath = Main.Mod.Path;
             Task.Run(() => {
+                try {
                 string[] texts = StandaloneFileBrowser.OpenFilePanel(
-                    Main.Lang.Get("SELECT_OBJECT", "Select Object"),
-                    Main.Mod.Path,
-                    [new ExtensionFilter(Main.Lang.Get("OVERLAYER_OBJECT_JSON", "Overlayer Object JSON"), "json")],
-                    true
+                    title, basePath, [new ExtensionFilter(filterName, "json")], true
                 );
                 if(texts == null || texts.Length == 0) {
                     return;
@@ -65,7 +70,7 @@ public class ProfileDrawer : ModelDrawable<ProfileConfig> {
                 var configsToAdd = new List<ObjectConfig>();
                 foreach(var text in texts) {
                     try {
-                        if(Path.GetExtension(text) != ".json") {
+                        if(!string.Equals(Path.GetExtension(text), ".json", StringComparison.OrdinalIgnoreCase)) {
                             continue;
                         }
                         string content = File.ReadAllText(text);
@@ -91,12 +96,22 @@ public class ProfileDrawer : ModelDrawable<ProfileConfig> {
                     }
                 }
                 Main.MainThreadDispatcher.Enqueue(() => {
+                    if(session != Main.SessionGeneration || !ProfileManager.Initialized || !profile) {
+                        return;
+                    }
                     foreach(var cfg in configsToAdd) {
-                        profile.ObjectManager.Create(cfg);
+                        try {
+                            profile.ObjectManager.Create(cfg);
+                        } catch(Exception e) {
+                            Debug.LogError("Failed to import object: " + e);
+                        }
                     }
                     dragSoltNeedInit = true;
                     profile.ObjectManager.Refresh();
                 });
+                } catch(Exception e) {
+                    Main.Logger?.Log($"Failed to select objects for import: {e}");
+                }
             });
         }
         GUI.color = old;
@@ -177,6 +192,8 @@ public class ProfileDrawer : ModelDrawable<ProfileConfig> {
                         UnityEngine.Object.DontDestroyOnLoad(popup);
                         popup.Initialize(obj, () => dragSoltNeedInit = true);
                     }
+                    GUI.color = old;
+                    GUILayout.EndHorizontal();
                     return;
                 }
                 GUI.color = old;

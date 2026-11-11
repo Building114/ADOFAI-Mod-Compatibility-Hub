@@ -35,6 +35,8 @@ public static class Impl {
         harmony = new Harmony("Overlayer.Scripting.Impl");
         globalVariables = [];
         registeredCustomTags = [];
+        replacedTags = [];
+        importingScripts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         customJudgeTexts = [];
         customJudgeConfigs = [];
         judgeTextShowPatchInjected = false;
@@ -44,31 +46,50 @@ public static class Impl {
         keyUpCallbacks = [];
         keyDownCallbacks = [];
     }
+    internal static bool MarkScriptExecuting(string path) =>
+        importingScripts != null && !string.IsNullOrWhiteSpace(path) && importingScripts.Add(Path.GetFullPath(path));
+
+    internal static void UnmarkScriptExecuting(string path) =>
+        importingScripts?.Remove(Path.GetFullPath(path));
+
+    private static void RestoreTag(string name) {
+        if(replacedTags == null || !replacedTags.TryGetValue(name, out var previous)) {
+            return;
+        }
+
+        if(Scripting.JSApi != null) {
+            Scripting.JSApi.Methods.RemoveAll(method => method.Item1.Name == name);
+            Scripting.JSApi.Methods.AddRange(previous.methods);
+        }
+
+        if(previous.tag != null) {
+            TagManager.SetTag(previous.tag);
+        } else {
+            TagManager.RemoveTag(name);
+        }
+
+        if(previous.hasDescription) {
+            TagDesc.Desc[name.ToUpperInvariant()] = previous.description;
+        } else {
+            TagDesc.Desc.Remove(name.ToUpperInvariant());
+        }
+        replacedTags.Remove(name);
+    }
+
     public static void Release() {
         if(registeredCustomTags != null) {
-            var registeredNames = new HashSet<string>(
-                registeredCustomTags
-            );
-
-            if(Scripting.JSApi != null) {
-                Scripting.JSApi.Methods.RemoveAll(
-                    method => registeredNames.Contains(
-                        method.Item1.Name
-                    )
-                );
+            foreach(var name in registeredCustomTags.Distinct()) {
+                RestoreTag(name);
             }
-
-            foreach(var registeredName in registeredNames) {
-                TagManager.RemoveTag(registeredName);
-                TagDesc.Desc.Remove(registeredName.ToUpperInvariant());
-            }
-
-            if(registeredNames.Count > 0) {
+            if(registeredCustomTags.Count > 0) {
                 TagManager.NotifyChanged();
             }
         }
 
+        Expression.expressions.Clear();
         registeredCustomTags = null;
+        replacedTags = null;
+        importingScripts = null;
         globalVariables = null;
         customJudgeTexts = null;
         customJudgeConfigs = null;
@@ -121,43 +142,36 @@ public static class Impl {
                         throw new FileNotFoundException(tagsOrProxies[i]);
                     }
                 }
+                tagOrProxy = Path.GetFullPath(tagOrProxy);
                 var name = Path.GetFileName(tagOrProxy);
+                if(importingScripts.Contains(tagOrProxy)) {
+                    Main.Logger.Log($"[{currentScript}] Cyclic script import skipped: {name}");
+                    continue;
+                }
                 var isProxy = false;
-                var time = MiscUtils.MeasureTime(() => {
-                    var code = File.ReadAllText(tagOrProxy);
-                    if(isProxy = code.StartsWith("// [Overlayer.Scripting JS Wrapper]")) {
-                        foreach(var (alias, member) in Scripting.ImportJSProxy(code)) {
-                            if(member is Type t) {
-                                engine.SetValue(
-                                    alias,
-                                    TypeReference.CreateTypeReference(
-                                        engine,
-                                        t
-                                    )
-                                );
+                importingScripts.Add(tagOrProxy);
+                TimeSpan time;
+                try {
+                    time = MiscUtils.MeasureTime(() => {
+                        var code = File.ReadAllText(tagOrProxy);
+                        if(isProxy = code.StartsWith("// [Overlayer.Scripting JS Wrapper]")) {
+                            foreach(var (alias, member) in Scripting.ImportJSProxy(code)) {
+                                if(member is Type t) {
+                                    engine.SetValue(alias, TypeReference.CreateTypeReference(engine, t));
+                                } else if(member is MethodInfo m) {
+                                    engine.SetValue(alias, Api.CreateMethodFunction(engine, alias, m));
+                                } else {
+                                    Main.Logger.Log($"[{currentScript}] Proxy member '{alias}' could not be resolved; skipped.");
+                                }
                             }
-                            else if(member is MethodInfo m) {
-                                engine.SetValue(
-                                    alias,
-                                    Api.CreateMethodFunction(
-                                        engine,
-                                        alias,
-                                        m
-                                    )
-                                );
-                            }
-                            else {
-                                Main.Logger.Log(
-                                    $"[{currentScript}] Proxy member " +
-                                    $"'{alias}' could not be resolved; skipped."
-                                );
-                            }
+                        } else {
+                            Scripting.ExecuteImportedScript(engine, tagOrProxy, code);
+                            alreadyExecutedScripts.Add(tagOrProxy);
                         }
-                    } else {
-                        engine.Execute(JSUtils.RemoveImports(code));
-                        alreadyExecutedScripts.Add(tagOrProxy);
-                    }
-                });
+                    });
+                } finally {
+                    importingScripts.Remove(tagOrProxy);
+                }
                 if(isProxy) {
                     Main.Logger.Log($"[{currentScript}] Using '{Path.GetFileName(tagOrProxy)}' Proxy. ({time.TotalMilliseconds}ms)");
                 } else {
@@ -317,18 +331,31 @@ public static class Impl {
     }
     [Api("registerTag")]
     public static void RegisterTag(Engine engine, string name, JsValue func, bool notplaying, string tooltip) {
-        if(func is not Function fi) {
+        if(string.IsNullOrWhiteSpace(name) || func is not Function fi) {
             return;
         }
 
         FIWrapper wrapper = new(fi);
         var tagWrapper = GenerateTagWrapper(wrapper);
-        var tuple = (new ApiAttribute(name), tagWrapper);
-        Scripting.JSApi.Methods.Add(tuple);
-        Expression.expressions.Clear();
         string pathOrScript = Scripting.CurrentExecutingScriptPath == "Sandbox.js" ? Scripting.CurrentExecutingScript : Scripting.CurrentExecutingScriptPath;
-        TagManager.SetTag(new ScriptTag(pathOrScript, tagWrapper, new Tags.Attributes.TagAttribute(name) { NotPlaying = notplaying }));
-        registeredCustomTags.Add(name);
+        var scriptTag = new ScriptTag(pathOrScript, tagWrapper, new Tags.Attributes.TagAttribute(name) { NotPlaying = notplaying });
+        if(!replacedTags.ContainsKey(name)) {
+            bool hasDescription = TagDesc.Desc.TryGetValue(name.ToUpperInvariant(), out var description);
+            replacedTags[name] = (
+                TagManager.GetTag(name),
+                Scripting.JSApi.Methods.Where(method => method.Item1.Name == name).ToList(),
+                description,
+                hasDescription
+            );
+        }
+
+        Scripting.JSApi.Methods.RemoveAll(method => method.Item1.Name == name);
+        Scripting.JSApi.Methods.Add((new ApiAttribute(name), tagWrapper));
+        Expression.expressions.Clear();
+        TagManager.SetTag(scriptTag);
+        if(!registeredCustomTags.Contains(name)) {
+            registeredCustomTags.Add(name);
+        }
         if(tooltip != null) {
             TagDesc.Desc[name.ToUpperInvariant()] = tooltip;
         }
@@ -338,11 +365,13 @@ public static class Impl {
     }
     [Api("unregisterTag")]
     public static void UnregisterTag(Engine engine, string name) {
-        Scripting.JSApi.Methods.RemoveAll(t => t.Item1.Name == name);
+        if(registeredCustomTags == null || !registeredCustomTags.Contains(name)) {
+            return;
+        }
+
+        RestoreTag(name);
         Expression.expressions.Clear();
-        TagManager.RemoveTag(name);
-        TagDesc.Desc.Remove(name.ToUpperInvariant());
-        registeredCustomTags?.RemoveAll(tagName => tagName == name);
+        registeredCustomTags.Remove(name);
         TagManager.NotifyChanged();
         StaticCoroutine.Queue(StaticCoroutine.SyncRunner(ProfileManager.Refresh));
     }
@@ -600,7 +629,11 @@ public static class Impl {
     [
         "Set Audio(UnityEngine.AudioClip) With Callback (.mp3, .ogg, .aiff, .wav)"
     ], RequireTypes = [typeof(AudioSource)])]
-    public static void SetAudio(string path, AudioSource source) => AudioPlayer.LoadAudio(path, clip => source.clip = clip);
+    public static void SetAudio(string path, AudioSource source) => AudioPlayer.LoadAudio(path, clip => {
+        if(source && clip) {
+            source.clip = clip;
+        }
+    });
     private static void InvokeEventCallback(
         FIWrapper wrapper,
         string eventName,
@@ -1036,7 +1069,7 @@ public static class Impl {
         }
         [Api("setTileSprite")]
         public static void SetTileSprite(Sprite sprite, float scale) {
-            foreach(var floor in UnityEngine.Object.FindObjectsOfType<scrFloor>()) {
+            foreach(var floor in UnityEngine.Object.FindObjectsByType<scrFloor>(FindObjectsSortMode.InstanceID)) {
                 floor.floorRenderer.sprite = sprite;
                 floor.floorRenderer.transform.localScale = new Vector2(scale, scale);
             }
@@ -1218,7 +1251,7 @@ public static class Impl {
             int renderersUpdated = 0;
             int nativeFailures = 0;
 
-            foreach(var floor in UnityEngine.Object.FindObjectsOfType<scrFloor>()) {
+            foreach(var floor in UnityEngine.Object.FindObjectsByType<scrFloor>(FindObjectsSortMode.InstanceID)) {
                 if(!floor) {
                     continue;
                 }
@@ -1462,7 +1495,11 @@ public static class Impl {
         }
         [Api("setLobbyBgm")]
         public static void SetLobbyBgm(string audio) => AudioPlayer.LoadAudio(audio, clip => {
-            var lobbySource = scrConductor.instance.GetComponentsInChildren<AudioSource>()?.FirstOrDefault(a => a.clip?.name == "1-X-wav");
+            var conductor = scrConductor.instance;
+            if(!conductor || !clip) {
+                return;
+            }
+            var lobbySource = conductor.GetComponentsInChildren<AudioSource>()?.FirstOrDefault(a => a.clip?.name == "1-X-wav");
             if(lobbySource != null) {
                 lobbySource.clip = clip;
             }
@@ -1758,6 +1795,8 @@ public static class Impl {
     static Dictionary<KeyCode, List<FIWrapper>> keyDownCallbacks;
     public static HashSet<string> alreadyExecutedScripts;
     public static List<string> registeredCustomTags;
+    static Dictionary<string, (OverlayerTag tag, List<(ApiAttribute, MethodInfo)> methods, string description, bool hasDescription)> replacedTags;
+    static HashSet<string> importingScripts;
     public static Dictionary<string, object> globalVariables;
     public static Dictionary<Texture2D, Sprite> spriteCache = [];
     static Dictionary<Engine, Dictionary<string, TypeReference>> jsTypes;

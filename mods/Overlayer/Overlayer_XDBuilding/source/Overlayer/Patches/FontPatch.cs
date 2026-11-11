@@ -167,6 +167,9 @@ public static class FontPatch {
 
                     if(tmpUsable) {
                         foreach(var tmp in i.GetComponentsInChildren<TMP_Text>(false)) {
+                            if(tmp.GetComponent<OverlayerText>()) {
+                                continue;
+                            }
                             if(tmp.font != font.fontTMP) {
                                 tmp.font = font.fontTMP;
                             }

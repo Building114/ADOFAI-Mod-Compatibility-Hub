@@ -5,6 +5,7 @@ using Overlayer.Tags;
 using Overlayer.Utils;
 using RapidGUI;
 using System;
+using System.Globalization;
 using UnityEngine;
 using Time = UnityEngine.Time;
 
@@ -32,31 +33,48 @@ internal class MovingManEditor : MonoBehaviour {
     public Ease ease = Ease.OutExpo;
 
     private NeoDrawer neoDrawer;
+    public bool HasChanges { get; private set; }
 
-    public void Initialize(string tag, string codesBefore, string codesAfter) {
-        if(tag.Contains("(")) {
-            var arr = tag.Split('(')[1].Split(')')[0].Split(',');
+    public bool Initialize(string tag, string codesBefore, string codesAfter) {
+        if(!CodeEditor.TryGetEditorArguments(tag, nameof(Effect.MovingMan), out string[] arr) || arr.Length > 7) return false;
+        if(arr.Length > 0) {
+            if(string.IsNullOrWhiteSpace(arr[0]) || arr[0].Contains("{") ||
+               TagManager.tags == null || !TagManager.tags.ContainsKey(arr[0])) return false;
+            double parsedStart = startSize, parsedEnd = endSize, parsedDefault = defaultSize, parsedSpeed = speed;
+            bool parsedInvert = invert;
+            Ease parsedEase = ease;
+            if(arr.Length > 1 && !double.TryParse(arr[1], NumberStyles.Float, CultureInfo.InvariantCulture, out parsedStart)) return false;
+            if(arr.Length > 2 && !double.TryParse(arr[2], NumberStyles.Float, CultureInfo.InvariantCulture, out parsedEnd)) return false;
+            if(arr.Length > 3 && !double.TryParse(arr[3], NumberStyles.Float, CultureInfo.InvariantCulture, out parsedDefault)) return false;
+            if(arr.Length > 4 && !double.TryParse(arr[4], NumberStyles.Float, CultureInfo.InvariantCulture, out parsedSpeed)) return false;
+            if(arr.Length > 5 && !bool.TryParse(arr[5], out parsedInvert)) return false;
+            if(arr.Length > 6 && (!Enum.TryParse(arr[6], true, out parsedEase) || !Enum.IsDefined(typeof(Ease), parsedEase))) return false;
+            if(double.IsNaN(parsedStart) || double.IsInfinity(parsedStart) ||
+               double.IsNaN(parsedEnd) || double.IsInfinity(parsedEnd) ||
+               double.IsNaN(parsedDefault) || double.IsInfinity(parsedDefault) ||
+               double.IsNaN(parsedSpeed) || double.IsInfinity(parsedSpeed)) return false;
             targetTag = arr[0];
-            startSize = double.Parse(arr[1]);
-            endSize = double.Parse(arr[2]);
-            defaultSize = double.Parse(arr[3]);
-            speed = double.Parse(arr[4]);
-            invert = bool.Parse(arr[5]);
-            ease = EnumHelper<Ease>.Parse(arr[6]);
+            startSize = parsedStart;
+            endSize = parsedEnd;
+            defaultSize = parsedDefault;
+            speed = parsedSpeed;
+            invert = parsedInvert;
+            ease = parsedEase;
         }
-
         windowRect.width = 300;
-
         isInitaialize = true;
         this.codesBefore = codesBefore;
         this.codesAfter = codesAfter;
         BlockUMMClosing.Block = true;
         TagManager.testerValue = "0";
-
         neoDrawer = new NeoDrawer();
+        return true;
     }
 
+    public void OnDestroy() => BlockUMMClosing.Block = false;
+
     public void Update() {
+        if(speed <= 0 || double.IsNaN(speed) || double.IsInfinity(speed)) return;
         timer += Time.deltaTime;
         if(timer >= speed / 1000f) {
             timer -= (float)speed / 1000f;
@@ -81,8 +99,9 @@ internal class MovingManEditor : MonoBehaviour {
             }
 
             windowRect = GUILayout.Window(122, windowRect, DrawWindow, fmt, RGUIStyle.darkWindow);
-            var txt = "<size=" + Math.Max(Math.Max(startSize / 2f, endSize / 2f), defaultSize / 2f) +
-                      ">Test</size>";
+            var size = Math.Max(Math.Max(startSize / 2, endSize / 2), defaultSize / 2);
+            size = double.IsNaN(size) || double.IsInfinity(size) ? 20 : Math.Max(1, Math.Min(300, size));
+            var txt = "<size=" + size.ToString(CultureInfo.InvariantCulture) + ">Test</size>";
             var sz = GUI.skin.label.CalcSize(new GUIContent(txt));
             previewWindowRect.width = sz.x + 50;
             previewWindowRect.height = sz.y + 50;
@@ -95,12 +114,18 @@ internal class MovingManEditor : MonoBehaviour {
 
     private void PreviewWindow(int windowID) {
         GUI.BringWindowToFront(windowID);
-        GUILayout.Label("<size=" + (Effect.MovingMan("INTERNAL_TESTER_TAG_1234512345", startSize, endSize,
-            defaultSize, speed, invert, ease) / 2f) + ">Test</size>");
+        double size = speed > 0 ? Effect.MovingMan("INTERNAL_TESTER_TAG_1234512345", startSize, endSize,
+            defaultSize, speed, invert, ease) / 2 : defaultSize / 2;
+        if(double.IsNaN(size) || double.IsInfinity(size)) size = 20;
+        GUILayout.Label("<size=" + Math.Max(1, Math.Min(300, size)).ToString(CultureInfo.InvariantCulture) + ">Test</size>");
     }
 
     private void DrawWindow(int windowID) {
         neoDrawer.FieldResetId();
+        string oldTarget = targetTag;
+        double oldStart = startSize, oldEnd = endSize, oldDefault = defaultSize, oldSpeed = speed;
+        bool oldInvert = invert;
+        Ease oldEase = ease;
 
         GUI.BringWindowToFront(windowID);
 
@@ -125,6 +150,8 @@ internal class MovingManEditor : MonoBehaviour {
         GUILayout.EndHorizontal();
 
         neoDrawer.UpdateFocused();
+        if(oldTarget != targetTag || oldStart != startSize || oldEnd != endSize ||
+           oldDefault != defaultSize || oldSpeed != speed || oldInvert != invert || oldEase != ease) HasChanges = true;
 
         if(Drawer.Button(Main.Lang.Get("DONE", "Done"))) {
             neoDrawer = null;

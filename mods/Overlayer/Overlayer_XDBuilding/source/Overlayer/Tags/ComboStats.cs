@@ -17,16 +17,16 @@ public static class ComboStats {
     #region MarginCombo
     [Tag]
     [TagDesc("Lenient judgment of MarginCombo")]
-    public static int LMarginCombo(HitMargin margin) => Combos[(int)Difficulty.Lenient][(int)margin];
+    public static int LMarginCombo(string margin) => SingleCombo(Difficulty.Lenient, margin, false);
     [Tag]
     [TagDesc("Normal judgment of MarginCombo")]
-    public static int NMarginCombo(HitMargin margin) => Combos[(int)Difficulty.Normal][(int)margin];
+    public static int NMarginCombo(string margin) => SingleCombo(Difficulty.Normal, margin, false);
     [Tag]
     [TagDesc("Strict judgment of MarginCombo")]
-    public static int SMarginCombo(HitMargin margin) => Combos[(int)Difficulty.Strict][(int)margin];
+    public static int SMarginCombo(string margin) => SingleCombo(Difficulty.Strict, margin, false);
     [Tag]
     [TagDesc("Displays the combo for a single judgment\n(ex: {MarginCombo:VeryLate})")]
-    public static int MarginCombo(HitMargin margin) => Combos[(int)GCS.difficulty][(int)margin];
+    public static int MarginCombo(string margin) => SingleCombo(GCS.difficulty, margin, false);
     #endregion
 
     #region MarginCombos
@@ -49,6 +49,9 @@ public static class ComboStats {
         var ppCombo = MarginCombos_Internal(GCS.difficulty, "Perfect");
         var noMiss = MarginCombos_Internal(GCS.difficulty, "VeryEarly|EarlyPerfect|Perfect|LatePerfect|VeryLate");
         string result = "XX";
+        if(seqID <= 0 || HitTiming.Timings.Count == 0) {
+            return result.Trim(maxLength, afterTrimStr);
+        }
         if(ppCombo == seqID) {
             result = "PP";
         } else if(noMiss == seqID) {
@@ -60,7 +63,7 @@ public static class ComboStats {
     }
 
     public static int MarginCombos_Internal(Difficulty diff, string margins) {
-        var hms = margins.SplitParse<HitMargin>('|');
+        var hms = ParseMargins(margins);
         int hash = ADOUtils.HashMargins(hms);
         if(!MMaxComboCache.TryGetValue(hash, out _)) {
             MMaxComboCache[hash] = new int[EnumHelper<Difficulty>.GetValues().Length];
@@ -75,16 +78,16 @@ public static class ComboStats {
     #region MarginMaxCombo
     [Tag]
     [TagDesc("Lenient judgment of MarginMaxCombo")]
-    public static int LMarginMaxCombo(HitMargin margin) => MaxCombos[(int)Difficulty.Lenient][(int)margin];
+    public static int LMarginMaxCombo(string margin) => SingleCombo(Difficulty.Lenient, margin, true);
     [Tag]
     [TagDesc("Normal judgment of MarginMaxCombos")]
-    public static int NMarginMaxCombo(HitMargin margin) => MaxCombos[(int)Difficulty.Normal][(int)margin];
+    public static int NMarginMaxCombo(string margin) => SingleCombo(Difficulty.Normal, margin, true);
     [Tag]
     [TagDesc("Strict judgment of MarginMaxCombo")]
-    public static int SMarginMaxCombo(HitMargin margin) => MaxCombos[(int)Difficulty.Strict][(int)margin];
+    public static int SMarginMaxCombo(string margin) => SingleCombo(Difficulty.Strict, margin, true);
     [Tag]
     [TagDesc("Displays the maximum combo for a single judgment\n(ex: {MarginMaxCombo:VeryLate})")]
-    public static int MarginMaxCombo(HitMargin margin) => MaxCombos[(int)GCS.difficulty][(int)margin];
+    public static int MarginMaxCombo(string margin) => SingleCombo(GCS.difficulty, margin, true);
     #endregion
 
     public static int[][] Combos = new int[EnumHelper<Difficulty>.GetValues().Length][];
@@ -120,7 +123,7 @@ public static class ComboStats {
     public static int MarginMaxCombos(string margins) => MarginMaxCombos_Internal(GCS.difficulty, margins);
 
     public static int MarginMaxCombos_Internal(Difficulty diff, string margins) {
-        var hms = margins.SplitParse<HitMargin>('|');
+        var hms = ParseMargins(margins);
         int hash = ADOUtils.HashMargins(hms);
         if(!MComboCache.TryGetValue(hash, out _)) {
             MComboCache[hash] = new int[EnumHelper<Difficulty>.GetValues().Length];
@@ -148,6 +151,34 @@ public static class ComboStats {
                 }
             }
         }
+    }
+
+    private static HitMargin[] ParseMargins(string margins) {
+        var parsed = new HashSet<HitMargin>();
+        foreach(string part in (margins ?? string.Empty).Split('|')) {
+            string name = part.Trim();
+            if(string.Equals(name, "Perfect", StringComparison.OrdinalIgnoreCase)) {
+                foreach(HitMargin margin in HitMarginHelper.PerfectHitMargins) {
+                    parsed.Add(margin);
+                }
+            } else if(Enum.TryParse(name, true, out HitMargin margin) && Enum.IsDefined(typeof(HitMargin), margin)) {
+                parsed.Add(margin);
+            }
+        }
+        return parsed.ToArray();
+    }
+
+    private static int SingleCombo(Difficulty diff, string marginName, bool maximum) {
+        if(string.Equals(marginName, "Perfect", StringComparison.OrdinalIgnoreCase)) {
+            return maximum ? MarginMaxCombos_Internal(diff, marginName) : MarginCombos_Internal(diff, marginName);
+        }
+        if(!Enum.TryParse(marginName, true, out HitMargin margin) || !Enum.IsDefined(typeof(HitMargin), margin)) return 0;
+        var values = maximum ? MaxCombos : Combos;
+        int index = (int)margin;
+        int difficultyIndex = (int)diff;
+        if(difficultyIndex < 0 || difficultyIndex >= values.Length) return 0;
+        int[] row = values[difficultyIndex];
+        return row != null && index >= 0 && index < row.Length ? row[index] : 0;
     }
 
     public static void Reset() {

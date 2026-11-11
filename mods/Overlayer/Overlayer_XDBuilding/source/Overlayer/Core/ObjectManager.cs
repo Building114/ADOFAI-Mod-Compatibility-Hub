@@ -38,11 +38,16 @@ public class ObjectManager {
         }
 
         var go = new GameObject($"OverlayerText_{Count + 1}");
-        var obj = go.AddComponent<OverlayerText>();
-        obj.Init(ProfileCanvas, config);
-
-        Objects.Add(obj);
-        return obj;
+        try {
+            var obj = go.AddComponent<OverlayerText>();
+            obj.Init(ProfileCanvas, config);
+            Objects.Add(obj);
+            return obj;
+        } catch {
+            go.SetActive(false);
+            UnityEngine.Object.Destroy(go);
+            throw;
+        }
     }
 
     public OverlayerImage Create(ImageConfig config) {
@@ -51,11 +56,16 @@ public class ObjectManager {
         }
 
         var go = new GameObject($"OverlayerImage_{Count + 1}");
-        var obj = go.AddComponent<OverlayerImage>();
-        obj.Init(ProfileCanvas, config);
-
-        Objects.Add(obj);
-        return obj;
+        try {
+            var obj = go.AddComponent<OverlayerImage>();
+            obj.Init(ProfileCanvas, config);
+            Objects.Add(obj);
+            return obj;
+        } catch {
+            go.SetActive(false);
+            UnityEngine.Object.Destroy(go);
+            throw;
+        }
     }
 
     public OverlayerObject Get(int index) => (index >= 0 && index < Count) ? Objects[index] : null;
@@ -143,6 +153,7 @@ public class ObjectManager {
 
         try {
             if(obj && obj.gameObject) {
+                obj.gameObject.SetActive(false);
                 Object.Destroy(obj.gameObject);
             }
         } catch(System.Exception e) {
@@ -162,10 +173,12 @@ public class ObjectManager {
             try {
                 switch(o) {
                     case OverlayerText text:
+                        text.TextConfig?.SuspendExpressions();
                         text.PlayingReplacer?.Dispose();
                         text.NotPlayingReplacer?.Dispose();
                         break;
                     case OverlayerImage image:
+                        image.ImageConfig?.SuspendExpressions();
                         image.PlayingReplacer?.Dispose();
                         image.NotPlayingReplacer?.Dispose();
                         break;
@@ -205,6 +218,7 @@ public class ObjectManager {
         CleanInvalid();
         foreach(var o in Objects.ToArray()) {
             if(o) {
+                o.gameObject.SetActive(false);
                 Object.Destroy(o.gameObject);
             }
         }

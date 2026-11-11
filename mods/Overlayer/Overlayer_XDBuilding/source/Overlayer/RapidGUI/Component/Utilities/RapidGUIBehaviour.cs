@@ -10,7 +10,7 @@ public class RapidGUIBehaviour : MonoBehaviour {
     public static RapidGUIBehaviour Instance {
         get {
             if(instance is null) {
-                instance = FindObjectOfType<RapidGUIBehaviour>();
+                instance = FindFirstObjectByType<RapidGUIBehaviour>();
                 if(instance is null) {
                     var ga = new GameObject("RapidGUI");
                     instance = ga.AddComponent<RapidGUIBehaviour>();

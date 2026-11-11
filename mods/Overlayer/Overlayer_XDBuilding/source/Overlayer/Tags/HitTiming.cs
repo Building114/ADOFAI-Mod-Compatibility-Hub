@@ -13,5 +13,8 @@ public static class HitTiming {
 
     public static List<double> Timings = [];
 
-    public static void Reset() => Timing = TimingAvg = 0;
+    public static void Reset() {
+        Timing = TimingAvg = 0;
+        Timings.Clear();
+    }
 }

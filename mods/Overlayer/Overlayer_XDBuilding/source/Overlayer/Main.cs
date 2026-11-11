@@ -18,6 +18,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static UnityModManagerNet.UnityModManager;
@@ -39,6 +40,8 @@ public static class Main {
     public static Translator Lang { get; internal set; }
     public static bool IsShowGUI { get; private set; } = false;
     private static UpdatePopup popup;
+    private static RichTextGuidePopup richTextGuidePopup;
+    public static int SessionGeneration { get; private set; }
     private const bool UpdaterDisabled = true;
 
     public static string tooltip = "";
@@ -80,7 +83,7 @@ public static class Main {
         Ass = Assembly.GetExecutingAssembly();
 
                                                                                                   
-        UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.6.";
+        UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.7.";
 
         GUI = new GUIController();
         Lang = new Translator();
@@ -105,6 +108,7 @@ public static class Main {
     }
 
     public static bool OnToggle(ModEntry modEntry, bool toggle) {
+        SessionGeneration++;
         if(toggle) {
             FontPatch.Reset();
             Settings.Load();
@@ -143,14 +147,24 @@ public static class Main {
 
             if(updateOnce) {
                 updateOnce = false;
-                UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.6.";
+                UpdateInfo = "AutoUpdater disabled in Overlayer XDBuilding 3.49.7.";
             }
         } else {
             if(EgEnabled) {
                 EgEnabled = false;
             }
-            if(Logo) {
-                Logo = null;
+            LogoRelease();
+            if(popup) {
+                UnityEngine.Object.Destroy(popup.gameObject);
+                popup = null;
+            }
+            if(richTextGuidePopup) {
+                UnityEngine.Object.Destroy(richTextGuidePopup.gameObject);
+                richTextGuidePopup = null;
+            }
+            var deletePopup = UnityEngine.Object.FindAnyObjectByType<DeletePopup>();
+            if(deletePopup) {
+                UnityEngine.Object.Destroy(deletePopup.gameObject);
             }
             ProfileManager.Release();
             FileAttempt = null;
@@ -165,18 +179,66 @@ public static class Main {
             LazyPatchManager.UnloadAll();
             SafePatchController.UnloadAll();
             Lang.Release();
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
             Settings.Save();
         }
 
         return true;
     }
 
-    public static void OnShowGUI(ModEntry modEntry) {
-        IsShowGUI = true;
+    private static string UpdateLogPath => Path.Combine(Mod.Path, "update.txt");
+
+    internal static string GetUpdateLogFingerprint(string filePath) {
+        using(var stream = File.OpenRead(filePath))
+        using(var hash = SHA256.Create()) {
+            return BitConverter.ToString(hash.ComputeHash(stream)).Replace("-", "");
+        }
+    }
+
+    internal static void MarkUpdateLogRead(string fingerprint) {
+        if(Settings == null || string.IsNullOrEmpty(fingerprint)) {
+            return;
+        }
+
+        Settings.LastSeenUpdateLogHash = fingerprint;
+        try {
+            Settings.Save();
+        } catch(Exception ex) {
+            Logger?.Log("Could not save update log read state: " + ex);
+        }
+    }
+
+    private static void ShowUpdateLog(bool onlyIfUnread = false) {
+        if(popup || Mod == null || !File.Exists(UpdateLogPath)) {
+            return;
+        }
+
+        if(onlyIfUnread) {
+            try {
+                if(Settings?.LastSeenUpdateLogHash == GetUpdateLogFingerprint(UpdateLogPath)) {
+                    return;
+                }
+            } catch(Exception ex) {
+                Logger?.Log("Could not check update log read state: " + ex);
+            }
+        }
+
         popup = new GameObject().AddComponent<UpdatePopup>();
         UnityEngine.Object.DontDestroyOnLoad(popup);
         popup.Initialize();
+    }
+
+    private static void ShowRichTextGuide() {
+        if(richTextGuidePopup) {
+            return;
+        }
+
+        richTextGuidePopup = new GameObject().AddComponent<RichTextGuidePopup>();
+        UnityEngine.Object.DontDestroyOnLoad(richTextGuidePopup.gameObject);
+    }
+
+    public static void OnShowGUI(ModEntry modEntry) {
+        IsShowGUI = true;
+        ShowUpdateLog(onlyIfUnread: true);
 
         //CodeEditor.CodeEditor.ignoreTextAreaNext.Clear();
 
@@ -271,6 +333,20 @@ public static class Main {
         }
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
+
+        GUILayout.Space(6f);
+        GUILayout.BeginHorizontal();
+        bool wasEnabled = UnityEngine.GUI.enabled;
+        UnityEngine.GUI.enabled = wasEnabled && File.Exists(UpdateLogPath);
+        if(Drawer.Button(Lang.Get("UPDATE_LOG_BUTTON", "Update Log"), GUILayout.MinWidth(140f), GUILayout.Height(32f))) {
+            ShowUpdateLog();
+        }
+        UnityEngine.GUI.enabled = wasEnabled;
+        if(Drawer.Button(Lang.Get("RICH_TEXT_GUIDE_BUTTON", "Rich Text & Tags"), GUILayout.MinWidth(180f), GUILayout.Height(32f))) {
+            ShowRichTextGuide();
+        }
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
         if(!UpdaterDisabled && AutoUpdater.CurrentVersionType != AutoUpdater.VersionType.Unknown) {
             if(AutoUpdater.LatestVersion != null) {
                 GUILayout.BeginHorizontal();
@@ -310,6 +386,10 @@ public static class Main {
 
     public static void OnHideGUI(ModEntry modEntry) {
         IsShowGUI = false;
+        if(richTextGuidePopup) {
+            UnityEngine.Object.Destroy(richTextGuidePopup.gameObject);
+            richTextGuidePopup = null;
+        }
         //CodeEditor.CodeEditor.ignoreTextAreaNext.Clear();
         CodeEditor.CodeEditor.instance.undoRedoManagers.Clear();
         GUI.Flush();
@@ -364,7 +444,11 @@ public static class Main {
         public static void Enqueue(Action action) => queue.Enqueue(action);
         public static void Update() {
             while(queue.TryDequeue(out var action)) {
-                action.Invoke();
+                try {
+                    action?.Invoke();
+                } catch(Exception e) {
+                    Main.Logger?.LogException(e);
+                }
             }
         }
     }

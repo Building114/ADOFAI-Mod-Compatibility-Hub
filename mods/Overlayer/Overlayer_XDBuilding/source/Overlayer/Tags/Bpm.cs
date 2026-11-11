@@ -9,7 +9,7 @@ public static class Bpm {
     public static double TileBpm;
     [Tag(ProcessingFlags = ValueProcessing.RoundNumber)]
     [TagDesc("The highest BPM in the level")]
-    public static double MaxTileBpm => scnGame.instance.highestBPM;
+    public static double MaxTileBpm => scnGame.instance != null ? scnGame.instance.highestBPM : 0d;
     [Tag(ProcessingFlags = ValueProcessing.RoundNumber)]
     [TagDesc("Current BPM")]
     public static double CurBpm;
@@ -52,23 +52,33 @@ public static class Bpm {
             bpmwithoutpitch = scrConductor.instance.bpm;
         }
         float cur = bpm;
+        float curWithoutPitch = bpmwithoutpitch;
         if(VersionSafe.GetCurrentSeqID(__instance) != 0) {
             double speed = VersionSafe.GetPlanetSpeed(scrController.instance);
             cur = (float)(bpm * speed);
+            curWithoutPitch = (float)(bpmwithoutpitch * speed);
         }
         TileBpm = cur;
         CurBpm = cur;
         RecKPS = cur / 60;
+        TileBpmWithoutPitch = curWithoutPitch;
+        CurBpmWithoutPitch = curWithoutPitch;
+        RecKPSWithoutPitch = curWithoutPitch / 60;
     }
 
     public static double GetRealBpm(scrFloor floor, float bpm) {
-        return floor == null
-            ? (double)bpm
-            : floor.nextfloor == null ? VersionSafe.GetPlanetSpeed(scrController.instance) * bpm : 60.0 / (floor.nextfloor.entryTime - floor.entryTime);
+        if(floor == null) return bpm;
+
+        double fallback = VersionSafe.GetPlanetSpeed(scrController.instance) * bpm;
+        if(floor.nextfloor == null) return fallback;
+
+        double interval = floor.nextfloor.entryTime - floor.entryTime;
+        if(interval <= 0 || double.IsNaN(interval) || double.IsInfinity(interval)) return fallback;
+        return 60.0 / interval;
     }
 
     public static void Update(scrFloor floor) {
-        if(floor.nextfloor is null) {
+        if(floor == null || floor.nextfloor == null) {
             return;
         }
 

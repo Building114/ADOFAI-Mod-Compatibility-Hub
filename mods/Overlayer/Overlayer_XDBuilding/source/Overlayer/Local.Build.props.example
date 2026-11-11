@@ -2,8 +2,7 @@
 <Project>
   <PropertyGroup>
     <GameDir>C:\Path\To\A Dance of Fire and Ice</GameDir>
-    <DeployToGame>false</DeployToGame>
-    <DeployModDir>$(GameDir)\Mods\Overlayer</DeployModDir>
+    <DeployToGame>true</DeployToGame>
     <Configuration>Release</Configuration>
   </PropertyGroup>
 </Project>

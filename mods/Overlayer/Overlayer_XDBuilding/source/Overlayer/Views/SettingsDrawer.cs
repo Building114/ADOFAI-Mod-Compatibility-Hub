@@ -40,10 +40,12 @@ public class SettingsDrawer : ModelDrawable<Settings> {
     public readonly static string[] preparingsymbols = { "|", "/", "-", "\\" };
     public float preparinglastUpdateTime = 0f;
     public int preparingsymbolIndex = 0;
-    public float helptime = 0f;
+    private float languageLoadingStartedAt = -1f;
+    private bool drawLoadingState;
+    private bool drawLoadingStateInitialized;
 
     private void LanguageInit() {
-        helptime = 0f;
+        languageLoadingStartedAt = -1f;
         preparingsymbolIndex = 0;
         languages = Main.Lang.GetLanguages();
         userLanguages = Main.Lang.GetLanguageNativeNames();
@@ -95,7 +97,12 @@ public class SettingsDrawer : ModelDrawable<Settings> {
             GUILayout.EndHorizontal();
         }
 
-        if(Main.Lang.IsLoading) {
+        if(Event.current.type == EventType.Layout || !drawLoadingStateInitialized) {
+            drawLoadingState = Main.Lang.IsLoading;
+            drawLoadingStateInitialized = true;
+        }
+        if(drawLoadingState) {
+            if(languageLoadingStartedAt < 0f) languageLoadingStartedAt = Time.realtimeSinceStartup;
             float elapsedTime = Time.time - preparinglastUpdateTime;
 
             if(elapsedTime >= 0.05f) {
@@ -106,18 +113,13 @@ public class SettingsDrawer : ModelDrawable<Settings> {
                 preparinglastUpdateTime = Time.time;
             }
 
-            helptime += Time.deltaTime;
-            if(helptime >= 8f) {
-                GUILayout.Label("Is the Preparing is taking too long?? please get in touch with the developer for assistance!!");
-            } else {
-                GUILayout.Label("");
-            }
-            GUILayout.BeginHorizontal();
-            Drawer.Button("Loading translations for you, hang tight...", GUILayout.Width(480));
-            GUILayout.Space(10);
-            GUILayout.Label(preparingsymbols[preparingsymbolIndex]);
-            GUILayout.EndHorizontal();
+            bool delayed = Time.realtimeSinceStartup - languageLoadingStartedAt >= 8f;
+            string message = delayed
+                ? "Is the Preparing is taking too long?? please get in touch with the developer for assistance!!... No. Don;t do that again,,,, now go to check the Overlayer log."
+                : "Loading translations for you, hang tight...";
+            GUILayout.Label(message + " " + preparingsymbols[preparingsymbolIndex]);
         } else {
+            languageLoadingStartedAt = -1f;
             string languageDesc;
             if(Main.Lang.IsDefault) {
                 languageDesc = $"! {Translator.FALLBACK_LANGUAGE} by OVERLAYER";
@@ -138,12 +140,17 @@ public class SettingsDrawer : ModelDrawable<Settings> {
 
             GUILayout.Label($"{Main.Lang.Get("SELECTLANGUAGE", "Select Language")} {languageDesc}");
             if(Main.Lang.IsSomeFail) {
-                GUILayout.Label("<color=#FFFF00>Some translations are failed to load, See the log for details.</color>");
+                GUILayout.Label("<color=#FFFF00>Some translations could not be loaded. Check the Overlayer log for details.</color>");
             } else if(Main.Lang.IsFail) {
                 GUILayout.Label($"<color=#FF0000>All translations failed to load: {Main.Lang.FailState}</color>");
             }
             GUILayout.BeginHorizontal();
+            if(languages == null || languages.Length == 0 || userLanguages == null || userLanguages.Length == 0) {
+                languages = [Translator.FALLBACK_LANGUAGE];
+                userLanguages = ["Default"];
+            }
             int selectedIndex = Array.IndexOf(languages, Main.Lang.Language);
+            if(selectedIndex < 0) selectedIndex = 0;
 
             if(Drawer.Button("◀", GUILayout.Width(40))) {
                 selectedIndex = (selectedIndex - 1 + languages.Length) % languages.Length;
@@ -169,10 +176,7 @@ public class SettingsDrawer : ModelDrawable<Settings> {
             }
 
             if(reloadLang) {
-                _ = Task.Run(async () => {
-                    await Main.Lang.Load(Path.Combine(Main.Mod.Path, "lang"));
-                    NeedLangInit = true;
-                });
+                _ = Main.Lang.Load(Path.Combine(Main.Mod.Path, "lang"));
             }
         }
         GUILayout.BeginHorizontal();
@@ -192,7 +196,6 @@ public class SettingsDrawer : ModelDrawable<Settings> {
                 }
                 model.AutoUpdate = false;
                 model.AutoUpdateBeta = false;
-                GUILayout.Label("AutoUpdater disabled in Overlayer XDBuilding 3.49.6.");
                 Drawer.DrawBool(string.Format(Main.Lang.Get("USE_THIS", "Use {0}"), Main.Lang.Get("TOOLTIP", "Tooltip")), ref model.Tooltip);
                 Drawer.HoverTooltip(Main.Lang.Get("TOOLTIP_DESC", "You are currently viewing this"));
                 if(Drawer.DrawBool(Main.Lang.Get("LEGACY_THEME", "Legacy Theme"), ref model.LegacyTheme)) {
@@ -277,7 +280,7 @@ public class SettingsDrawer : ModelDrawable<Settings> {
                         SafePatchController.RemovePatch<HitFixPatch>();
                     }
                 }
-                Drawer.HoverTooltip(Main.Lang.Get("SHOW_TRUE_AUTO_JUDGEMENT_DESC", "Patches the in game judgement line code\nso that judgements are always displayed on the Hit Error Meter even during Autoplay"));
+                Drawer.HoverTooltip(Main.Lang.Get("SHOW_TRUE_AUTO_JUDGEMENT_DESC", "Tries to show judgements on the Hit Error Meter during Autoplay (may not work in 3.4.0)"));
                 break;
         }
         if(extraMenu != ExtraMenus.Closed) {
@@ -291,72 +294,92 @@ public class SettingsDrawer : ModelDrawable<Settings> {
         }
         GUI.color = new Color(1f, 1f, 0.8f);
         if(Drawer.Button(Drawer.Icon_Down, GUILayout.Width(60))) {
+            int session = Main.SessionGeneration;
+            string title = Main.Lang.Get("SELECT_PROFILE", "Select Profile");
+            string filterName = Main.Lang.Get("OVERLAYER_PROFILE_JSON", "Overlayer Profile JSON");
+            string profilePath = Main.ProfilePath;
+            var existingProfiles = new HashSet<string>(
+                ProfileManager.Profiles.Where(p => p?.Config != null).Select(p => p.Config.Name),
+                StringComparer.OrdinalIgnoreCase
+            );
             Task.Run(() => {
-                string[] pfs = StandaloneFileBrowser.OpenFilePanel(
-                    Main.Lang.Get("SELECT_PROFILE", "Select Profile"),
-                    Main.ProfilePath,
-                    [new ExtensionFilter(Main.Lang.Get("OVERLAYER_PROFILE_JSON", "Overlayer Profile JSON"), "json")],
-                    true
-                );
-                foreach(var pf in pfs) {
-                    try {
-                        if(Path.GetExtension(pf) != ".json") {
-                            continue;
-                        }
-                        string name = Path.GetFileNameWithoutExtension(pf);
-                        if(ProfileManager.Exists(name)) {
-                            continue;
-                        }
-                        string targetPath = Path.Combine(Main.ProfilePath, name + ".json");
-                        if(!string.Equals(
-                            Path.GetFullPath(pf),
-                            Path.GetFullPath(targetPath),
-                            StringComparison.OrdinalIgnoreCase
-                        )) {
-                            File.Copy(pf, targetPath, true);
-                        }
-                        var content = File.ReadAllText(targetPath);
-                        if(string.IsNullOrWhiteSpace(content)) {
-                            continue;
-                        }
-                        var token = JToken.Parse(content);
-                        var cfg = new ProfileConfig();
-                        cfg.Deserialize(token);
-                        cfg.Path = targetPath;
-                        cfg.Name = name;
-
-                        if(cfg.MigratedFromLegacyFormat) {
-                            string backup = targetPath + ".legacy.bak";
-                            if(!File.Exists(backup)) {
-                                File.Copy(targetPath, backup, false);
-                            }
-                            File.WriteAllText(targetPath, cfg.Serialize().ToString(Newtonsoft.Json.Formatting.Indented));
-                        }
-
-                        Main.MainThreadDispatcher.Enqueue(() => {
-                            try {
-                                JToken refsNode = token is JObject ? token : null;
-                                foreach(var obj in cfg.Objects) {
-                                    if(refsNode != null && obj is TextConfig t) {
-                                        TextConfigImporter.ImportRef(t, refsNode);
-                                    } else if(refsNode != null && obj is ImageConfig i) {
-                                        ImageConfigImporter.ImportRef(i, refsNode);
-                                    }
-                                }
-                                var profile = ProfileManager.CreateRuntimeProfile(cfg);
-                                if(profile != null) {
-                                    ProfileManager.Profiles.Add(profile);
-                                    profile.ApplyConfig();
-                                    TagManager.UpdatePatch();
-                                }
-                                dragSoltNeedInit = true;
-                            } catch(Exception ex) {
-                                Debug.LogError($"Failed to create profile '{pf}' on main thread: {ex}");
-                            }
-                        });
-                    } catch(Exception e) {
-                        Debug.LogError($"Failed to load profile '{pf}': {e}");
+                try {
+                    string[] pfs = StandaloneFileBrowser.OpenFilePanel(
+                        title, profilePath, [new ExtensionFilter(filterName, "json")], true
+                    );
+                    if(pfs == null) {
+                        return;
                     }
+                    foreach(var pf in pfs) {
+                        try {
+                            if(!string.Equals(Path.GetExtension(pf), ".json", StringComparison.OrdinalIgnoreCase)) {
+                                continue;
+                            }
+                            string name = Path.GetFileNameWithoutExtension(pf);
+                            if(existingProfiles.Contains(name)) {
+                                continue;
+                            }
+                            string targetPath = Path.Combine(profilePath, name + ".json");
+                            bool needCopy = !string.Equals(
+                                Path.GetFullPath(pf),
+                                Path.GetFullPath(targetPath),
+                                StringComparison.OrdinalIgnoreCase
+                            );
+                            if(needCopy && File.Exists(targetPath)) {
+                                Main.Logger?.Log($"Skipped profile import '{pf}': destination already exists.");
+                                continue;
+                            }
+                            var content = File.ReadAllText(pf);
+                            if(string.IsNullOrWhiteSpace(content)) {
+                                continue;
+                            }
+                            var token = JToken.Parse(content);
+                            var cfg = new ProfileConfig();
+                            cfg.Deserialize(token);
+                            if(needCopy) {
+                                File.Copy(pf, targetPath, false);
+                            }
+                            cfg.Path = targetPath;
+                            cfg.Name = name;
+
+                            if(cfg.MigratedFromLegacyFormat) {
+                                string backup = targetPath + ".legacy.bak";
+                                if(!File.Exists(backup)) {
+                                    File.Copy(targetPath, backup, false);
+                                }
+                                Overlayer.Utils.Extensions.WriteAllTextAtomic(targetPath, cfg.Serialize().ToString(Newtonsoft.Json.Formatting.Indented));
+                            }
+
+                            Main.MainThreadDispatcher.Enqueue(() => {
+                                if(session != Main.SessionGeneration || !ProfileManager.Initialized ||
+                                   ProfileManager.Profiles == null || ProfileManager.Exists(name)) {
+                                    return;
+                                }
+                                try {
+                                    JToken refsNode = token is JObject ? token : null;
+                                    foreach(var obj in cfg.Objects) {
+                                        if(refsNode != null && obj is TextConfig t) {
+                                            TextConfigImporter.ImportRef(t, refsNode);
+                                        } else if(refsNode != null && obj is ImageConfig i) {
+                                            ImageConfigImporter.ImportRef(i, refsNode);
+                                        }
+                                    }
+                                    var profile = ProfileManager.CreateRuntimeProfile(cfg);
+                                    if(profile != null) {
+                                        ProfileManager.Profiles.Add(profile);
+                                        TagManager.UpdatePatch();
+                                    }
+                                    dragSoltNeedInit = true;
+                                } catch(Exception ex) {
+                                    Main.Logger?.Log($"Failed to create profile '{pf}' on main thread: {ex}");
+                                }
+                            });
+                        } catch(Exception e) {
+                            Main.Logger?.Log($"Failed to load profile '{pf}': {e}");
+                        }
+                    }
+                } catch(Exception e) {
+                    Main.Logger?.Log($"Failed to select profiles for import: {e}");
                 }
             });
         }
@@ -410,21 +433,29 @@ public class SettingsDrawer : ModelDrawable<Settings> {
                 GUI.enabled = true;
                 GUI.color = new Color(1f, 0.8f, 1f);
                 if(Drawer.Button(Drawer.Icon_Up, GUILayout.Width(46))) {
-                    Task.Run(() => {
-                        string target = StandaloneFileBrowser.SaveFilePanel(
-                            Main.Lang.Get("EXPORT_PROFILE", "Export Profile"),
-                            Persistence.GetLastUsedFolder(),
-                            $"{profile.Config.Name}.json",
-                            "json"
-                        );
-                        if(!string.IsNullOrWhiteSpace(target)) {
-                            var node = profile.Config.Serialize();
-                            if(model.IncludeReferences) {
-                                node["References"] = ProfileReferences.GetReferences(profile);
+                    try {
+                        profile.Config.Objects = profile.ObjectManager.Export();
+                        var node = profile.Config.Serialize();
+                        var referencePaths = model.IncludeReferences ? ProfileReferences.GetJustReferences(profile) : null;
+                        string title = Main.Lang.Get("EXPORT_PROFILE", "Export Profile");
+                        string saveFolder = Persistence.GetLastUsedFolder();
+                        string fileName = $"{profile.Config.Name}.json";
+                        Task.Run(() => {
+                            try {
+                                string target = StandaloneFileBrowser.SaveFilePanel(title, saveFolder, fileName, "json");
+                                if(!string.IsNullOrWhiteSpace(target)) {
+                                    if(referencePaths != null) {
+                                        node["References"] = ProfileReferences.ResolveReferences(referencePaths);
+                                    }
+                                    Overlayer.Utils.Extensions.WriteAllTextAtomic(target, node.ToString());
+                                }
+                            } catch(Exception e) {
+                                Main.Logger?.Log($"Failed to export profile '{fileName}': {e}");
                             }
-                            File.WriteAllText(target, node.ToString());
-                        }
-                    });
+                        });
+                    } catch(Exception e) {
+                        Main.Logger?.Log($"Failed to prepare profile export: {e}");
+                    }
                 }
                 GUI.color = new Color(1f, 0.8f, 0.8f);
                 if(Drawer.Button(Drawer.Icon_X, GUILayout.Width(46))) {
@@ -440,6 +471,8 @@ public class SettingsDrawer : ModelDrawable<Settings> {
                             });
                         }
                     }
+                    GUI.color = old;
+                    GUILayout.EndHorizontal();
                     return;
                 }
                 GUI.color = old;
@@ -543,20 +576,18 @@ public class SettingsDrawer : ModelDrawable<Settings> {
             do {
                 name = $"Profile {i}";
                 i++;
-            } while(ProfileManager.Profiles.Any(p => string.Equals(p.Config.Name, name, StringComparison.Ordinal)));
-
-            string path = Path.Combine(Main.ProfilePath, name + ".json");
+            } while(ProfileManager.Exists(name) || File.Exists(Path.Combine(Main.ProfilePath, name + ".json")));
 
             var config = new ProfileConfig {
                 Name = name,
                 Path = name + ".json"
             };
 
-            File.WriteAllText(path, JsonConvert.SerializeObject(config, Formatting.Indented));
-
             var profile = ProfileManager.Create(config);
-
-            dragSoltNeedInit = true;
+            if(profile != null) {
+                ProfileManager.Save();
+                dragSoltNeedInit = true;
+            }
         }
 
         NeoDrawer.StaticInstance.UpdateFocused();
